@@ -51,6 +51,10 @@ final class RequestLabSlowPage extends Component
 
     <section
         style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;border:1px solid rgba(51,65,85,1);background:#0f172a;border-radius:20px;padding:24px;color:#e2e8f0;">
+        <a href="{{ route('spaReactive') }}" volt:navigate
+            style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
+            Inicio Sistema SPA Full Reactive
+        </a>
         <a href="/runtimeRequestLab" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid rgba(250,204,21,0.28);background:rgba(113,63,18,0.18);color:#fef3c7;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Volver al laboratorio

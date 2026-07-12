@@ -175,9 +175,9 @@ final class HtmlAltPage extends Component
             style="display:inline-flex;align-items:center;border:1px solid rgba(34,211,238,0.28);background:rgba(8,47,73,0.18);color:#cffafe;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Volver a runtimeHtml
         </a>
-        <a href="/" volt:navigate
+        <a href="{{ route('spaReactive') }}" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
-            Volver al inicio
+            Inicio Sistema SPA Full Reactive
         </a>
     </section>
 </div>

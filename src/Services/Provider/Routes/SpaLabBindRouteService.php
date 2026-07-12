@@ -14,8 +14,5 @@ class SpaLabBindRouteService
     {
         Route::get('/runtimeBind', BindPage::class)->name('runtimeBind');
         Route::get('/runtimeBindAlt', BindAltPage::class)->name('runtimeBindAlt');
-        Route::get('/spaReactive', function () {
-            return view('spa-reactive');
-        })->name('spaReactive');
     }
 }

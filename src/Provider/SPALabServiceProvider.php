@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace VoltStack\SPALab\Provider;
 
+use Quantum\Facades\Route;
 use Quantum\Http\Request;
 use Quantum\Http\Response;
-use Quantum\Facades\Route;
 use Quantum\View\ViewFactory;
 use VoltStack\Framework\ServiceProvider;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabBindRouteService;
@@ -17,6 +17,7 @@ use VoltStack\SPALab\Services\Provider\Routes\SpaLabEventRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabFocusRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabFormRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabHtmlRouteService;
+use VoltStack\SPALab\Services\Provider\Routes\SpaLabInitRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabModelRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabNavigationRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabPersistRouteService;
@@ -42,6 +43,7 @@ final class SPALabServiceProvider extends ServiceProvider
         );
 
         if ($enableDemoSpaRoutes) {
+            SpaLabInitRouteService::registerInitRoutes();
             SpaLabBindRouteService::registerBindRoutes();
             SpaLabCacheRouteService::registerCacheRoutes();
             SpaLabCounterRouteService::registerCounterRoutes();

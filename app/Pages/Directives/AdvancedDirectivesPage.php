@@ -966,9 +966,9 @@ final class AdvancedDirectivesPage extends Component
             style="display:inline-flex;align-items:center;border:1px solid rgba(16,185,129,0.28);background:rgba(6,95,70,0.18);color:#d1fae5;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Volver a /runtimeState
         </a>
-        <a href="/" volt:navigate
+        <a href="{{ route('spaReactive') }}" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
-            Volver al inicio
+            Inicio Sistema SPA Full Reactive
         </a>
     </section>
 </div>

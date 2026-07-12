@@ -114,7 +114,7 @@ final class ConterExamplePage extends Component
             Usa estos enlaces para cambiar entre demos sin recargar la pagina completa.
         </p>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
-            <a href="/" volt:navigate
+            <a href="{{ route('spaReactive') }}" volt:navigate
                 style="display:inline-flex;align-items:center;border:1px solid rgba(34,211,238,0.28);background:rgba(34,211,238,0.08);color:#cffafe;border-radius:10px;padding:10px 16px;text-decoration:none;">
                 Volver al inicio
             </a>
@@ -123,7 +123,7 @@ final class ConterExamplePage extends Component
                 Ir a formulario
             </a>
             <a href="/cacheExample" volt:navigate
-                class="inline-flex items-center rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white">
+                class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition border-slate-700 bg-slate-950/70 text-slate-200 hover:border-slate-500 hover:text-white">
                 Probar navegacion a /cacheExample
             </a>
         </div>

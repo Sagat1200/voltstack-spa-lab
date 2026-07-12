@@ -18,49 +18,49 @@ final class BindAltPage extends Component
 @section('head')
 <meta name="volt-navigation-mode" content="auto" data-volt-head-key="runtime-bind-alt-mode">
 <script data-volt-head-key="runtime-bind-demo-bridge">
-(() => {
-    if (window.__voltRuntimeBindDemoInstalled) {
-        return;
-    }
-
-    window.__voltRuntimeBindDemoInstalled = true;
-
-    function state() {
-        return window.Volt && window.Volt.state ? window.Volt.state : null;
-    }
-
-    function setShared(path, value) {
-        const api = state();
-
-        if (!api) {
+    (() => {
+        if (window.__voltRuntimeBindDemoInstalled) {
             return;
         }
 
-        api.set(path, value, {
-            scope: 'shared'
+        window.__voltRuntimeBindDemoInstalled = true;
+
+        function state() {
+            return window.Volt && window.Volt.state ? window.Volt.state : null;
+        }
+
+        function setShared(path, value) {
+            const api = state();
+
+            if (!api) {
+                return;
+            }
+
+            api.set(path, value, {
+                scope: 'shared'
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            const trigger = event.target && typeof event.target.closest === 'function' ?
+                event.target.closest('[data-runtime-bind-alt-action]') :
+                null;
+
+            if (!trigger) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const action = trigger.getAttribute('data-runtime-bind-alt-action') || '';
+
+            if (action === 'shared-link-alt') {
+                setShared('bind.linkUrl', 'https://example.com/alt/runtime-bind');
+                setShared('bind.linkTitle', 'Abrir enlace compartido desde alt');
+                setShared('bind.lastAction', 'alt-shared-link');
+            }
         });
-    }
-
-    document.addEventListener('click', (event) => {
-        const trigger = event.target && typeof event.target.closest === 'function' ?
-            event.target.closest('[data-runtime-bind-alt-action]') :
-            null;
-
-        if (!trigger) {
-            return;
-        }
-
-        event.preventDefault();
-
-        const action = trigger.getAttribute('data-runtime-bind-alt-action') || '';
-
-        if (action === 'shared-link-alt') {
-            setShared('bind.linkUrl', 'https://example.com/alt/runtime-bind');
-            setShared('bind.linkTitle', 'Abrir enlace compartido desde alt');
-            setShared('bind.lastAction', 'alt-shared-link');
-        }
-    });
-})();
+    })();
 </script>
 @endsection
 
@@ -169,9 +169,9 @@ final class BindAltPage extends Component
             style="display:inline-flex;align-items:center;border:1px solid rgba(56,189,248,0.28);background:rgba(8,47,73,0.18);color:#bae6fd;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Volver a runtimeBind
         </a>
-        <a href="/" volt:navigate
+        <a href="{{ route('spaReactive') }}" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
-            Volver al inicio
+            Inicio Sistema SPA Full Reactive
         </a>
     </section>
 </div>

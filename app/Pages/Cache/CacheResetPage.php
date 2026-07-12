@@ -108,9 +108,9 @@ final class CacheResetPage extends Component
                 style="display:inline-flex;align-items:center;border:1px solid rgba(34,197,94,0.28);background:rgba(34,197,94,0.12);color:#dcfce7;border-radius:10px;padding:10px 16px;text-decoration:none;">
                 Volver a fragment cache
             </a>
-            <a href="/formExample" volt:navigate
-                style="display:inline-flex;align-items:center;border:1px solid rgba(59,130,246,0.28);background:rgba(59,130,246,0.12);color:#dbeafe;border-radius:10px;padding:10px 16px;text-decoration:none;">
-                Ir a /formExample
+            <a href="{{ route('spaReactive') }}" volt:navigate
+                style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
+                Inicio Sistema SPA Full Reactive
             </a>
             <a href="/cacheExample" volt:navigate
                 style="display:inline-flex;align-items:center;border:1px solid rgba(14,165,233,0.28);background:rgba(14,165,233,0.12);color:#cffafe;border-radius:10px;padding:10px 16px;text-decoration:none;">

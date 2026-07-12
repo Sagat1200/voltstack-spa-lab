@@ -286,9 +286,9 @@ final class CacheExamplePage extends Component
     </article>
 
     <div class="mt-8 flex flex-wrap gap-3">
-        <a href="/" volt:navigate volt:prefetch="none"
-            class="inline-flex items-center rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white">
-            Volver al inicio
+        <a href="{{ route('spaReactive') }}" volt:navigate
+            style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
+            Inicio Sistema SPA Full Reactive
         </a>
         <a href="/counterExample" volt:navigate volt:prefetch="none"
             class="inline-flex items-center rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white">

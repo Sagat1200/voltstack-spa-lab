@@ -61,6 +61,10 @@ final class DocumentReloadPage extends Component
     <section
         style="border:1px solid rgba(51,65,85,1);background:#0f172a;border-radius:20px;padding:24px;color:#e2e8f0;">
         <h2 style="margin:0 0 12px;font-size:24px;">Navegacion</h2>
+        <a href="{{ route('spaReactive') }}" volt:navigate
+            style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
+            Inicio Sistema SPA Full Reactive
+        </a>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
             <a href="/navigationPolicy" volt:navigate="spa" data-runtime-check="document-reload-back-to-lab"
                 style="display:inline-flex;align-items:center;border:1px solid rgba(34,197,94,0.28);background:rgba(34,197,94,0.12);color:#dcfce7;border-radius:10px;padding:10px 16px;text-decoration:none;">

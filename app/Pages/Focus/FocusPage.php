@@ -240,9 +240,9 @@ final class FocusPage extends Component
             style="display:inline-flex;align-items:center;border:1px solid rgba(59,130,246,0.30);background:rgba(30,64,175,0.16);color:#dbeafe;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Probar navegacion a runtimeFocusAlt
         </a>
-        <a href="/" volt:navigate
+        <a href="{{ route('spaReactive') }}" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
-            Volver al inicio
+            Inicio Sistema SPA Full Reactive
         </a>
     </section>
 </div>

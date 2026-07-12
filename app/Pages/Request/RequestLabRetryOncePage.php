@@ -64,9 +64,9 @@ final class RequestLabRetryOncePage extends Component
             style="display:inline-flex;align-items:center;border:1px solid rgba(74,222,128,0.28);background:rgba(20,83,45,0.18);color:#dcfce7;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Volver al laboratorio
         </a>
-        <a href="/runtimeEvents" volt:navigate
-            style="display:inline-flex;align-items:center;border:1px solid rgba(56,189,248,0.28);background:rgba(8,47,73,0.18);color:#bae6fd;border-radius:10px;padding:10px 16px;text-decoration:none;">
-            Ir a runtimeEvents
+        <a href="{{ route('spaReactive') }}" volt:navigate
+            style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
+            Inicio Sistema SPA Full Reactive
         </a>
     </section>
 </div>

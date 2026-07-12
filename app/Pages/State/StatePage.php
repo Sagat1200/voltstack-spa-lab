@@ -610,9 +610,9 @@ shared:counter -> updates.sharedCounterMirror</pre>
             style="display:inline-flex;align-items:center;border:1px solid rgba(168,85,247,0.28);background:rgba(88,28,135,0.16);color:#f5d0fe;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Ir a la segunda pantalla SPA
         </a>
-        <a href="/" volt:navigate
+        <a href="{{ route('spaReactive') }}" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
-            Volver al inicio
+            Inicio Sistema SPA Full Reactive
         </a>
     </section>
 </div>

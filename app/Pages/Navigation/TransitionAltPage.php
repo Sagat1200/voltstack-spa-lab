@@ -100,7 +100,12 @@ final class TransitionAltPage extends Component
     </section>
 
     <section
+
         style="display:flex;flex-wrap:wrap;gap:12px;border:1px solid rgba(51,65,85,1);background:#0f172a;border-radius:20px;padding:24px;color:#e2e8f0;">
+        <a href="{{ route('spaReactive') }}" volt:navigate
+            style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
+            Inicio Sistema SPA Full Reactive
+        </a>
         <a href="/navigationTransition" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid rgba(96,165,250,0.28);background:rgba(14,116,144,0.14);color:#e0f2fe;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Volver al origen con politica documental

@@ -351,9 +351,9 @@ final class FormExamplePage extends Component
             Usa estos enlaces para cambiar entre demos sin recargar la pagina completa.
         </p>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
-            <a href="/" volt:navigate
-                style="display:inline-flex;align-items:center;border:1px solid rgba(34,211,238,0.28);background:rgba(34,211,238,0.08);color:#cffafe;border-radius:10px;padding:10px 16px;text-decoration:none;">
-                Volver al inicio
+            <a href="{{ route('spaReactive') }}" volt:navigate
+                style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
+                Inicio Sistema SPA Full Reactive
             </a>
             <a href="/fragmentCache" volt:navigate
                 style="display:inline-flex;align-items:center;border:1px solid rgba(34,197,94,0.28);background:rgba(34,197,94,0.12);color:#dcfce7;border-radius:10px;padding:10px 16px;text-decoration:none;">

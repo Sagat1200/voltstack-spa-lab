@@ -11,6 +11,10 @@ class SpaLabCounterRouteService
 {
     public static function registerCounterRoutes(): void
     {
-        Route::get('/counterExample', ConterExamplePage::class)->name('counterExample');
+        Route::get('/counterExample', ConterExamplePage::class)
+            ->name('counterExample')
+            ->runtime([
+                'prefetch' => false,
+            ]);
     }
 }

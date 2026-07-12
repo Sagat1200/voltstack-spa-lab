@@ -4,18 +4,14 @@
 <section class="p-8 rounded-2xl border shadow-2xl border-slate-800 bg-slate-900/70 shadow-slate-950/30">
     <span
         class="inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-cyan-300">
-        VoltStack + Tailwind + Vite
+        Sistema de Analisis de Runtime SPA Full Reactive
     </span>
 
-    <h1 class="mt-6 text-4xl font-semibold tracking-tight text-white">{{ $appName }}</h1>
 
-    <p class="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-        Sistema de Analisis de Runtime SPA Full Reactive
-    </p>
 
     <div class="grid gap-5 mt-8 md:grid-cols-2 xl:grid-cols-3">
         <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-cyan-400/40 hover:bg-slate-950"
-            href="/counterExample" volt:navigate volt:prefetch="none">
+            href="/counterExample" volt:navigate volt:prefetch>
             <strong class="block text-lg text-white">/counterExample</strong>
             <span class="block mt-3 text-sm leading-6 text-slate-400">Componente reactivo inline con <code
                     class="px-2 py-1 rounded bg-red-950 text-slate-200">volt-click</code>, <code

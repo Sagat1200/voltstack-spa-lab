@@ -25,79 +25,79 @@ final class BindPage extends Component
 @section('head')
 <meta name="volt-navigation-mode" content="auto" data-volt-head-key="bind-mode">
 <script data-volt-head-key="bind-demo-bridge">
-    (() => {
-        if (window.__voltBindDemoInstalled) {
+(() => {
+    if (window.__voltBindDemoInstalled) {
+        return;
+    }
+
+    window.__voltBindDemoInstalled = true;
+
+    function state() {
+        return window.Volt && window.Volt.state ? window.Volt.state : null;
+    }
+
+    function setShared(path, value) {
+        const api = state();
+
+        if (!api) {
             return;
         }
 
-        window.__voltBindDemoInstalled = true;
+        api.set(path, value, {
+            scope: 'shared'
+        });
+    }
 
-        function state() {
-            return window.Volt && window.Volt.state ? window.Volt.state : null;
-        }
-
-        function setShared(path, value) {
-            const api = state();
-
-            if (!api) {
-                return;
-            }
-
-            api.set(path, value, {
-                scope: 'shared'
-            });
-        }
-
-        function svgData(label, background, foreground) {
-            return 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+    function svgData(label, background, foreground) {
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 220">
   <rect width="480" height="220" rx="24" fill="${background}"></rect>
   <text x="40" y="96" fill="${foreground}" font-family="Arial, sans-serif" font-size="26" font-weight="700">${label}</text>
   <text x="40" y="142" fill="${foreground}" font-family="Arial, sans-serif" font-size="16">volt:bind image preview</text>
 </svg>`);
+    }
+
+    document.addEventListener('click', (event) => {
+        const trigger = event.target && typeof event.target.closest === 'function' ?
+            event.target.closest('[data-runtime-bind-action]') :
+            null;
+
+        if (!trigger) {
+            return;
         }
 
-        document.addEventListener('click', (event) => {
-            const trigger = event.target && typeof event.target.closest === 'function' ?
-                event.target.closest('[data-runtime-bind-action]') :
-                null;
+        event.preventDefault();
 
-            if (!trigger) {
-                return;
-            }
+        const action = trigger.getAttribute('data-runtime-bind-action') || '';
 
-            event.preventDefault();
+        if (action === 'preset-link-docs') {
+            setShared('bind.linkUrl', 'https://example.com/docs/runtime-bind');
+            setShared('bind.linkTitle', 'Abrir documentacion runtime bind');
+            setShared('bind.lastAction', 'preset-link-docs');
+            return;
+        }
 
-            const action = trigger.getAttribute('data-runtime-bind-action') || '';
+        if (action === 'preset-link-status') {
+            setShared('bind.linkUrl', 'https://example.com/status/runtime-bind');
+            setShared('bind.linkTitle', 'Abrir status runtime bind');
+            setShared('bind.lastAction', 'preset-link-status');
+            return;
+        }
 
-            if (action === 'preset-link-docs') {
-                setShared('bind.linkUrl', 'https://example.com/docs/runtime-bind');
-                setShared('bind.linkTitle', 'Abrir documentacion runtime bind');
-                setShared('bind.lastAction', 'preset-link-docs');
-                return;
-            }
+        if (action === 'preset-image-ocean') {
+            setShared('bind.previewUrl', svgData('Ocean Preview', '#082f49', '#ecfeff'));
+            setShared('bind.imageTitle', 'Ocean preview title');
+            setShared('bind.lastAction', 'preset-image-ocean');
+            return;
+        }
 
-            if (action === 'preset-link-status') {
-                setShared('bind.linkUrl', 'https://example.com/status/runtime-bind');
-                setShared('bind.linkTitle', 'Abrir status runtime bind');
-                setShared('bind.lastAction', 'preset-link-status');
-                return;
-            }
-
-            if (action === 'preset-image-ocean') {
-                setShared('bind.previewUrl', svgData('Ocean Preview', '#082f49', '#ecfeff'));
-                setShared('bind.imageTitle', 'Ocean preview title');
-                setShared('bind.lastAction', 'preset-image-ocean');
-                return;
-            }
-
-            if (action === 'preset-image-amber') {
-                setShared('bind.previewUrl', svgData('Amber Preview', '#78350f', '#fef3c7'));
-                setShared('bind.imageTitle', 'Amber preview title');
-                setShared('bind.lastAction', 'preset-image-amber');
-            }
-        });
-    })();
+        if (action === 'preset-image-amber') {
+            setShared('bind.previewUrl', svgData('Amber Preview', '#78350f', '#fef3c7'));
+            setShared('bind.imageTitle', 'Amber preview title');
+            setShared('bind.lastAction', 'preset-image-amber');
+        }
+    });
+})();
 </script>
 @endsection
 
@@ -267,9 +267,9 @@ final class BindPage extends Component
             style="display:inline-flex;align-items:center;border:1px solid rgba(56,189,248,0.28);background:rgba(8,47,73,0.18);color:#bae6fd;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Ir a runtimeBindAlt
         </a>
-        <a href="/" volt:navigate
+        <a href="{{ route('spaReactive') }}" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
-            Volver al inicio
+            Inicio Sistema SPA Full Reactive
         </a>
     </section>
 </div>
