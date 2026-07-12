@@ -14,7 +14,7 @@ class SpaLabCounterRouteService
         Route::get('/counterExample', ConterExamplePage::class)
             ->name('counterExample')
             ->runtime([
-                'prefetch' => false,
+                'prefetch' => true,
             ]);
     }
 }

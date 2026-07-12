@@ -22,6 +22,7 @@ use VoltStack\SPALab\Services\Provider\Routes\SpaLabModelRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabNavigationRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabPersistRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabPortalRouteService;
+use VoltStack\SPALab\Services\Provider\Routes\SpaLabRequestRouteService;
 
 final class SPALabServiceProvider extends ServiceProvider
 {
@@ -54,6 +55,7 @@ final class SPALabServiceProvider extends ServiceProvider
             SpaLabHtmlRouteService::registerHtmlRoutes();
             SpaLabModelRouteService::registerModelRoutes();
             SpaLabNavigationRouteService::registerNavigationRoutes();
+            SpaLabRequestRouteService::registerRequestRoutes();
             SpaLabPersistRouteService::registerPersistRoutes();
             SpaLabPortalRouteService::registerPortalRoutes();
         }
