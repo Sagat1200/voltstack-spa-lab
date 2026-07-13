@@ -98,7 +98,7 @@ Este documento funciona como checklist operativo. Cada accion debe marcarse al f
 - [x] Agregar prueba para documentos especiales `attachment` y respuestas no HTML fuera del contrato SPA.
 - [x] Agregar prueba para paginas de error `404` y `500` como documentos `reload-only`.
 - [ ] Agregar prueba para preservar el comportamiento actual del protocolo reactivo.
-- [ ] Agregar prueba para paginas tradicionales con componentes interactivos embebidos.
+- [x] Agregar prueba para paginas tradicionales con componentes interactivos embebidos.
 
 ## Fase 9. Documentacion final
 
@@ -111,11 +111,11 @@ Este documento funciona como checklist operativo. Cada accion debe marcarse al f
 
 ## Fase 10. Validacion final
 
-- [ ] Verificar que `/` navegue por SPA desde el primer click.
+- [x] Verificar que `/` navegue por SPA desde el primer click.
 - [ ] Verificar que rutas tradicionales sigan funcionando aunque no usen layout.
 - [ ] Verificar que rutas reactivas sigan funcionando sin regresiones.
-- [ ] Verificar que no haya inicializacion duplicada del runtime.
-- [ ] Verificar que los hooks `volt:before-navigate` y `volt:navigated` se disparen correctamente en todos los escenarios soportados.
+- [x] Verificar que no haya inicializacion duplicada del runtime.
+- [x] Verificar que los hooks `volt:before-navigate` y `volt:navigated` se disparen correctamente en todos los escenarios soportados.
 - [ ] Verificar que el comportamiento final sea consistente en desarrollo y en build de produccion.
 
 ## Criterios de cierre
