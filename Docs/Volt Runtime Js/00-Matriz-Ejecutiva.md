@@ -21,12 +21,12 @@ Objetivo: una vista compacta de que documenta cada archivo, que contrato fija, c
 2. [5-Client-Integration-Guide.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/5-Client-Integration-Guide.md) (como usar)
 3. [2-Versions_Cache.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/2-Versions_Cache.md) (cache/prefetch)
 4. [3-Full-SPA-Reactive.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/3-Full-SPA-Reactive.md) (deuda y cierre)
-5. [10-Manual_Runtime_QA.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/10-Manual_Runtime_QA.md) (validacion final)
-6. [1-Versions.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/1-Versions.md) (historial, decisiones, mediciones)
+5. [11-Matriz-Implementacion-Runtime.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/11-Matriz-Implementacion-Runtime.md) (mapa doc -> codigo -> tests -> demo)
+6. [10-Manual_Runtime_QA.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/10-Manual_Runtime_QA.md) (validacion final)
+7. [1-Versions.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/1-Versions.md) (historial, decisiones, mediciones)
 
 ## Riesgos Principales (segun docs actuales)
 
 - Cache SPA: staleness/memoria si crecen TTL o volumen; rutas sensibles si no usan `no-store` donde corresponda (ver [2-Versions_Cache.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/2-Versions_Cache.md)).
 - Seguridad: `volt:html` implica HTML confiable; riesgo XSS si llega contenido no saneado (registrado en [1-Versions.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/1-Versions.md)).
 - Cierre incompleto: la migracion “Full SPA” aun no pasa por validacion final y faltan pruebas automatizadas clave (ver [3-Full-SPA-Reactive.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/3-Full-SPA-Reactive.md)).
-
