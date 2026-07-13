@@ -11,53 +11,60 @@ final class CacheExamplePage extends Component
     public string $title = 'Cache Example';
     public string $subtitle = 'Laboratorio de control e invalidacion de cache SPA';
 
-    public array $cacheExamples = [
-        'cacheExamples' => [
-            [
-                'label' => 'Recarga controlada',
-                'href' => '/counterExample',
-                'cache' => 'reload',
-                'description' => 'Omite la entrada actual y fuerza una lectura nueva desde red antes de reutilizar la ruta.',
-                'expectation' => 'Debe producir un miss inicial y almacenar una respuesta fresca.',
-            ],
-            [
-                'label' => 'Sin almacenamiento',
-                'href' => '/formExample',
-                'cache' => 'no-store',
-                'description' => 'Evita leer y guardar cache para esa navegacion o prefetch asociado.',
-                'expectation' => 'Cada visita debe resolverse sin persistir la respuesta HTML en memoria.',
-            ],
-            [
-                'label' => 'TTL extendido',
-                'href' => '/counterExample',
-                'cache' => 'ttl=15s',
-                'description' => 'Mantiene la entrada viva mas tiempo que el TTL global del runtime.',
-                'expectation' => 'Reutiliza la respuesta durante 15 segundos salvo invalidacion explicita.',
-            ],
-            [
-                'label' => 'Invalidacion previa',
-                'href' => '/formExample',
-                'cache' => 'invalidate',
-                'description' => 'Borra primero la entrada de esa URL y luego resuelve la navegacion normal.',
-                'expectation' => 'Debe invalidar la entrada previa y volver a poblarla si la respuesta es almacenable.',
-            ],
+    /**
+     * @var array<int, array{label: string, href: string, cache: string, description: string, expectation: string}>
+     */
+    public array $navigationExamples = [
+        [
+            'label' => 'Recarga controlada',
+            'href' => '/counterExample',
+            'cache' => 'reload',
+            'description' => 'Omite la entrada actual y fuerza una lectura nueva desde red antes de reutilizar la ruta.',
+            'expectation' => 'Debe producir un miss inicial y almacenar una respuesta fresca.',
         ],
-        'documentControls' => [
-            '<meta name="volt-cache-control" content="no-store">',
-            '<meta name="volt-cache-control" content="reload ttl=15s">',
-            '<meta name="volt:navigation-cache" content="invalidate">',
+        [
+            'label' => 'Sin almacenamiento',
+            'href' => '/formExample',
+            'cache' => 'no-store',
+            'description' => 'Evita leer y guardar cache para esa navegacion o prefetch asociado.',
+            'expectation' => 'Cada visita debe resolverse sin persistir la respuesta HTML en memoria.',
         ],
-        'runtimeEvents' => [
-            'volt:cache-hit',
-            'volt:cache-miss',
-            'volt:cache-store',
-            'volt:cache-invalidate',
-            'volt:cache-clear',
+        [
+            'label' => 'TTL extendido',
+            'href' => '/counterExample',
+            'cache' => 'ttl=15s',
+            'description' => 'Mantiene la entrada viva mas tiempo que el TTL global del runtime.',
+            'expectation' => 'Reutiliza la respuesta durante 15 segundos salvo invalidacion explicita.',
         ],
-        'manualInvalidationExamples' => [
-            "document.dispatchEvent(new CustomEvent('volt:navigation-cache-invalidate', {\n  detail: { url: '/formExample', reason: 'manual' },\n}));",
-            "document.dispatchEvent(new CustomEvent('volt:navigation-cache-invalidate', {\n  detail: { reason: 'manual' },\n}));",
+        [
+            'label' => 'Invalidacion previa',
+            'href' => '/formExample',
+            'cache' => 'invalidate',
+            'description' => 'Borra primero la entrada de esa URL y luego resuelve la navegacion normal.',
+            'expectation' => 'Debe invalidar la entrada previa y volver a poblarla si la respuesta es almacenable.',
         ],
+    ];
+
+    /** @var array<int, string> */
+    public array $documentControls = [
+        '<meta name="volt-cache-control" content="no-store">',
+        '<meta name="volt-cache-control" content="reload ttl=15s">',
+        '<meta name="volt:navigation-cache" content="invalidate">',
+    ];
+
+    /** @var array<int, string> */
+    public array $runtimeEvents = [
+        'volt:cache-hit',
+        'volt:cache-miss',
+        'volt:cache-store',
+        'volt:cache-invalidate',
+        'volt:cache-clear',
+    ];
+
+    /** @var array<int, string> */
+    public array $manualInvalidationExamples = [
+        "document.dispatchEvent(new CustomEvent('volt:navigation-cache-invalidate', {\n  detail: { url: '/formExample', reason: 'manual' },\n}));",
+        "document.dispatchEvent(new CustomEvent('volt:navigation-cache-invalidate', {\n  detail: { reason: 'manual' },\n}));",
     ];
 }
 

@@ -78,6 +78,32 @@ Cobertura adicional del contrato de errores del runtime:
 
 - `Telemetry navigation`: `aborted:1`, `http-error:1`, `success:4`, `timeout:1`
 - `Telemetry action`: `network-error:1`, `protocol-error:1`, `timeout:1`
+
+### Ejecucion Reciente 2026-07-13
+
+Resultado de cierre operativo del bloque Full SPA:
+
+- `QA-06 Navegacion SPA`: `OK`
+  - flujo `/` -> `/spaReactive` -> `/counterExample` -> `/formExample` sin recarga completa
+  - flujo `/` -> `/noLayoutExample` sin fallback por ausencia de `data-volt-layout`
+- `QA-07 Persistencia del runtime`: `OK`
+  - no se detecto reinyeccion duplicada de `/_volt/runtime.js`
+- `Build de produccion`: `OK`
+  - `npm run build` genero `public/build/.vite/manifest.json`
+  - el skeleton resolvio assets `/build/assets/*` sin depender de `@vite/client` cuando el hot reload no estaba activo
+
+### Ejecucion Reciente 2026-07-13 - Bloque 2 Request Lifecycle
+
+Validacion real en navegador sobre `/runtimeRequestLab`:
+
+- `QA-08 Abort y stale`: `OK`
+  - `Abort previous action` emitio `volt:request-abort` para `slowAction`
+  - el estado final visible quedo en `fastAction respondio sin demora.`
+  - `Abort previous navigation` emitio `volt:request-abort` para la visita a `/runtimeRequestLabSlow`
+  - la segunda navegacion completo correctamente hacia `/runtimeEvents`
+  - `Stale navigation` emitio `volt:request-stale` de forma determinista para la visita lenta supersedida
+- `Observacion de implementacion`: `OK`
+  - el laboratorio ahora expone controles explicitos para `abort` y un helper acotado al lab para reproducir `stale` sin tocar el runtime global
 - `volt:error` validado con `CSRF` invalido y con laboratorio controlado en `/runtimeRequestLab`
 
 Cobertura adicional del retry seguro en navegacion `GET`:
@@ -92,3 +118,17 @@ Cobertura adicional del retry seguro en navegacion `GET`:
 - `avg patch = 21.24 ms`
 - `max patch = 29 ms`
 - lectura operativa: resultado compatible con un fallo transitorio absorbido por el retry automatico, sin degradacion visible del patch DOM
+
+### Cobertura Automatizada Complementaria 2026-07-13
+
+Guardrails nuevos incorporados en `vendor/voltstack/framework/tests/Feature/SkeletonSpaRoadmapTest.php`:
+
+- `popstate` queda fijado contra el contrato actual de `visit(window.location.href, { updateHistory: false, historyMode: "replace", fallback: false })`
+- la reconciliacion de `head` queda fijada sobre claves gestionadas y reutilizacion de nodos existentes
+- la no duplicacion de scripts del `head` queda fijada por la clave estable `script:type:src`
+- el fallback por error HTTP de navegacion queda fijado sobre `volt:request-error` y `window.location.assign(...)`
+- `volt:model` queda fijado sobre la actualizacion inmediata del `snapshot` en `data-volt-snapshot`
+- `volt:model.sync` queda fijado sobre el despacho interno `__volt_sync__` con debounce del runtime
+- el lifecycle de acciones queda fijado sobre `volt:request-stale`, `volt:request-abort` y resincronizacion del snapshot tras la respuesta
+- las acciones reactivas quedan fijadas sin retry automatico en el runtime actual
+- `accion no permitida` queda fijada como `protocol-error` semantico con codigo `runtime.action_not_allowed`

@@ -49,10 +49,12 @@ Este corte prioriza **cierre operativo del runtime actual** antes de abrir nueva
 
 ### Bloque Activo 1. Cierre Full SPA
 
-- `[!]` completar la validacion final de [3-Full-SPA-Reactive.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/3-Full-SPA-Reactive.md)
-- `[!]` verificar `/` y rutas tradicionales desde el primer click SPA
-- `[!]` verificar coexistencia correcta entre vistas tradicionales, layout opcional y paginas `Component`
-- `[!]` verificar que no exista inicializacion duplicada del runtime
+- `[x]` completar la validacion final de [3-Full-SPA-Reactive.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/3-Full-SPA-Reactive.md)
+- `[x]` verificar `/` y rutas tradicionales desde el primer click SPA
+- `[x]` verificar coexistencia correcta entre vistas tradicionales, layout opcional y paginas `Component`
+- `[x]` verificar que no exista inicializacion duplicada del runtime
+- `[x]` reconfirmar que `/spaReactive`, `/counterExample` y `/formExample` siguen sanos como rutas reactivas sin regresiones
+- `[x]` reconfirmar que el skeleton resuelve assets compilados desde `public/build/.vite/manifest.json` cuando el hot reload no esta activo
 
 Impacta directamente:
 
@@ -60,12 +62,17 @@ Impacta directamente:
 - `Component Runtime`
 - `Checklist De Pruebas > A. Navegacion SPA`
 
+Con este cierre, el siguiente frente recomendado pasa a ser **Bloque Activo 2. Automatizacion Del Contrato Critico**.
+
 ### Bloque Activo 2. Automatizacion Del Contrato Critico
 
 - `[!]` convertir a pruebas automatizadas los casos criticos de navegacion y protocolo
-- `[ ]` `popstate`, reconciliacion de `head`, scripts duplicados y fallback por error HTTP
-- `[ ]` `volt:submit`, `volt:model`, snapshot invalido, checksum roto, stale y abort
+- `[x]` `popstate`, reconciliacion de `head`, scripts duplicados y fallback por error HTTP
+- `[x]` `volt:submit`, `volt:model`, snapshot invalido, checksum roto, stale y abort
+- `[x]` fijar `accion no permitida` como error semantico del protocolo y dejar explicito que las acciones reactivas no hacen retry automatico en el contrato actual
 - `[ ]` preservar el comportamiento actual del protocolo reactivo sin regresiones
+- `[x]` blindar el contrato de error de `volt:submit` para validacion semantica y payloads invalidos del endpoint reactivo
+- `[x]` volver reproducibles `volt:request-abort` y `volt:request-stale` desde `/runtimeRequestLab` para QA operativa del runtime
 
 Impacta directamente:
 
@@ -155,7 +162,7 @@ Cuando se trabaje en este corte:
 - `[x]` abort de request anterior concurrente
 - `[x]` manejo base de errores de request
 - `[x]` retry automatico seguro para navegacion `GET` ante errores transitorios
-- `[ ]` extender retry hacia acciones reactivas o politicas adicionales segun contrato final
+- `[x]` mantener acciones reactivas sin retry automatico hasta definir un contrato final de replay seguro
 - `[x]` estrategia de timeout configurable
 - `[x]` clasificacion formal de errores de protocolo
 - `[x]` telemetria de latencia y payload
@@ -272,7 +279,7 @@ Cuando se trabaje en este corte:
 
 ### 10. Resilience Y Modo Offline
 
-- `[-]` retry system parcial: navegacion `GET` validada; falta decidir alcance final para acciones y degradacion offline
+- `[-]` retry system parcial: navegacion `GET` validada; acciones reactivas quedan sin retry automatico por contrato actual; degradacion offline aun pendiente
 - `[ ]` retry coordinado con acciones reactivas
 - `[ ]` offline snapshots
 - `[ ]` queued actions
@@ -295,23 +302,23 @@ Cuando se trabaje en este corte:
 - `[x]` navegar entre dos vistas con mismo layout sin recarga completa
 - `[x]` navegar entre layouts distintos y verificar fallback a full reload
 - `[x]` validar retry automatico de navegacion `GET` con fallo transitorio controlado
-- `[ ]` volver con `popstate` y validar contenido correcto
+- `[x]` volver con `popstate` y validar contenido correcto
 - `[ ]` validar preservacion de scroll normal
 - `[ ]` validar `volt:preserve-scroll`
-- `[ ]` validar reconciliacion de `head` con estilos y scripts
-- `[ ]` validar que no se dupliquen scripts del `head`
-- `[ ]` validar navegacion con error HTTP y fallback correcto
+- `[x]` validar reconciliacion de `head` con estilos y scripts
+- `[x]` validar que no se dupliquen scripts del `head`
+- `[x]` validar navegacion con error HTTP y fallback correcto
 
 ### B. Acciones Reactivas
 
 - `[x]` click simple con `volt:click`
-- `[ ]` submit con `volt:submit`
-- `[ ]` sincronizacion de `volt:model`
-- `[ ]` validar retry o decision explicita de no-retry para acciones reactivas
-- `[ ]` actualizacion de snapshot tras response
-- `[ ]` stale request descartada correctamente
-- `[ ]` abort de request previa concurrente
-- `[ ]` checksum invalido o payload roto manejado con error seguro
+- `[x]` submit con `volt:submit`
+- `[x]` sincronizacion de `volt:model`
+- `[x]` validar retry o decision explicita de no-retry para acciones reactivas
+- `[x]` actualizacion de snapshot tras response
+- `[x]` stale request descartada correctamente
+- `[x]` abort de request previa concurrente
+- `[x]` checksum invalido o payload roto manejado con error seguro
 
 ### C. Estados Runtime
 
@@ -359,8 +366,8 @@ Cuando se trabaje en este corte:
 - `[x]` error de validacion backend
 - `[x]` CSRF invalido
 - `[x]` fallo transitorio absorbido por retry seguro en navegacion `GET`
-- `[ ]` snapshot invalido
-- `[ ]` accion no permitida
+- `[x]` snapshot invalido
+- `[x]` accion no permitida
 
 ### H. Performance Basica
 

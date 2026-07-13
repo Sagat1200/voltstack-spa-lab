@@ -113,10 +113,10 @@ Este documento funciona como checklist operativo. Cada accion debe marcarse al f
 
 - [x] Verificar que `/` navegue por SPA desde el primer click.
 - [x] Verificar que rutas tradicionales sigan funcionando aunque no usen layout.
-- [ ] Verificar que rutas reactivas sigan funcionando sin regresiones.
+- [x] Verificar que rutas reactivas sigan funcionando sin regresiones.
 - [x] Verificar que no haya inicializacion duplicada del runtime.
 - [x] Verificar que los hooks `volt:before-navigate` y `volt:navigated` se disparen correctamente en todos los escenarios soportados.
-- [ ] Verificar que el comportamiento final sea consistente en desarrollo y en build de produccion.
+- [x] Verificar que el comportamiento final sea consistente en desarrollo y en build de produccion.
 
 ## Criterios de cierre
 

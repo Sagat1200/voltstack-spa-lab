@@ -19,6 +19,10 @@ Objetivo: cruzar el contrato documentado del runtime con su implementacion real 
 1. El contrato de navegacion SPA y del protocolo reactivo ya esta sostenido principalmente por `framework`.
 2. El laboratorio `spa-lab` sigue siendo la fuente operativa para directivas avanzadas, `state`, cache/prefetch y observabilidad browser-level.
 3. La mayor deuda actual no es de arquitectura base sino de trazabilidad y automatizacion de bloques que hoy dependen sobre todo de QA manual.
+4. El cierre Full SPA del skeleton ya cubre home, vistas tradicionales con y sin layout, islas interactivas y rutas reactivas `/spaReactive`, `/counterExample` y `/formExample`, con assets compilados resueltos desde manifest cuando no hay hot reload.
+5. El skeleton ahora tambien fija con pruebas automatizadas el contrato de `popstate`, reconciliacion de `head`, no duplicacion de scripts y fallback por error HTTP en la navegacion SPA.
+6. El skeleton ahora fija ademas el wiring critico de `volt:model`, `volt:model.sync`, resincronizacion de `snapshot` y hooks de `stale`/`abort` para acciones concurrentes.
+7. El protocolo reactivo ahora expone `runtime.action_not_allowed` para acciones invalidas o reservadas, y el skeleton fija que `dispatchAction()` no implementa retry automatico en el contrato actual.
 
 ## Divergencias Detectadas Y Corregidas
 
@@ -31,5 +35,6 @@ Objetivo: cruzar el contrato documentado del runtime con su implementacion real 
 ## Prioridad Recomendada
 
 1. Mantener esta matriz sincronizada cuando se agreguen bloques nuevos del runtime.
-2. Convertir a pruebas automatizadas una parte de `cache/prefetch`, politicas de navegacion y `state runtime`.
-3. Seguir usando [10-Manual_Runtime_QA.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/10-Manual_Runtime_QA.md) como gate antes de features nuevas del runtime.
+2. Convertir a pruebas automatizadas una parte de `cache/prefetch`, `state runtime` y el resto del lifecycle reactivo aun abierto.
+3. Preservar el comportamiento actual del protocolo reactivo y de la reconciliacion documental mientras se automatizan los casos criticos pendientes.
+4. Seguir usando [10-Manual_Runtime_QA.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/10-Manual_Runtime_QA.md) como gate antes de features nuevas del runtime.

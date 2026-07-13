@@ -121,6 +121,11 @@ final class RequestLabPage extends Component
                 style="border:1px solid rgba(244,114,182,0.28);background:rgba(131,24,67,0.24);color:#fce7f3;border-radius:12px;padding:10px 16px;cursor:pointer;">
                 Protocol error por excepcion
             </button>
+            <button type="button" data-volt-target="abort-action-scenario-button"
+                onclick="(function(button){var root=button.closest('[data-volt-root]'); if(!root){return;} var slow=root.querySelector('[data-volt-target=&quot;slow-action-button&quot;]'); var fast=root.querySelector('[data-volt-target=&quot;fast-action-button&quot;]'); if(!slow||!fast){return;} slow.click(); window.setTimeout(function(){ fast.click(); }, 40);})(this)"
+                style="border:1px solid rgba(56,189,248,0.28);background:rgba(8,47,73,0.28);color:#bae6fd;border-radius:12px;padding:10px 16px;cursor:pointer;">
+                Abort previous action
+            </button>
         </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
@@ -177,6 +182,8 @@ final class RequestLabPage extends Component
                     <li><code>Preparar endpoint roto</code> + <code>Fast action</code> debe registrar
                         <code>network-error</code>.
                     </li>
+                    <li><code>Abort previous action</code> debe registrar <code>volt:request-abort</code> y dejar
+                        visible el resultado final de <code>Fast action</code>.</li>
                 </ul>
             </article>
         </div>
@@ -208,9 +215,16 @@ final class RequestLabPage extends Component
                 Network error navigation
             </button>
             <button type="button"
-                onclick="window.Volt.visit('/runtimeRequestLabSlow', { timeout: 4000, fallback: false }); window.setTimeout(function(){ window.Volt.visit('/runtimeRequestLab', { fallback: false }); }, 40);"
+                onclick="if(window.__spaLabRequestLab && typeof window.__spaLabRequestLab.runStaleNavigationScenario === 'function'){ window.__spaLabRequestLab.runStaleNavigationScenario(); }"
+                data-volt-target="stale-navigation-button"
                 style="border:1px solid rgba(34,197,94,0.28);background:rgba(20,83,45,0.28);color:#dcfce7;border-radius:12px;padding:10px 16px;cursor:pointer;">
                 Stale navigation
+            </button>
+            <button type="button"
+                onclick="window.Volt.visit('/runtimeRequestLabSlow', { timeout: 4000, fallback: false }); window.setTimeout(function(){ window.Volt.visit('/runtimeEvents', { fallback: false }); }, 40);"
+                data-volt-target="abort-navigation-button"
+                style="border:1px solid rgba(56,189,248,0.28);background:rgba(8,47,73,0.28);color:#bae6fd;border-radius:12px;padding:10px 16px;cursor:pointer;">
+                Abort previous navigation
             </button>
             <button type="button"
                 onclick="window.Volt.visit('/runtimeRequestLabRetryOnce', { fallback: false, retry: { attempts: 1, delay: 120 } });"
@@ -231,6 +245,10 @@ final class RequestLabPage extends Component
                 <li><code>http://127.0.0.1:9/runtimeRequestLab</code>: puerto cerrado para forzar
                     <code>network-error</code>.
                 </li>
+                <li><code>Stale navigation</code>: neutraliza el aborto de una visita lenta solo dentro del lab para
+                    hacer visible <code>volt:request-stale</code> de forma determinista.</li>
+                <li><code>Abort previous navigation</code>: inicia una visita lenta y la reemplaza con una nueva para
+                    hacer visible <code>volt:request-abort</code>.</li>
             </ul>
         </div>
     </section>
@@ -247,4 +265,47 @@ final class RequestLabPage extends Component
         </a>
     </section>
 </div>
+<script>
+    window.__spaLabRequestLab = window.__spaLabRequestLab || {};
+
+    window.__spaLabRequestLab.runStaleNavigationScenario = function() {
+        if (
+            !window.Volt ||
+            typeof window.Volt.visit !== 'function' ||
+            typeof AbortController === 'undefined' ||
+            !AbortController.prototype ||
+            typeof AbortController.prototype.abort !== 'function'
+        ) {
+            return;
+        }
+
+        var originalAbort = AbortController.prototype.abort;
+        var restored = false;
+
+        function restoreAbort() {
+            if (restored) {
+                return;
+            }
+
+            AbortController.prototype.abort = originalAbort;
+            restored = true;
+        }
+
+        AbortController.prototype.abort = function() {
+            restoreAbort();
+        };
+
+        window.Volt.visit('/runtimeRequestLabSlow', {
+            timeout: 4000,
+            fallback: false
+        });
+        window.setTimeout(function() {
+            window.Volt.visit('/runtimeRequestLab', {
+                fallback: false
+            });
+            window.setTimeout(restoreAbort, 0);
+        }, 40);
+        window.setTimeout(restoreAbort, 250);
+    };
+</script>
 @endsection
