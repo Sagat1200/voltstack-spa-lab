@@ -112,7 +112,7 @@ Este documento funciona como checklist operativo. Cada accion debe marcarse al f
 ## Fase 10. Validacion final
 
 - [x] Verificar que `/` navegue por SPA desde el primer click.
-- [ ] Verificar que rutas tradicionales sigan funcionando aunque no usen layout.
+- [x] Verificar que rutas tradicionales sigan funcionando aunque no usen layout.
 - [ ] Verificar que rutas reactivas sigan funcionando sin regresiones.
 - [x] Verificar que no haya inicializacion duplicada del runtime.
 - [x] Verificar que los hooks `volt:before-navigate` y `volt:navigated` se disparen correctamente en todos los escenarios soportados.
