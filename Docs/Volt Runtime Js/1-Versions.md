@@ -43,6 +43,81 @@ Resumen del estado del runtime segun la documentacion y la implementacion observ
 - `[ ]` extensibilidad formal del runtime
 - `[ ]` transportes avanzados (`WebSocket`, `SSE`, `streaming`)
 
+## Plan Ejecutivo Recomendado (Corte Actual)
+
+Este corte prioriza **cierre operativo del runtime actual** antes de abrir nuevas capacidades grandes.
+
+### Bloque Activo 1. Cierre Full SPA
+
+- `[!]` completar la validacion final de [3-Full-SPA-Reactive.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/3-Full-SPA-Reactive.md)
+- `[!]` verificar `/` y rutas tradicionales desde el primer click SPA
+- `[!]` verificar coexistencia correcta entre vistas tradicionales, layout opcional y paginas `Component`
+- `[!]` verificar que no exista inicializacion duplicada del runtime
+
+Impacta directamente:
+
+- `Navigation Engine`
+- `Component Runtime`
+- `Checklist De Pruebas > A. Navegacion SPA`
+
+### Bloque Activo 2. Automatizacion Del Contrato Critico
+
+- `[!]` convertir a pruebas automatizadas los casos criticos de navegacion y protocolo
+- `[ ]` `popstate`, reconciliacion de `head`, scripts duplicados y fallback por error HTTP
+- `[ ]` `volt:submit`, `volt:model`, snapshot invalido, checksum roto, stale y abort
+- `[ ]` preservar el comportamiento actual del protocolo reactivo sin regresiones
+
+Impacta directamente:
+
+- `Protocol Client`
+- `Checklist De Pruebas > A. Navegacion SPA`
+- `Checklist De Pruebas > B. Acciones Reactivas`
+- `Checklist De Pruebas > D. DOM Y Effects`
+
+### Bloque Activo 3. Cierre Manual De Laboratorios Ya Implementados
+
+- `[-]` cerrar validacion fina de `fragment cache SPA`
+- `[-]` cerrar validacion fina de `volt:preserve`
+- `[-]` cerrar validacion fina de `volt:persist`
+- `[-]` cerrar validacion fina de `preload`, `modulepreload` y eventos `volt:cache-*`
+- `[-]` mantener `spa-lab` alineado con el wiring real de rutas demo
+
+Impacta directamente:
+
+- `Navigation Engine`
+- `Directives System`
+- validaciones manuales de `cache`, `preserve`, `persist` y `prefetch`
+
+### Bloque Activo 4. Eficiencia Y Presupuestos
+
+- `[ ]` ejecutar la matriz de medicion definida mas abajo en este documento
+- `[ ]` fijar budgets reales para `boot`, `patch`, payload, memoria y sesiones largas
+- `[ ]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
+
+Este bloque debe arrancar despues del cierre funcional del runtime actual, para medir un contrato ya estabilizado.
+
+### Bloques Postergados Explicitamente
+
+No abrir estos frentes hasta cerrar los cuatro bloques anteriores:
+
+- `[ ]` effects de alto nivel (`toast`, `modal`)
+- `[ ]` extensibilidad formal (`runtime.on`, plugins, middleware, custom effects)
+- `[ ]` offline mode y recovery
+- `[ ]` transportes avanzados (`WebSocket`, `SSE`, `streaming`)
+- `[ ]` sincronizacion multi-tab y stores persistentes avanzados
+
+### Regla Operativa Del Documento
+
+Cuando se trabaje en este corte:
+
+1. marcar como `[-]` solo los items del bloque activo
+2. mover a `[x]` cada validacion apenas quede cerrada
+3. no abrir features nuevas de extensibilidad, offline o transportes mientras sigan abiertos los pendientes criticos de SPA/protocolo
+4. reflejar cualquier cierre importante tambien en:
+   - [01-Contrato-Vigente.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/01-Contrato-Vigente.md)
+   - [10-Manual_Runtime_QA.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/10-Manual_Runtime_QA.md)
+   - [11-Matriz-Implementacion-Runtime.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/11-Matriz-Implementacion-Runtime.md)
+
 ## Checklist De Desarrollo
 
 ### 1. Navigation Engine

@@ -32,14 +32,14 @@ Este documento funciona como checklist operativo. Cada accion debe marcarse al f
 - [ ] Opcion A: layout base
 - [x] Opcion B: inyector global de respuestas HTML
 - [x] Asegurar que no existan dobles listeners ni doble inicializacion de `window.Volt`.
-- [ ] Verificar que la home y cualquier vista tradicional con enlaces `volt:navigate` naveguen por SPA desde el primer click.
+- [x] Verificar que la home y cualquier vista tradicional con enlaces `volt:navigate` naveguen por SPA desde el primer click.
 
 ## Fase 2. Soporte SPA para vistas tradicionales con y sin layout
 
 - [ ] Definir el contrato minimo de una respuesta HTML SPA-capable.
 - [ ] Establecer si el framework debe inyectar automaticamente el runtime en respuestas HTML tradicionales.
 - [x] Implementar el bootstrap para vistas sin layout.
-- [ ] Verificar que una vista tradicional con layout siga funcionando correctamente.
+- [x] Verificar que una vista tradicional con layout siga funcionando correctamente.
 - [x] Verificar que una vista tradicional sin layout tambien pueda navegar por SPA si cumple el contrato minimo.
 - [ ] Definir el comportamiento cuando una vista HTML no deba participar en SPA.
 
@@ -74,7 +74,7 @@ Este documento funciona como checklist operativo. Cada accion debe marcarse al f
 
 - [ ] Mantener la diferencia entre navegacion SPA global y reactividad de componentes.
 - [ ] Verificar que las paginas `Component` sigan renderizando sus raices interactivas correctamente.
-- [ ] Verificar que una vista tradicional pueda incrustar componentes interactivos sin convertir toda la pagina en `Component`.
+- [x] Verificar que una vista tradicional pueda incrustar componentes interactivos sin convertir toda la pagina en `Component`.
 - [ ] Confirmar que la hidratacion, snapshots y endpoint `/_volt/action` no dependan del layout.
 - [ ] Documentar el patron hibrido: vista tradicional + componentes interactivos embebidos.
 
@@ -90,7 +90,7 @@ Este documento funciona como checklist operativo. Cada accion debe marcarse al f
 
 ## Fase 8. Pruebas automatizadas
 
-- [ ] Agregar prueba para confirmar que una vista tradicional navega por SPA desde el primer click.
+- [x] Agregar prueba para confirmar que una vista tradicional navega por SPA desde el primer click.
 - [x] Agregar prueba para confirmar que una pagina `Component` no duplica el runtime.
 - [x] Agregar prueba para respuestas HTML sin layout.
 - [x] Agregar prueba para preservar la declaracion documental `reload` al bootstrapear HTML.
