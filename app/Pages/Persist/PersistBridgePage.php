@@ -78,7 +78,7 @@ final class PersistBridgePage extends Component
         }
 
         document.addEventListener('volt:navigated', (event) => {
-            window.__voltRuntimePersistDemoState.lastNavigatedDetail =
+            window.__voltPersistDemoState.lastNavigatedDetail =
                 event && event.detail && typeof event.detail === 'object' ? event.detail : {};
 
             window.requestAnimationFrame(renderPersistStatus);

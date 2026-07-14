@@ -84,8 +84,8 @@ Impacta directamente:
 ### Bloque Activo 3. Cierre Manual De Laboratorios Ya Implementados
 
 - `[-]` cerrar validacion fina de `fragment cache SPA`
-- `[-]` cerrar validacion fina de `volt:preserve`
-- `[-]` cerrar validacion fina de `volt:persist`
+- `[-]` cerrar validacion fina de `volt:preserve` (checklist dedicada + guardrails minimos ya disponibles; falta pasada final en navegador)
+- `[x]` cerrar validacion fina de `volt:persist` (pasada browser ejecutada sobre `/runtimePersist -> /runtimePersistBridge -> /runtimePersistAlt`, con reinyeccion estable, sin duplicados y registry coherente)
 - `[-]` cerrar validacion fina de `preload`, `modulepreload` y eventos `volt:cache-*`
 - `[-]` mantener `spa-lab` alineado con el wiring real de rutas demo
 
@@ -232,8 +232,8 @@ Cuando se trabaje en este corte:
 - `[x]` `volt:dispatch`
 - `[x]` `volt:focus`
 - `[x]` `volt:portal`
-- `[-]` `volt:preserve` (fragment preserve SPA opt-in actual)
-- `[-]` `volt:persist`
+- `[-]` `volt:preserve` (contrato y checklist listos; pendiente validacion manual fina)
+- `[-]` `volt:persist` (contrato y checklist listos; pendiente validacion manual fina)
 - `[x]` `volt:click`
 - `[x]` `volt:model`
 - `[x]` `volt:submit`
@@ -1658,6 +1658,53 @@ Rutas demo:
 - `/runtimeEvents`: origen para probar `volt:dispatch` simple, multiple y combinado con `volt:on`
 - la demo actual incluye puente minimo hacia `window.Volt.state` para reflejar los `CustomEvent` emitidos
 
+## Contrato Actual: Volt Preserve
+
+Estado actual:
+
+- `[-]` MVP inicial implementado; contrato de preserve/reset ya aterrizado
+- `[-]` demo dedicada creada en el skeleton; checklist manual dedicada y guardrails automatizados minimos agregados; pendiente validacion manual fina
+- `[x]` rutas demo compatibles y ruta de descarte por politica documental disponibles
+
+Declaracion actual:
+
+```html
+<form data-volt-preserve="draft-fragment"></form>
+<section data-volt-preserve="live-shell"></section>
+```
+
+Gramatica actual:
+
+- formato base: `volt:preserve="clave"` o `data-volt-preserve="clave"`
+- `clave` representa la identidad logica del fragmento dentro del flujo SPA compatible
+- el MVP actual opera sobre fragmentos top-level
+
+Reglas actuales:
+
+- al navegar por SPA, si el destino vuelve a exponer la misma clave, el runtime reutiliza el nodo vivo previo
+- si el destino no expone la clave compatible, `volt:preserve` no garantiza supervivencia fuera del DOM visible
+- la politica documental `reset` descarta los fragmentos preservados aunque la clave y el tag coincidan
+- si hay duplicados o claves invalidas, el runtime conserva la primera coincidencia valida y descarta el resto
+- el contrato observable actual emite `volt:fragment-preserve` y `volt:fragment-discard`
+
+Semantica actual:
+
+- `volt:preserve` preserva una instancia fisica del DOM entre pantallas SPA compatibles
+- no preserva estado entre recargas completas ni entre pestañas
+- no reemplaza a `volt:persist`; `volt:persist` es la capa que puede sobrevivir a una pantalla intermedia sin target compatible
+
+Rutas demo actuales:
+
+- `/fragmentCache`: origen para editar `draft-fragment` y `live-shell`
+- `/formExample`: destino compatible para confirmar reuse
+- `/fragmentCacheReset`: destino con descarte por politica documental
+
+Validacion y guardrails disponibles:
+
+- checklist dedicada: [13-Volt-Preserve-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/13-Volt-Preserve-Manual-Validation.md)
+- checklist complementaria: [7-Fragment-Cache-Prefetch-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/7-Fragment-Cache-Prefetch-Manual-Validation.md)
+- guardrails automatizados del skeleton sobre rutas demo, politica `reset` y contrato observable en [SkeletonSpaRoadmapTest.php](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/framework/tests/Feature/SkeletonSpaRoadmapTest.php)
+
 ## Contrato Actual: Volt Focus
 
 Estado actual:
@@ -1791,8 +1838,8 @@ Rutas demo actuales:
 
 Estado actual:
 
-- `[-]` MVP inicial implementado en runtime
-- `[-]` demo dedicada creada en el skeleton; pendiente validacion manual fina
+- `[x]` MVP inicial implementado en runtime
+- `[x]` demo dedicada creada en el skeleton; checklist manual dedicada, guardrails automatizados minimos y pasada browser final completados
 - `[x]` reutiliza la base existente de `data-volt-preserve="clave"` y `volt:preserve="clave"` dentro de `fragment cache SPA`
 
 Nota de alcance actual:
@@ -1859,6 +1906,12 @@ Rutas demo actuales:
 - `/runtimePersist`: origen para editar nodos con `volt:persist`
 - `/runtimePersistBridge`: pantalla intermedia sin targets persistidos para comprobar que el registro sobrevive fuera del DOM visible
 - `/runtimePersistAlt`: destino final para validar reinyeccion real de la instancia viva tras una pantalla intermedia
+
+Validacion y guardrails disponibles:
+
+- checklist dedicada: [12-Volt-Persist-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/12-Volt-Persist-Manual-Validation.md)
+- guardrails automatizados del skeleton sobre wiring demo, panel de estado y contrato observable en [SkeletonSpaRoadmapTest.php](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/framework/tests/Feature/SkeletonSpaRoadmapTest.php)
+- pasada browser validada en build local sobre el flujo `/runtimePersist -> /runtimePersistBridge -> /runtimePersistAlt -> /runtimePersist`, confirmando `persistedFragments = 0` en bridge, `persistedFragments = 2` en destino final, supervivencia de texto/checkbox/range/details y ausencia de duplicados por clave
 
 ## Contrato Actual: Volt Model Local
 

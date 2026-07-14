@@ -45,7 +45,44 @@ Fuera de alcance (por ahora):
 - cache formal de datos desacoplado del HTML
 - persistencia entre pestañas o entre recargas completas
 
-### 1.4 Directivas Avanzadas (Validacion Manual)
+### 1.4 Preserve Opt-In De Fragmentos SPA
+
+Fuente principal: [1-Versions.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/1-Versions.md)
+
+Contrato actual:
+
+- `volt:preserve` reutiliza fragmentos top-level marcados por clave entre pantallas SPA compatibles
+- acepta `data-volt-preserve`, `volt-preserve` y `volt:preserve`
+- el destino debe volver a exponer la misma clave para reutilizar el nodo vivo
+- la politica documental `reset` descarta los fragmentos preservados aunque la clave coincida
+- emite observabilidad por `volt:fragment-preserve` y `volt:fragment-discard`
+
+Validacion recomendada:
+
+- [13-Volt-Preserve-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/13-Volt-Preserve-Manual-Validation.md)
+- [7-Fragment-Cache-Prefetch-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/7-Fragment-Cache-Prefetch-Manual-Validation.md)
+
+### 1.5 Persistencia Opt-In De Fragmentos Vivos
+
+Fuente principal: [1-Versions.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/1-Versions.md)
+
+Contrato actual:
+
+- `volt:persist` reutiliza una instancia fisica del DOM por clave estable entre navegaciones SPA compatibles
+- acepta `data-volt-persist`, `volt-persist` y `volt:persist`
+- puede sobrevivir a una pantalla intermedia sin target compatible y reinyectarse cuando la clave reaparece
+- evita duplicar instancias activas por clave y exige coincidencia de `key + tagName` en el MVP actual
+- la politica documental `reset` puede descartar el registro persistido actual
+
+Validacion recomendada:
+
+- [12-Volt-Persist-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/12-Volt-Persist-Manual-Validation.md)
+
+Estado de validacion:
+
+- pasada browser del flujo `/runtimePersist -> /runtimePersistBridge -> /runtimePersistAlt -> /runtimePersist` ejecutada en build local, con `registry` estable, reinyeccion correcta y sin duplicados observados
+
+### 1.6 Directivas Avanzadas (Validacion Manual)
 
 Fuente: [6-Runtime-Advanced-Directives-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/6-Runtime-Advanced-Directives-Manual-Validation.md)
 
@@ -71,7 +108,15 @@ Gate recomendado antes de nuevas features del runtime:
 
 - [7-Fragment-Cache-Prefetch-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/7-Fragment-Cache-Prefetch-Manual-Validation.md)
 
-### 2.4 Eficiencia y telemetria
+### 2.4 Preserve opt-in (`volt:preserve`)
+
+- [13-Volt-Preserve-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/13-Volt-Preserve-Manual-Validation.md)
+
+### 2.5 Persistencia opt-in (`volt:persist`)
+
+- [12-Volt-Persist-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/12-Volt-Persist-Manual-Validation.md)
+
+### 2.6 Eficiencia y telemetria
 
 - [9-Runtime-Efficiency-Browser-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/9-Runtime-Efficiency-Browser-Validation.md)
 
@@ -80,4 +125,3 @@ Gate recomendado antes de nuevas features del runtime:
 - Checklist completo y bitacora: [1-Versions.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/1-Versions.md)
 - Cierre de migracion Full SPA: [3-Full-SPA-Reactive.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/3-Full-SPA-Reactive.md)
 - Mapa ejecutivo del directorio: [00-Matriz-Ejecutiva.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/00-Matriz-Ejecutiva.md)
-

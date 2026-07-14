@@ -16,6 +16,7 @@ final class CacheResetPage extends Component
 @extends('layouts.spa')
 
 @section('head')
+<meta name="volt-fragment-control" content="reset" data-volt-head-key="fragment-control-reset">
 <meta name="volt-cache-control" content="no-store" data-volt-head-key="cache-no-store">
 <meta name="volt-cache-control" content="reset" data-volt-head-key="cache-control-reset">
 @endsection

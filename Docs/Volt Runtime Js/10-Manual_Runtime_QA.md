@@ -2,6 +2,14 @@
 
 Usar esta tabla para registrar una pasada corta de validacion funcional en navegador real sobre el runtime SPA/reactivo.
 
+## Checklists Complementarias
+
+Cuando el bloque activo sea `cache/preserve/persist`, complementar esta pasada corta con:
+
+- [7-Fragment-Cache-Prefetch-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/7-Fragment-Cache-Prefetch-Manual-Validation.md)
+- [13-Volt-Preserve-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/13-Volt-Preserve-Manual-Validation.md)
+- [12-Volt-Persist-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/12-Volt-Persist-Manual-Validation.md)
+
 ### Datos De La Ejecucion
 
 | Campo | Valor |
