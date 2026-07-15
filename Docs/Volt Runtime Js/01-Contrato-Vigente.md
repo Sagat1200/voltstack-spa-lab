@@ -62,6 +62,11 @@ Validacion recomendada:
 - [13-Volt-Preserve-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/13-Volt-Preserve-Manual-Validation.md)
 - [7-Fragment-Cache-Prefetch-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/7-Fragment-Cache-Prefetch-Manual-Validation.md)
 
+Estado de validacion:
+
+- pasada browser del flujo `/fragmentCache -> /formExample -> /fragmentCacheReset -> /fragmentCache` ejecutada en build local, con reuse correcto del estado vivo en la ruta compatible y descarte observable por `reset`
+- despues del descarte, el HTML fresco del documento `reset` pasa a ser la nueva base reutilizable si la siguiente ruta vuelve a exponer la misma clave
+
 ### 1.5 Persistencia Opt-In De Fragmentos Vivos
 
 Fuente principal: [1-Versions.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/1-Versions.md)

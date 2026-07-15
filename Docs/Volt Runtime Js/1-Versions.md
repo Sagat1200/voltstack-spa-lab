@@ -84,7 +84,7 @@ Impacta directamente:
 ### Bloque Activo 3. Cierre Manual De Laboratorios Ya Implementados
 
 - `[-]` cerrar validacion fina de `fragment cache SPA`
-- `[-]` cerrar validacion fina de `volt:preserve` (checklist dedicada + guardrails minimos ya disponibles; falta pasada final en navegador)
+- `[x]` cerrar validacion fina de `volt:preserve` (pasada browser ejecutada sobre `/fragmentCache -> /formExample -> /fragmentCacheReset -> /fragmentCache`, con reuse correcto, descarte por `reset` y sin reaparicion del estado previo descartado)
 - `[x]` cerrar validacion fina de `volt:persist` (pasada browser ejecutada sobre `/runtimePersist -> /runtimePersistBridge -> /runtimePersistAlt`, con reinyeccion estable, sin duplicados y registry coherente)
 - `[-]` cerrar validacion fina de `preload`, `modulepreload` y eventos `volt:cache-*`
 - `[-]` mantener `spa-lab` alineado con el wiring real de rutas demo
@@ -1662,8 +1662,8 @@ Rutas demo:
 
 Estado actual:
 
-- `[-]` MVP inicial implementado; contrato de preserve/reset ya aterrizado
-- `[-]` demo dedicada creada en el skeleton; checklist manual dedicada y guardrails automatizados minimos agregados; pendiente validacion manual fina
+- `[x]` MVP inicial implementado; contrato de preserve/reset ya aterrizado
+- `[x]` demo dedicada creada en el skeleton; checklist manual dedicada, guardrails automatizados minimos y pasada browser final completados
 - `[x]` rutas demo compatibles y ruta de descarte por politica documental disponibles
 
 Declaracion actual:
@@ -1704,6 +1704,7 @@ Validacion y guardrails disponibles:
 - checklist dedicada: [13-Volt-Preserve-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/13-Volt-Preserve-Manual-Validation.md)
 - checklist complementaria: [7-Fragment-Cache-Prefetch-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/7-Fragment-Cache-Prefetch-Manual-Validation.md)
 - guardrails automatizados del skeleton sobre rutas demo, politica `reset` y contrato observable en [SkeletonSpaRoadmapTest.php](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/framework/tests/Feature/SkeletonSpaRoadmapTest.php)
+- pasada browser validada en build local sobre `/fragmentCache -> /formExample -> /fragmentCacheReset -> /fragmentCache`, confirmando reuse del formulario y shell preservados, descarte con `volt:fragment-discard` y no reaparicion del estado previo descartado
 
 ## Contrato Actual: Volt Focus
 

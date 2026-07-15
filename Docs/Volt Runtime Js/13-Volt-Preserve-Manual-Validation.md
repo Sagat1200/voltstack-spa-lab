@@ -67,15 +67,22 @@ Fuera de alcance en esta pasada:
 
 | Campo | Valor |
 | --- | --- |
-| Fecha |  |
-| Entorno |  |
-| Navegador |  |
-| Build | `[ ] dev` `[ ] build` |
+| Fecha | 2026-07-14 |
+| Entorno | Local `php volt serve --port=8001` |
+| Navegador | Browser integrado del agente |
+| Build | `[ ] dev` `[x] build` |
 | Total casos | 10 |
-| OK |  |
-| Parcial |  |
-| Falla |  |
-| Decision | `[ ] cerrar item` `[ ] mantener en progreso` `[ ] corregir antes de cerrar` |
+| OK | 10 |
+| Parcial | 0 |
+| Falla | 0 |
+| Decision | `[x] cerrar item` `[ ] mantener en progreso` `[ ] corregir antes de cerrar` |
+
+Notas de la pasada:
+
+- flujo validado: `/fragmentCache -> /formExample -> /fragmentCacheReset -> /fragmentCache`
+- en `/formExample`, el formulario `draft-fragment` y el shell `live-shell` conservaron estado vivo; los bloques de control volvieron a su HTML base
+- en `/fragmentCacheReset`, el destino mostro HTML nuevo y el monitor registro `volt:fragment-discard` para `<form>` y `<section>`
+- al volver a `/fragmentCache`, el estado previo descartado no reaparecio; el documento `reset` actuo como nueva base fresca para claves compatibles en la navegacion siguiente
 
 ## Cierre Documental
 
