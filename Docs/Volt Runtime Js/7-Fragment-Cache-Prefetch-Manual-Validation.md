@@ -151,14 +151,14 @@ Esperado:
 
 Accion:
 
-- seguir en `/cacheExample`
-- hacer hover sobre un enlace `Hover + prefetch`
+- abrir `/counterExample`
+- hacer hover sobre el enlace `Probar navegacion a /cacheExample` (declara `volt:prefetch="hover"`)
 - en `Elements`, inspeccionar el `head`
 - en `Network`, observar entradas de tipo `preload`, `script` o assets asociados al destino
 
 Esperado:
 
-- aparecen hints `preload` o `modulepreload` para assets criticos del documento destino cuando corresponda
+- aparecen hints `preload` (CSS) y `modulepreload` (JS) para assets criticos del documento destino cuando corresponda
 - no se insertan hints duplicados para la misma URL/asset durante la misma ventana de reutilizacion
 - tras navegar, esos hints ya no provocan una segunda cascada innecesaria si el asset estaba listo
 
@@ -215,3 +215,17 @@ Se puede cerrar este bloque cuando:
 - `preload` y `modulepreload` se observan de forma consistente en `head` o `Network`
 - las politicas `reload`, `no-store`, `invalidate` y `ttl=15s` producen hooks coherentes
 - `head` y `layout` permanecen estables en rutas compatibles y hacen fallback seguro en escenarios no compatibles
+
+## Resultado De La Pasada
+
+Fecha: 2026-07-14
+
+Entorno:
+
+- build: `npm run build` (manifest con `app` + `cacheExample`)
+- server: `php volt serve --port=8001`
+
+Notas:
+
+- se introdujo un entry Vite extra para la ruta `/cacheExample` (`resources/js/cacheExample.js`) para hacer observable el contrato de `preload/modulepreload` durante `prefetch`
+- el enlace de `/counterExample` hacia `/cacheExample` declara `volt:prefetch="hover"` para inducir prefetch real

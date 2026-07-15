@@ -122,7 +122,7 @@ final class ConterExamplePage extends Component
                 style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
                 Ir a formulario
             </a>
-            <a href="/cacheExample" volt:navigate
+            <a href="/cacheExample" volt:navigate volt:prefetch="hover"
                 class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border transition border-slate-700 bg-slate-950/70 text-slate-200 hover:border-slate-500 hover:text-white">
                 Probar navegacion a /cacheExample
             </a>

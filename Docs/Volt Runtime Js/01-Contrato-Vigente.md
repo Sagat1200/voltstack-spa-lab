@@ -39,6 +39,10 @@ Contrato actual:
 - expiracion por TTL
 - control declarativo por enlace via `volt:cache` (`no-store`, `reload`, `invalidate`, `ttl=...`, `max-age=...`)
 - control por documento destino via meta tags
+- observabilidad por eventos `volt:cache-hit`, `volt:cache-miss`, `volt:cache-store`, `volt:cache-invalidate` y `volt:cache-clear`
+- durante `prefetch`, el runtime puede inyectar hints de `head` como:
+  - `<link rel="preload" as="style" ... data-volt-prefetch-preload="...">`
+  - `<link rel="modulepreload" ... data-volt-prefetch-preload="...">`
 
 Fuera de alcance (por ahora):
 
