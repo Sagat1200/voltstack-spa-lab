@@ -83,7 +83,7 @@ Impacta directamente:
 
 ### Bloque Activo 3. Cierre Manual De Laboratorios Ya Implementados
 
-- `[-]` cerrar validacion fina de `fragment cache SPA`
+- `[x]` cerrar validacion fina de `fragment cache SPA` (pasada browser ejecutada sobre `/fragmentCache -> /formExample -> /fragmentCacheReset -> /fragmentCache`, con reuse de fragmentos declarados, controles sin marca reseteados y descarte observable por `volt:fragment-discard`)
 - `[x]` cerrar validacion fina de `volt:preserve` (pasada browser ejecutada sobre `/fragmentCache -> /formExample -> /fragmentCacheReset -> /fragmentCache`, con reuse correcto, descarte por `reset` y sin reaparicion del estado previo descartado)
 - `[x]` cerrar validacion fina de `volt:persist` (pasada browser ejecutada sobre `/runtimePersist -> /runtimePersistBridge -> /runtimePersistAlt`, con reinyeccion estable, sin duplicados y registry coherente)
 - `[x]` cerrar validacion fina de `preload`, `modulepreload` y eventos `volt:cache-*` (pasada browser ejecutada con prefetch hover desde `/counterExample` hacia `/cacheExample`, observando hints y monitor `volt:cache-*`; guardrails agregados en `SkeletonSpaRoadmapTest.php`)
@@ -147,9 +147,9 @@ Cuando se trabaje en este corte:
 - `[x]` preload selectivo de `head` assets criticos
 - `[x]` no reinyectar assets ya presentes en documento actual
 - `[x]` soporte declarativo inicial para `volt:prefetch`
-- `[-]` fragment cache SPA opt-in por clave declarativa
-- `[-]` preservacion opt-in de formularios entre pantallas
-- `[-]` preservacion opt-in de componentes vivos entre navegaciones
+- `[x]` fragment cache SPA opt-in por clave declarativa
+- `[x]` preservacion opt-in de formularios entre pantallas
+- `[x]` preservacion opt-in de componentes vivos entre navegaciones
 - `[-]` politicas configurables por ruta para SPA vs full reload
 - `[x]` transiciones de pagina enter/leave reales
 - `[x]` invalidacion/control de cache de navegacion
@@ -232,8 +232,8 @@ Cuando se trabaje en este corte:
 - `[x]` `volt:dispatch`
 - `[x]` `volt:focus`
 - `[x]` `volt:portal`
-- `[-]` `volt:preserve` (contrato y checklist listos; pendiente validacion manual fina)
-- `[-]` `volt:persist` (contrato y checklist listos; pendiente validacion manual fina)
+- `[x]` `volt:preserve` (contrato, checklist y pasada browser cerrados)
+- `[x]` `volt:persist` (contrato, checklist y pasada browser cerrados)
 - `[x]` `volt:click`
 - `[x]` `volt:model`
 - `[x]` `volt:submit`
@@ -667,8 +667,8 @@ Usar esta seccion para marcar hitos reales conforme avancemos.
 - `[x]` MVP de `volt:model.sync` con actualizacion optimista del store, debounce fijo y sync backend via accion interna `__volt_sync__`
 - `[x]` MVP de `volt:focus` y `volt:autofocus.when` con enfoque reactivo por transicion `false -> true`
 - `[x]` MVP de `volt:portal` con movimiento real del nodo hacia targets globales del layout
-- `[-]` `volt:preserve` disponible como preserve opt-in de fragmentos top-level; `volt:persist` ya arranco como capa independiente sobre esa base
-- `[-]` MVP inicial de `volt:persist` montado sobre la base de `fragment cache SPA`, con registro runtime propio entre navegaciones
+- `[x]` `volt:preserve` disponible como preserve opt-in de fragmentos top-level; `volt:persist` ya arranco como capa independiente sobre esa base
+- `[x]` MVP inicial de `volt:persist` montado sobre la base de `fragment cache SPA`, con registro runtime propio entre navegaciones
 - `[x]` demos `/runtimeHtml` y `/runtimeHtmlAlt` para validar contenido `client/shared`, reemplazo de subarbol y reactivacion de directivas internas
 - `[x]` demos `/runtimeBind` y `/runtimeBindAlt` para validar `value`, `checked`, `disabled`, `href`, `src`, `title` y `placeholder`
 - `[x]` demos `/runtimeModelLocal` y `/runtimeModelLocalAlt` para validar input, textarea, checkbox y select sin roundtrip backend
@@ -1093,7 +1093,7 @@ Rutas demo actuales:
 
 Nota:
 
-- aun falta la validacion manual fina en navegador para cerrar `fragment cache SPA` y revisar en una sola pasada `preload`, `modulepreload`, `volt:fragment-preserve` y `volt:fragment-discard` en condiciones reales.
+- la validacion manual fina en navegador ya quedo cerrada en build local, cubriendo en pasadas dedicadas `fragment cache SPA`, `preload`, `modulepreload`, `volt:fragment-preserve` y `volt:fragment-discard`.
 
 ## Contrato Actual: Perfiles De Transicion Reutilizables
 

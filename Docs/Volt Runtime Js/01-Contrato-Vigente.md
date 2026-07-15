@@ -117,6 +117,10 @@ Gate recomendado antes de nuevas features del runtime:
 
 - [7-Fragment-Cache-Prefetch-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/7-Fragment-Cache-Prefetch-Manual-Validation.md)
 
+Estado de validacion:
+
+- pasada browser cerrada en build local para `fragment cache SPA`, `prefetch`, `preload` y `modulepreload`
+
 ### 2.4 Preserve opt-in (`volt:preserve`)
 
 - [13-Volt-Preserve-Manual-Validation.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/13-Volt-Preserve-Manual-Validation.md)

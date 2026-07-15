@@ -22,11 +22,12 @@ Objetivo: cruzar el contrato documentado del runtime con su implementacion real 
 2. El laboratorio `spa-lab` sigue siendo la fuente operativa para directivas avanzadas, `state`, cache/prefetch y observabilidad browser-level.
 3. La mayor deuda actual no es de arquitectura base sino de trazabilidad y automatizacion de bloques que hoy dependen sobre todo de QA manual.
 4. `volt:preserve` ya quedo validado en navegador sobre el flujo origen -> destino compatible -> reset -> origen, con reuse correcto, descarte observable y sin reaparicion del estado previo descartado.
-5. `volt:persist` ya quedo validado en navegador sobre el flujo origen -> bridge -> destino -> origen, con `registry` coherente, reinyeccion de 2 fragmentos vivos y ausencia de duplicados por clave.
-6. El cierre Full SPA del skeleton ya cubre home, vistas tradicionales con y sin layout, islas interactivas y rutas reactivas `/spaReactive`, `/counterExample` y `/formExample`, con assets compilados resueltos desde manifest cuando no hay hot reload.
-7. El skeleton ahora tambien fija con pruebas automatizadas el contrato de `popstate`, reconciliacion de `head`, no duplicacion de scripts y fallback por error HTTP en la navegacion SPA.
-8. El skeleton ahora fija ademas el wiring critico de `volt:model`, `volt:model.sync`, resincronizacion de `snapshot`, hooks de `stale`/`abort`, el wiring observable de `volt:persist` y el contrato base de `volt:preserve`.
-9. El protocolo reactivo ahora expone `runtime.action_not_allowed` para acciones invalidas o reservadas, y el skeleton fija que `dispatchAction()` no implementa retry automatico en el contrato actual.
+5. El bloque de `fragment cache SPA` ya puede considerarse cerrado operativamente: los fragmentos declarados se reutilizan, los controles sin marca vuelven a baseline y el descarte por `reset` queda observable en la ruta dedicada.
+6. `volt:persist` ya quedo validado en navegador sobre el flujo origen -> bridge -> destino -> origen, con `registry` coherente, reinyeccion de 2 fragmentos vivos y ausencia de duplicados por clave.
+7. El cierre Full SPA del skeleton ya cubre home, vistas tradicionales con y sin layout, islas interactivas y rutas reactivas `/spaReactive`, `/counterExample` y `/formExample`, con assets compilados resueltos desde manifest cuando no hay hot reload.
+8. El skeleton ahora tambien fija con pruebas automatizadas el contrato de `popstate`, reconciliacion de `head`, no duplicacion de scripts y fallback por error HTTP en la navegacion SPA.
+9. El skeleton ahora fija ademas el wiring critico de `volt:model`, `volt:model.sync`, resincronizacion de `snapshot`, hooks de `stale`/`abort`, el wiring observable de `volt:persist`, el contrato base de `volt:preserve` y el wiring documental de `fragment cache SPA`.
+10. El protocolo reactivo ahora expone `runtime.action_not_allowed` para acciones invalidas o reservadas, y el skeleton fija que `dispatchAction()` no implementa retry automatico en el contrato actual.
 
 ## Divergencias Detectadas Y Corregidas
 

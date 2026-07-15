@@ -229,3 +229,12 @@ Notas:
 
 - se introdujo un entry Vite extra para la ruta `/cacheExample` (`resources/js/cacheExample.js`) para hacer observable el contrato de `preload/modulepreload` durante `prefetch`
 - el enlace de `/counterExample` hacia `/cacheExample` declara `volt:prefetch="hover"` para inducir prefetch real
+- el flujo `/fragmentCache -> /formExample -> /fragmentCacheReset -> /fragmentCache` quedo confirmado en build local:
+  - los fragmentos con clave `draft-fragment` y `live-shell` se reutilizan en la ruta compatible
+  - los controles sin marca vuelven a su HTML base
+  - la ruta `reset` descarta el estado vivo previo y hace observable `volt:fragment-discard`
+
+Decision:
+
+- `[x]` cerrar `fragment cache SPA`
+- `[x]` cerrar `prefetch`/`preload`/`modulepreload`
