@@ -608,6 +608,7 @@ Instrumentacion util para navegador real:
 - `[x]` laboratorio de eficiencia incrustado en `/runtimeEvents`, leyendo `window.Volt.telemetry`, `window.Volt.components` y `performance`
 - `[x]` guardrails server-side del skeleton para `/runtimeEvents`, fijando hook inspector, paneles `efficiency-*`, tarjetas `Telemetry *` y links operativos hacia `runtimeAdvancedDirectives`, `runtimeState` y `runtimeModelSync`
 - `[x]` guardrails adicionales del skeleton para `runtimeEvents` y `/_volt/runtime.js`, fijando estado base del panel de eficiencia (`boot`, `(pendiente)`, snapshots `latest`) y la API publica `window.Volt.telemetry` / `window.Volt.components`
+- `[x]` pasada browser guiada sobre `/runtimeEvents -> /runtimeState -> captureSelectiveSync -> /runtimeEvents`, confirmando `navigation:2`, `action:1`, `patch:3`, `latest` coherentes y la nota operativa de que `captureSelectiveSync` solo envia valores ya persistidos en el store runtime
 - `[x]` checklist manual dedicada en `9-Runtime-Efficiency-Browser-Validation.md`
 - `[x]` controles de refresco/reset para observar `navigation`, `action`, `patch`, payloads y roots activos sin abrir consola
 
@@ -648,6 +649,7 @@ Usar esta seccion para marcar hitos reales conforme avancemos.
 - `[x]` API publica `window.Volt.state` con stores `client` y `shared`
 - `[x]` demo `/runtimeState` y `/runtimeStateAlt` para validar reset por URL y persistencia global
 - `[x]` sincronizacion selectiva desde `client/shared state` hacia `params` o `updates`
+- `[x]` UX del lab `/runtimeState` endurecida para `captureSelectiveSync`, con flujo visual de 3 pasos y preview live desde `window.Volt.state` antes del submit
 - `[x]` effects backend -> frontend para `state.set`, `state.merge`, `state.delete` y `state.clear`
 - `[x]` cobertura automatizada backend de `params + updates` para sincronizacion selectiva y mapeo explicito hacia `updates.*`
 - `[x]` MVP de `volt:show` con expresiones `client:path` y `shared:path`

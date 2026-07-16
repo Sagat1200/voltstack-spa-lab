@@ -542,6 +542,33 @@ shared:ui.softenSharedCard -&gt; opacity:0.7; transform:scale(1.01) translateY(-
         </div>
 
         <div
+            style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));border:1px solid rgba(148,163,184,0.18);background:rgba(15,23,42,0.82);border-radius:16px;padding:16px;">
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(34,197,94,0.18);background:rgba(6,78,59,0.14);border-radius:14px;padding:14px;">
+                <strong style="color:#bbf7d0;">Paso 1. Guardar en el store runtime</strong>
+                <span style="font-size:13px;color:#d1fae5;line-height:1.6;">
+                    Usa los botones <code>Guardar client.draft</code> y <code>Guardar shared.draft</code> de arriba.
+                </span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(168,85,247,0.18);background:rgba(88,28,135,0.14);border-radius:14px;padding:14px;">
+                <strong style="color:#e9d5ff;">Paso 2. Confirmar el preview live</strong>
+                <span style="font-size:13px;color:#f5d0fe;line-height:1.6;">
+                    Las tarjetas de abajo leen <code>window.Volt.state</code>. Si no cambian, el backend seguira viendo
+                    <code>(vacio)</code>.
+                </span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(59,130,246,0.18);background:rgba(30,64,175,0.14);border-radius:14px;padding:14px;">
+                <strong style="color:#bfdbfe;">Paso 3. Enviar lo ya guardado</strong>
+                <span style="font-size:13px;color:#dbeafe;line-height:1.6;">
+                    El submit solo toma las claves ya persistidas en el store y las mapea a <code>params</code> /
+                    <code>updates</code>.
+                </span>
+            </article>
+        </div>
+
+        <div
             style="border:1px solid rgba(59,130,246,0.20);background:rgba(14,116,144,0.14);border-radius:16px;padding:16px;">
             <strong style="display:block;color:#bfdbfe;">Contrato activo de esta demo</strong>
             <pre
@@ -563,26 +590,38 @@ shared:counter -> updates.sharedCounterMirror</pre>
                 style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));border:1px solid rgba(51,65,85,1);background:#020617;border-radius:18px;padding:18px;">
                 <article
                     style="display:grid;gap:8px;border:1px solid rgba(34,197,94,0.18);background:rgba(6,78,59,0.12);border-radius:14px;padding:14px;">
-                    <strong style="color:#bbf7d0;">Params desde client.draft.note</strong>
-                    <span style="font-size:13px;color:#86efac;">{{ $lastClientNote }}</span>
+                    <strong style="color:#bbf7d0;">Store listo para <code>params.clientNote</code></strong>
+                    <span data-runtime-check="state-sync-client-store-preview"
+                        volt:text="client:draft.note ?? '(vacio)'"
+                        style="font-size:13px;color:#86efac;line-height:1.7;">(vacio)</span>
                 </article>
                 <article
                     style="display:grid;gap:8px;border:1px solid rgba(168,85,247,0.18);background:rgba(88,28,135,0.12);border-radius:14px;padding:14px;">
-                    <strong style="color:#e9d5ff;">Params desde shared.draft.note</strong>
-                    <span style="font-size:13px;color:#f5d0fe;">{{ $lastSharedNote }}</span>
+                    <strong style="color:#e9d5ff;">Store listo para <code>params.sharedNote</code></strong>
+                    <span data-runtime-check="state-sync-shared-store-preview"
+                        volt:text="shared:draft.note ?? '(vacio)'"
+                        style="font-size:13px;color:#f5d0fe;line-height:1.7;">(vacio)</span>
                 </article>
                 <article
                     style="display:grid;gap:8px;border:1px solid rgba(59,130,246,0.18);background:rgba(30,64,175,0.12);border-radius:14px;padding:14px;">
-                    <strong style="color:#bfdbfe;">Updates desde shared.counter</strong>
-                    <span style="font-size:13px;color:#dbeafe;">{{ $sharedCounterMirror }}</span>
+                    <strong style="color:#bfdbfe;">Store listo para <code>updates.sharedCounterMirror</code></strong>
+                    <span data-runtime-check="state-sync-shared-counter-preview"
+                        volt:text="shared:counter ?? 0"
+                        style="font-size:13px;color:#dbeafe;line-height:1.7;">0</span>
                 </article>
             </div>
+
+            <p
+                style="margin:0;border:1px solid rgba(250,204,21,0.24);background:rgba(113,63,18,0.18);border-radius:12px;padding:12px 14px;color:#fde68a;line-height:1.7;">
+                Si escribes en el input pero no pulsas <code>Guardar</code>, este preview no cambia porque la fuente de
+                verdad sigue siendo <code>window.Volt.state</code>.
+            </p>
 
             <div style="display:flex;flex-wrap:wrap;gap:12px;">
                 <button type="submit" volt:loading.class="opacity-70" volt:loading.action="captureSelectiveSync"
                     volt:loading.delay="80ms" volt:loading.min-duration="400ms"
                     style="border:1px solid rgba(59,130,246,0.28);background:rgba(14,116,144,0.16);color:#dbeafe;border-radius:10px;padding:10px 16px;">
-                    Enviar sync selectivo al backend
+                    Enviar al backend lo ya guardado en el store
                 </button>
                 <span volt:loading="captureSelectiveSync"
                     style="display:inline-flex;align-items:center;border:1px solid rgba(250,204,21,0.28);background:rgba(250,204,21,0.08);color:#fde68a;border-radius:10px;padding:10px 14px;">

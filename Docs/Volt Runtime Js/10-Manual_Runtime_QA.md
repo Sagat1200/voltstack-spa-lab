@@ -83,6 +83,17 @@ Resultado validado manualmente en navegador real sobre las rutas demo actuales:
 - `QA-11 Estado success`: `OK`
 - `QA-12 Estado error`: `OK`
 
+Pasada browser adicional sobre `/runtimeEvents -> /runtimeState -> accion reactiva -> /runtimeEvents`:
+
+- `Telemetry navigation`: `count = 2`, `outcomes = success:2`
+- `Telemetry action`: `count = 1`, `outcomes = success:1`
+- `Telemetry patch`: `count = 3`, `outcomes = navigation-patch:2, action-effects:1`
+- `Latest navigation entry`: termina apuntando a `/runtimeEvents`
+- `Latest action entry`: queda fijado en `captureSelectiveSync`
+- `Latest patch entry`: termina como `navigation-patch`
+- hallazgo operativo: escribir en los inputs de `/runtimeState` no alimenta por si solo `captureSelectiveSync`; primero hay que persistir el valor en `window.Volt.state`, o el selective sync reporta `Applied = 0`, `Skipped = 3` y notas `"(vacio)"`
+- ajuste UX del lab: `/runtimeState` ahora expone un flujo visual de 3 pasos y un preview live desde `window.Volt.state` para que el usuario vea exactamente que llegara al backend antes del submit
+
 Cobertura adicional del contrato de errores del runtime:
 
 - `Telemetry navigation`: `aborted:1`, `http-error:1`, `success:4`, `timeout:1`
