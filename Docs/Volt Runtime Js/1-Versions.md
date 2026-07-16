@@ -680,6 +680,7 @@ Usar esta seccion para marcar hitos reales conforme avancemos.
 - `[x]` validacion automatizada del subbloque de sincronizacion selectiva completada, ajustando expectativas de effects para no exigir `html.replace` cuando no existe diff HTML real
 - `[x]` cobertura automatizada adicional de sincronizacion selectiva para `/runtimeModelSyncAlt` y para requests mixtos con `params + updates` de texto/booleanos en la misma accion
 - `[x]` pruebas automatizadas del skeleton para `/runtimeAdvancedDirectives`, cubriendo `volt:text` con `??`, expresiones compuestas en `volt:show` y `volt:if`, reglas multiples en `volt:class`/`volt:attr`/`volt:style` y casos `null` vs `undefined`
+- `[x]` guardrails server-side adicionales del skeleton para `/runtimeState`, `/runtimeStateAlt` y `/runtimeRequestLabRetryOnce`, fijando contrato documental de state runtime, markers estables de directivas avanzadas y retry seguro de navegacion `GET`
 - `[x]` validacion manual de `/runtimeAdvancedDirectives` cerrada con presets reproducibles, markers `data-runtime-check` y checklist dedicada en `6-Runtime-Advanced-Directives-Manual-Validation.md`
 - `[x]` validacion manual de `fragment cache SPA`, `prefetch`/`preload`, `head` + layout fallback y politicas `reload` cerrada con la checklist `7-Fragment-Cache-Prefetch-Manual-Validation.md`
 - `[x]` validacion manual de `politicas configurables por ruta para SPA vs full reload` cerrada con scaffolding en `NavigationPolicyPage`, `NavigationDocumentReloadPage` y la checklist `8-Navigation-Policy-Manual-Validation.md`

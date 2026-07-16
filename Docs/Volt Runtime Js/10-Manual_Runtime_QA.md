@@ -127,6 +127,7 @@ Cobertura adicional del retry seguro en navegacion `GET`:
 - `max response = 58213 B`
 - `avg patch = 21.24 ms`
 - `max patch = 29 ms`
+- guardrail automatizado del skeleton: el destino `/runtimeRequestLabRetryOnce` queda fijado con primer intento `500` y segundo intento `200`
 - lectura operativa: resultado compatible con un fallo transitorio absorbido por el retry automatico, sin degradacion visible del patch DOM
 
 ### Cobertura Automatizada Complementaria 2026-07-13

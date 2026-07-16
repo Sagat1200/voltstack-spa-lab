@@ -11,6 +11,9 @@ class SpaLabFormRouteService
 {
     public static function registerFormRoutes(): void
     {
-        Route::get('/formExample', FormExamplePage::class)->name('formExample');
+        Route::get('/formExample', FormExamplePage::class)->name('formExample')
+            ->runtime([
+                'prefetch' => true,
+            ]);
     }
 }
