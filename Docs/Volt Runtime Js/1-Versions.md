@@ -606,6 +606,8 @@ Resultado despues de reducir el peso del runtime externo:
 Instrumentacion util para navegador real:
 
 - `[x]` laboratorio de eficiencia incrustado en `/runtimeEvents`, leyendo `window.Volt.telemetry`, `window.Volt.components` y `performance`
+- `[x]` guardrails server-side del skeleton para `/runtimeEvents`, fijando hook inspector, paneles `efficiency-*`, tarjetas `Telemetry *` y links operativos hacia `runtimeAdvancedDirectives`, `runtimeState` y `runtimeModelSync`
+- `[x]` guardrails adicionales del skeleton para `runtimeEvents` y `/_volt/runtime.js`, fijando estado base del panel de eficiencia (`boot`, `(pendiente)`, snapshots `latest`) y la API publica `window.Volt.telemetry` / `window.Volt.components`
 - `[x]` checklist manual dedicada en `9-Runtime-Efficiency-Browser-Validation.md`
 - `[x]` controles de refresco/reset para observar `navigation`, `action`, `patch`, payloads y roots activos sin abrir consola
 

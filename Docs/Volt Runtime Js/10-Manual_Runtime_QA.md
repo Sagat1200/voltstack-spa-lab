@@ -74,6 +74,7 @@ Resultado validado manualmente en navegador real sobre las rutas demo actuales:
 - `QA-01 Runtime asset`: `OK`
 - `QA-03 Telemetria inicial`: `OK`
 - `QA-04 Accion reactiva`: `OK`
+- guardrails automatizados del skeleton fijan ahora la presencia del hook inspector, el panel `efficiency-*`, los snapshots `latest` y la API publica de telemetria/componentes en `/runtimeEvents`
 - `QA-05 Model sync`: `OK`
 - `QA-06 Navegacion SPA`: `OK`
 - `QA-07 Persistencia del runtime`: `OK`
