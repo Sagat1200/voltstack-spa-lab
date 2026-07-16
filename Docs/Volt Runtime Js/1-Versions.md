@@ -87,7 +87,7 @@ Impacta directamente:
 - `[x]` cerrar validacion fina de `volt:preserve` (pasada browser ejecutada sobre `/fragmentCache -> /formExample -> /fragmentCacheReset -> /fragmentCache`, con reuse correcto, descarte por `reset` y sin reaparicion del estado previo descartado)
 - `[x]` cerrar validacion fina de `volt:persist` (pasada browser ejecutada sobre `/runtimePersist -> /runtimePersistBridge -> /runtimePersistAlt`, con reinyeccion estable, sin duplicados y registry coherente)
 - `[x]` cerrar validacion fina de `preload`, `modulepreload` y eventos `volt:cache-*` (pasada browser ejecutada con prefetch hover desde `/counterExample` hacia `/cacheExample`, observando hints y monitor `volt:cache-*`; guardrails agregados en `SkeletonSpaRoadmapTest.php`)
-- `[-]` mantener `spa-lab` alineado con el wiring real de rutas demo
+- `[x]` mantener `spa-lab` alineado con el wiring real de rutas demo (provider, indice visual `/spaReactive` y smoke tests del skeleton sincronizados para `/cacheExample`, `/fragmentCache`, `/runtimeState`, `/runtimePersist` y `/runtimeRequestLab`)
 
 Impacta directamente:
 

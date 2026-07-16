@@ -43,6 +43,16 @@
                 <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">ttl=15s</code>.</span>
         </a>
 
+        <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-emerald-400/40 hover:bg-slate-950"
+            href="/fragmentCache" volt:navigate volt:prefetch="none">
+            <strong class="block text-lg text-white">/fragmentCache</strong>
+            <span class="block mt-3 text-sm leading-6 text-slate-400">Laboratorio dedicado de <code
+                    class="px-2 py-1 rounded bg-slate-800 text-slate-200">fragment cache SPA</code> y <code
+                    class="px-2 py-1 rounded bg-slate-800 text-slate-200">volt:preserve</code>, con reuse entre
+                pantallas compatibles y descarte documental observable en <code
+                    class="px-2 py-1 rounded bg-slate-800 text-slate-200">/fragmentCacheReset</code>.</span>
+        </a>
+
         <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-cyan-400/40 hover:bg-slate-950"
             href="/navigationPolicy" volt:navigate volt:prefetch="none">
             <strong class="block text-lg text-white">/navigationPolicy</strong>

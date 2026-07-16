@@ -31,11 +31,9 @@ Objetivo: cruzar el contrato documentado del runtime con su implementacion real 
 
 ## Divergencias Detectadas Y Corregidas
 
-- `SpaLabStateRouteService` existia como implementacion real del laboratorio de `state`, pero no estaba siendo registrado desde `SPALabServiceProvider`.
-- Esa divergencia afectaba la coherencia entre:
-  - la documentacion (`/runtimeState` aparece en [10-Manual_Runtime_QA.md](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/Docs/Volt%20Runtime%20Js/10-Manual_Runtime_QA.md)),
-  - el indice visual del lab ([spa-reactive.volt.php:L65-L66](file:///c:/W4/Packages/VoltStack/app-skeleton/vendor/voltstack/spa-lab/resources/spa-reactive.volt.php#L65-L66)),
-  - y el wiring efectivo del provider.
+- `SpaLabStateRouteService` ya esta registrado desde `SPALabServiceProvider`, cerrando la divergencia historica entre documentacion, indice visual y wiring efectivo del provider.
+- El indice visual de `/spaReactive` ahora expone tambien `/fragmentCache`, de modo que las demos ya cerradas de `fragment cache SPA` y `volt:preserve` quedan accesibles desde la home operativa del lab.
+- El skeleton fija ademas un smoke test de rutas demo criticas para que provider, indice visual y paginas vivas no vuelvan a desalinearse silenciosamente.
 
 ## Prioridad Recomendada
 

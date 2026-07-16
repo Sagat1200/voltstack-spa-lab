@@ -94,6 +94,8 @@ Resultado de cierre operativo del bloque Full SPA:
 - `QA-06 Navegacion SPA`: `OK`
   - flujo `/` -> `/spaReactive` -> `/counterExample` -> `/formExample` sin recarga completa
   - flujo `/` -> `/noLayoutExample` sin fallback por ausencia de `data-volt-layout`
+- `Indice operativo del lab`: `OK`
+  - `/spaReactive` expone accesos directos a `/cacheExample`, `/fragmentCache`, `/runtimeState`, `/runtimePersist` y `/runtimeRequestLab`
 - `QA-07 Persistencia del runtime`: `OK`
   - no se detecto reinyeccion duplicada de `/_volt/runtime.js`
 - `Build de produccion`: `OK`
