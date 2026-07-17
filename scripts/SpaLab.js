@@ -152,6 +152,7 @@ const navigationArrivalState = {
 
 const runtimeStateExampleState = {
   lastEvent: null,
+  lastRequestEvent: null,
 }
 
 const runtimeEfficiencyState = {
@@ -824,10 +825,19 @@ function syncRuntimeStateExamples() {
   const api = runtimeStateApi()
 
   document.querySelectorAll('[data-volt-state-example]').forEach((panel) => {
+    const runtimeRoot = panel.closest('[data-volt-root]')
     const clientScopeNode = panel.querySelector('[data-volt-state-client-scope]')
     const clientNode = panel.querySelector('[data-volt-state-client-snapshot]')
     const sharedNode = panel.querySelector('[data-volt-state-shared-snapshot]')
     const eventNode = panel.querySelector('[data-volt-state-last-event]')
+    const requestStatusNode = panel.querySelector('[data-runtime-check="state-status-request-status"]')
+    const dirtyTargetNode = panel.querySelector('[data-runtime-check="state-status-dirty-target"]')
+    const successActionNode = panel.querySelector('[data-runtime-check="state-status-success-action"]')
+    const successTargetNode = panel.querySelector('[data-runtime-check="state-status-success-target"]')
+    const errorActionNode = panel.querySelector('[data-runtime-check="state-status-error-action"]')
+    const errorTargetNode = panel.querySelector('[data-runtime-check="state-status-error-target"]')
+    const errorMessageNode = panel.querySelector('[data-runtime-check="state-status-error-message"]')
+    const requestEventNode = panel.querySelector('[data-runtime-check="state-status-last-request-event"]')
 
     if (!api) {
       if (clientScopeNode) {
@@ -840,6 +850,38 @@ function syncRuntimeStateExamples() {
 
       if (sharedNode) {
         sharedNode.textContent = '{"error":"runtime.state no disponible"}'
+      }
+
+      if (requestStatusNode) {
+        requestStatusNode.textContent = 'request-status = runtime no disponible'
+      }
+
+      if (dirtyTargetNode) {
+        dirtyTargetNode.textContent = 'dirty.target = runtime no disponible'
+      }
+
+      if (successActionNode) {
+        successActionNode.textContent = 'success.action = runtime no disponible'
+      }
+
+      if (successTargetNode) {
+        successTargetNode.textContent = 'success.target = runtime no disponible'
+      }
+
+      if (errorActionNode) {
+        errorActionNode.textContent = 'error.action = runtime no disponible'
+      }
+
+      if (errorTargetNode) {
+        errorTargetNode.textContent = 'error.target = runtime no disponible'
+      }
+
+      if (errorMessageNode) {
+        errorMessageNode.textContent = 'error.message = runtime no disponible'
+      }
+
+      if (requestEventNode) {
+        requestEventNode.textContent = '{"error":"runtime request state no disponible"}'
       }
 
       return
@@ -866,11 +908,54 @@ function syncRuntimeStateExamples() {
         waiting: 'Aun no hay eventos de state runtime.',
       })
     }
+
+    if (requestStatusNode) {
+      requestStatusNode.textContent = `request-status = ${runtimeRoot ? (runtimeRoot.getAttribute('data-volt-request-status') || 'idle') : 'sin root'}`
+    }
+
+    if (dirtyTargetNode) {
+      dirtyTargetNode.textContent = `dirty.target = ${runtimeRoot ? (runtimeRoot.getAttribute('data-volt-dirty-target') || 'sin target') : 'sin root'}`
+    }
+
+    if (successActionNode) {
+      successActionNode.textContent = `success.action = ${runtimeRoot ? (runtimeRoot.getAttribute('data-volt-success-action') || 'sin action') : 'sin root'}`
+    }
+
+    if (successTargetNode) {
+      successTargetNode.textContent = `success.target = ${runtimeRoot ? (runtimeRoot.getAttribute('data-volt-success-target') || 'sin target') : 'sin root'}`
+    }
+
+    if (errorActionNode) {
+      errorActionNode.textContent = `error.action = ${runtimeRoot ? (runtimeRoot.getAttribute('data-volt-error-action') || 'sin action') : 'sin root'}`
+    }
+
+    if (errorTargetNode) {
+      errorTargetNode.textContent = `error.target = ${runtimeRoot ? (runtimeRoot.getAttribute('data-volt-error-target') || 'sin target') : 'sin root'}`
+    }
+
+    if (errorMessageNode) {
+      errorMessageNode.textContent = `error.message = ${runtimeRoot ? (runtimeRoot.getAttribute('data-volt-error-message') || 'sin error') : 'sin root'}`
+    }
+
+    if (requestEventNode) {
+      requestEventNode.textContent = serializeStateExample(runtimeStateExampleState.lastRequestEvent || {
+        waiting: 'Aun no hay hooks de request state.',
+      })
+    }
   })
 }
 
 function setRuntimeStateExampleEvent(eventName, detail) {
   runtimeStateExampleState.lastEvent = {
+    event: eventName,
+    detail: normalizeHookValue(detail || {}),
+  }
+
+  syncRuntimeStateExamples()
+}
+
+function setRuntimeStateRequestExampleEvent(eventName, detail) {
+  runtimeStateExampleState.lastRequestEvent = {
     event: eventName,
     detail: normalizeHookValue(detail || {}),
   }
@@ -1311,6 +1396,19 @@ function registerRuntimeStateExampleControls() {
 
   document.addEventListener('volt:state-scope-changed', (event) => {
     setRuntimeStateExampleEvent('volt:state-scope-changed', event.detail || {})
+  })
+
+  ;[
+    'volt:dirty',
+    'volt:clean',
+    'volt:success',
+    'volt:success-cleared',
+    'volt:request-error',
+    'volt:error-cleared',
+  ].forEach((eventName) => {
+    document.addEventListener(eventName, (event) => {
+      setRuntimeStateRequestExampleEvent(eventName, event.detail || {})
+    })
   })
 
   document.addEventListener('volt:navigated', () => {

@@ -323,11 +323,11 @@ Cuando se trabaje en este corte:
 ### C. Estados Runtime
 
 - `[x]` `loading` visible y oculto segun delay/min-duration
-- `[ ]` `dirty` con debounce
-- `[ ]` `success` con timeout y min-duration
-- `[ ]` `error` con timeout
-- `[ ]` filtros por `action`
-- `[ ]` filtros por `target`
+- `[x]` `dirty` con debounce
+- `[x]` `success` con timeout y min-duration
+- `[x]` `error` con timeout
+- `[x]` filtros por `action`
+- `[x]` filtros por `target`
 
 ### D. DOM Y Effects
 
@@ -346,10 +346,10 @@ Cuando se trabaje en este corte:
 
 ### E. Foco, Seleccion Y Scroll
 
-- `[ ]` preservar foco en input tras patch
-- `[ ]` preservar seleccion en input/textarea
-- `[ ]` preservar scroll interno en contenedores marcados
-- `[ ]` restaurar scroll tras reemplazo HTML del root
+- `[x]` preservar foco en input tras patch
+- `[x]` preservar seleccion en input/textarea
+- `[x]` preservar scroll interno en contenedores marcados
+- `[x]` restaurar scroll tras reemplazo HTML del root
 
 ### F. Layout Y Head
 
@@ -719,6 +719,8 @@ Usar esta seccion para marcar hitos reales conforme avancemos.
 - `[x]` el panel unificado de resiliencia tambien se replica en `/runtimeEvents` para que el resumen sea visible al aterrizar desde el request lab o al recargar la pantalla directamente
 - `[x]` `/runtimeEvents` expone ademas un CTA directo a `/runtimeRequestLab` y un badge de `incidentes en sesion` para guiar la reproduccion QA sin depender de recordar rutas
 - `[x]` `RequestLab` rehidrata su wiring JS desde el cliente persistente `SpaLab.js`, de modo que siga operativo tambien al entrar por navegacion SPA desde otras pantallas
+- `[x]` `/runtimeState` suma un laboratorio explicito para `dirty`, `success` y `error`, con filtros por `action/target`, panel de `request-status` y markers estables para guardrails del skeleton
+- `[x]` `/runtimeFocus` suma un laboratorio contractual para restore de `focus`, `selection` y `scroll`, con patch server-driven, contenedor `data-volt-preserve-scroll`, inspector visible y markers estables para el skeleton
 
 ## Proximo Bloque Recomendado
 
@@ -1725,7 +1727,7 @@ Estado actual:
 
 - `[x]` MVP inicial implementado en runtime
 - `[x]` demo dedicada creada en el skeleton
-- `[-]` pendiente validacion manual fina de comportamiento en navegador
+- `[x]` validacion manual fina de comportamiento en navegador cerrada sobre foco, seleccion y scroll restore
 
 Declaracion actual:
 
@@ -1779,8 +1781,8 @@ Limitaciones actuales del MVP:
 
 Rutas demo actuales:
 
-- `/runtimeFocus`: origen para probar foco condicional en inputs, textareas, botones de retorno y paneles con error
-- `/runtimeFocusAlt`: destino para validar reenfoque, `shared state` y comportamiento tras navegacion SPA
+- `/runtimeFocus`: origen para probar `volt:focus`, `volt:autofocus.when`, restore de `selection`/cursor y scroll interno tras un patch reactivo server-driven
+- `/runtimeFocusAlt`: destino para validar reenfoque compartido, `shared state` y comportamiento tras navegacion SPA
 
 ## Contrato Actual: Volt Portal
 

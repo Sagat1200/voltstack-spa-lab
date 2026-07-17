@@ -49,10 +49,26 @@ final class FocusAltPage extends Component
             });
         }
 
-        document.addEventListener('focusin', (event) => {
-            const target = event && event.target && typeof event.target === 'object' ? event.target : null;
-            const focusId = target && typeof target.getAttribute === 'function' && target.getAttribute(
-                    'data-focus-id') ?
+        function isSelectable(target) {
+            if (!target || !target.tagName) {
+                return false;
+            }
+
+            if (target.tagName === 'TEXTAREA') {
+                return true;
+            }
+
+            if (target.tagName !== 'INPUT') {
+                return false;
+            }
+
+            return ['text', 'search', 'url', 'tel', 'password', 'email', 'number'].includes(
+                String(target.type || 'text').toLowerCase()
+            );
+        }
+
+        function resolveFocusId(target) {
+            return target && typeof target.getAttribute === 'function' && target.getAttribute('data-focus-id') ?
                 target.getAttribute('data-focus-id') :
                 target && target.id ?
                 target.id :
@@ -61,10 +77,82 @@ final class FocusAltPage extends Component
                 target && target.tagName ?
                 target.tagName.toLowerCase() :
                 '(sin target)';
+        }
+
+        function updateText(selector, value) {
+            document.querySelectorAll(selector).forEach((node) => {
+                node.textContent = value;
+            });
+        }
+
+        function syncInspector(reason) {
+            const active = document.activeElement && typeof document.activeElement === 'object' ? document.activeElement : null;
+            const scrollBox = document.querySelector('[data-volt-target="focus-scroll-box"]');
+            const selectionRange = isSelectable(active) && typeof active.selectionStart === 'number' &&
+                typeof active.selectionEnd === 'number' ?
+                `${active.selectionStart}-${active.selectionEnd}` :
+                'n/d';
+            const selectionDirection = isSelectable(active) && typeof active.selectionDirection === 'string' ?
+                active.selectionDirection :
+                'none';
+            const innerScrollTop = isSelectable(active) && typeof active.scrollTop === 'number' ? Math.round(active.scrollTop) :
+                0;
+
+            updateText('[data-runtime-check="focus-active-element"]', resolveFocusId(active));
+            updateText('[data-runtime-check="focus-selection-range"]', selectionRange);
+            updateText('[data-runtime-check="focus-selection-direction"]', selectionDirection);
+            updateText('[data-runtime-check="focus-selection-scroll-top"]', String(innerScrollTop));
+            updateText(
+                '[data-runtime-check="focus-scroll-box-top"]',
+                scrollBox && typeof scrollBox.scrollTop === 'number' ? String(Math.round(scrollBox.scrollTop)) : '0'
+            );
+            updateText(
+                '[data-runtime-check="focus-scroll-box-left"]',
+                scrollBox && typeof scrollBox.scrollLeft === 'number' ? String(Math.round(scrollBox.scrollLeft)) : '0'
+            );
+            updateText('[data-runtime-check="focus-inspector-reason"]', reason);
+        }
+
+        document.addEventListener('focusin', (event) => {
+            const target = event && event.target && typeof event.target === 'object' ? event.target : null;
+            const focusId = resolveFocusId(target);
 
             setClient('focus.lastActive', focusId);
             setClient('focus.lastActiveAt', new Date().toLocaleTimeString());
+            syncInspector('focusin');
         });
+
+        document.addEventListener('selectionchange', () => {
+            syncInspector('selectionchange');
+        });
+
+        document.addEventListener(
+            'scroll',
+            () => {
+                syncInspector('scroll');
+            },
+            true
+        );
+
+        document.addEventListener('volt:after-patch', () => {
+            window.requestAnimationFrame(() => {
+                syncInspector('after-patch');
+            });
+        });
+
+        document.addEventListener('volt:navigated', () => {
+            window.requestAnimationFrame(() => {
+                syncInspector('navigated');
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.requestAnimationFrame(() => {
+                syncInspector('boot');
+            });
+        });
+
+        syncInspector('boot');
     })();
 </script>
 @endsection

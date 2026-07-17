@@ -122,8 +122,8 @@
             <strong class="block text-lg text-white">/runtimeFocus</strong>
             <span class="block mt-3 text-sm leading-6 text-slate-400">Laboratorio para validar
                 <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">volt:focus</code> y
-                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">volt:autofocus.when</code> con foco
-                reactivo, paneles condicionales y navegación SPA hacia
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">volt:autofocus.when</code>, junto al
+                restore de selección y scroll interno durante patch reactivo y navegación SPA hacia
                 <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">/runtimeFocusAlt</code>.</span>
         </a>
 

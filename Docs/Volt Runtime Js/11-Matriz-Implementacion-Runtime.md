@@ -38,6 +38,8 @@ Objetivo: cruzar el contrato documentado del runtime con su implementacion real 
 18. `/runtimeEvents` replica el panel unificado de resiliencia y el resumen de lifecycle para que los outcomes de navegacion/errores del request lab queden visibles tambien al aterrizar fuera del lab.
 19. `/runtimeEvents` agrega un badge `incidentes en sesion` y un CTA `Ir a RequestLab` para cerrar el circuito QA entre observabilidad y reproduccion operativa.
 20. `RequestLab` rehidrata su wiring JS desde `SpaLab.js` cuando la pantalla se abre por SPA desde `/runtimeEvents` u otras rutas demo, evitando un lab visible pero sin bootstrap activo.
+21. `/runtimeState` incorpora un laboratorio contractual de estados runtime con `dirty` por debounce, `success/error` filtrados por `action/target` y un panel que relee `data-volt-request-status`, `data-volt-dirty-target`, `data-volt-success-*` y `data-volt-error-*`.
+22. `/runtimeFocus` incorpora un laboratorio contractual de restore UI con patch server-driven, `data-volt-preserve-scroll`, inspector visible de `focus/selection/scroll` y markers estables (`focus-*`) para guardrails del skeleton.
 
 ## Divergencias Detectadas Y Corregidas
 

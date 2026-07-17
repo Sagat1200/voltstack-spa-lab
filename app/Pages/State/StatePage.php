@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace VoltStack\SPALab\Pages\State;
 
+use RuntimeException;
 use VoltStack\Runtime\Component\Component;
 use VoltStack\Runtime\Protocol\ActionEffectOptions;
 use VoltStack\Runtime\Protocol\ActionManualEffectBuilder;
@@ -21,6 +22,10 @@ final class StatePage extends Component
     public int $sharedCounterMirror = 0;
 
     public string $lastSyncReport = '{"waiting":"Sin request reactiva aun."}';
+
+    public string $statusProbeTitle = 'Runtime state status';
+
+    public string $statusProbeSavedMessage = 'Aun no guardado.';
 
     public function mount(): void
     {
@@ -53,6 +58,34 @@ final class StatePage extends Component
                 ])
                 ->event('demo.state.synced', $report)
                 ->end());
+    }
+
+    public function saveStatusProbe(): ActionEffectOptions
+    {
+        $this->validate([
+            'statusProbeTitle' => $this->statusProbeTitle,
+        ], [
+            'statusProbeTitle' => ['required', 'string', 'min:5'],
+        ]);
+
+        $this->statusProbeSavedMessage = sprintf(
+            'Guardado desde saveStatusProbe a las %s con titulo "%s".',
+            date('H:i:s'),
+            $this->statusProbeTitle
+        );
+
+        return ActionEffectOptions::make()
+            ->effects(fn(ActionManualEffectBuilder $effects) => $effects
+                ->event('demo.state.status.saved', [
+                    'title' => $this->statusProbeTitle,
+                    'savedMessage' => $this->statusProbeSavedMessage,
+                ])
+                ->end());
+    }
+
+    public function failStatusProbe(): ActionEffectOptions
+    {
+        throw new RuntimeException('Runtime state status demo forced error.');
     }
 }
 
@@ -521,6 +554,26 @@ shared:ui.softenSharedCard -&gt; opacity:0.7; transform:scale(1.01) translateY(-
                 <pre data-volt-state-shared-snapshot
                     style="margin:8px 0 0;min-block-size:120px;overflow:auto;border:1px solid rgba(51,65,85,1);background:#020617;border-radius:12px;padding:12px;color:#e9d5ff;font-size:12px;line-height:1.7;">{"waiting":"shared snapshot"}</pre>
             </article>
+            <article
+                style="border:1px solid rgba(56,189,248,0.20);background:rgba(8,47,73,0.18);border-radius:16px;padding:16px;">
+                <strong style="display:block;color:#a5f3fc;">Estado request/runtime</strong>
+                <div style="display:grid;gap:8px;margin-block-start:10px;">
+                    <span data-runtime-check="state-status-request-status"
+                        style="font-size:13px;color:#e0f2fe;line-height:1.6;">request-status = idle</span>
+                    <span data-runtime-check="state-status-dirty-target"
+                        style="font-size:13px;color:#bfdbfe;line-height:1.6;">dirty.target = sin target</span>
+                    <span data-runtime-check="state-status-success-action"
+                        style="font-size:13px;color:#86efac;line-height:1.6;">success.action = sin action</span>
+                    <span data-runtime-check="state-status-success-target"
+                        style="font-size:13px;color:#bbf7d0;line-height:1.6;">success.target = sin target</span>
+                    <span data-runtime-check="state-status-error-action"
+                        style="font-size:13px;color:#fca5a5;line-height:1.6;">error.action = sin action</span>
+                    <span data-runtime-check="state-status-error-target"
+                        style="font-size:13px;color:#fecaca;line-height:1.6;">error.target = sin target</span>
+                    <span data-runtime-check="state-status-error-message"
+                        style="font-size:13px;color:#fda4af;line-height:1.6;">error.message = sin error</span>
+                </div>
+            </article>
         </div>
 
         <article
@@ -529,6 +582,93 @@ shared:ui.softenSharedCard -&gt; opacity:0.7; transform:scale(1.01) translateY(-
             <pre data-volt-state-last-event
                 style="margin:8px 0 0;min-block-size:120px;overflow:auto;border:1px solid rgba(51,65,85,1);background:#020617;border-radius:12px;padding:12px;color:#cbd5e1;font-size:12px;line-height:1.7;">{"waiting":"state event"}</pre>
         </article>
+
+        <article
+            style="border:1px solid rgba(56,189,248,0.18);background:rgba(8,47,73,0.22);border-radius:16px;padding:16px;">
+            <strong style="display:block;color:#a5f3fc;">Ultimo hook de request state</strong>
+            <pre data-runtime-check="state-status-last-request-event"
+                style="margin:8px 0 0;min-block-size:120px;overflow:auto;border:1px solid rgba(51,65,85,1);background:#020617;border-radius:12px;padding:12px;color:#cffafe;font-size:12px;line-height:1.7;">{"waiting":"request state event"}</pre>
+        </article>
+    </section>
+
+    <section data-volt-state-example
+        style="display:grid;gap:18px;border:1px solid rgba(14,165,233,0.24);background:#0f172a;border-radius:20px;padding:24px;color:#e2e8f0;">
+        <div style="display:grid;gap:8px;">
+            <h2 style="margin:0;font-size:24px;">Estados runtime: <code>dirty</code>, <code>success</code>, <code>error</code></h2>
+            <p style="margin:0;color:#94a3b8;line-height:1.7;">
+                Este bloque fija el contrato visual de estados runtime con filtros explicitos por
+                <code>action</code> y <code>target</code>. Aqui no se prueba el store global, sino el lifecycle del
+                request reactivo.
+            </p>
+        </div>
+
+        <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+            <article data-runtime-check="state-status-dirty-banner" volt:dirty volt:dirty.target="statusProbeTitle"
+                volt:dirty.debounce="200ms"
+                style="display:grid;gap:8px;border:1px solid rgba(168,85,247,0.28);background:rgba(88,28,135,0.18);border-radius:14px;padding:14px;color:#f3e8ff;">
+                <strong>Dirty por target</strong>
+                <span style="font-size:13px;line-height:1.6;">Se activa cuando editas <code>volt-model="statusProbeTitle"</code> y respeta <code>200ms</code> de debounce.</span>
+            </article>
+            <article data-runtime-check="state-status-success-action-banner" volt:success="saveStatusProbe"
+                volt:success.timeout="1200ms" volt:success.min-duration="200ms"
+                style="display:grid;gap:8px;border:1px solid rgba(16,185,129,0.28);background:rgba(6,95,70,0.18);border-radius:14px;padding:14px;color:#d1fae5;">
+                <strong>Success por action</strong>
+                <span style="font-size:13px;line-height:1.6;">Solo responde a <code>saveStatusProbe</code> y se limpia por timeout.</span>
+            </article>
+            <article data-runtime-check="state-status-success-target-banner" volt:success volt:success.target="state-status-form"
+                volt:success.timeout="1200ms" volt:success.min-duration="200ms"
+                style="display:grid;gap:8px;border:1px solid rgba(34,197,94,0.28);background:rgba(20,83,45,0.18);border-radius:14px;padding:14px;color:#dcfce7;">
+                <strong>Success por target</strong>
+                <span style="font-size:13px;line-height:1.6;">Solo aparece cuando el exito llega desde <code>state-status-form</code>.</span>
+            </article>
+            <article data-runtime-check="state-status-error-action-banner" volt:error="failStatusProbe"
+                volt:error.timeout="3s"
+                style="display:grid;gap:8px;border:1px solid rgba(248,113,113,0.28);background:rgba(127,29,29,0.20);border-radius:14px;padding:14px;color:#fecaca;">
+                <strong>Error por action</strong>
+                <span style="font-size:13px;line-height:1.6;">Solo responde a <code>failStatusProbe</code> y muestra el mensaje del runtime.</span>
+            </article>
+            <article data-runtime-check="state-status-error-target-banner" volt:error volt:error.target="state-status-error-button"
+                volt:error.timeout="3s"
+                style="display:grid;gap:8px;border:1px solid rgba(251,146,60,0.28);background:rgba(154,52,18,0.18);border-radius:14px;padding:14px;color:#fed7aa;">
+                <strong>Error por target</strong>
+                <span style="font-size:13px;line-height:1.6;">Queda filtrado por el trigger <code>state-status-error-button</code>.</span>
+            </article>
+        </div>
+
+        <form data-volt-target="state-status-form" volt-submit="saveStatusProbe" style="display:grid;gap:16px;">
+            <div
+                style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));border:1px solid rgba(51,65,85,1);background:#020617;border-radius:18px;padding:18px;">
+                <label style="display:grid;gap:8px;">
+                    <span style="font-size:14px;color:#cbd5e1;">Titulo observado por <code>volt:model</code></span>
+                    <input type="text" data-volt-target="state-status-title-input" volt-model="statusProbeTitle"
+                        value="{{ $statusProbeTitle }}"
+                        style="display:block;inline-size:100%;padding:10px 12px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f8fafc;">
+                </label>
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(56,189,248,0.18);background:rgba(8,47,73,0.18);border-radius:14px;padding:14px;">
+                    <strong style="color:#a5f3fc;">Ultimo guardado</strong>
+                    <span data-runtime-check="state-status-saved-message"
+                        style="font-size:13px;color:#cffafe;line-height:1.7;">{{ $statusProbeSavedMessage }}</span>
+                </article>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                <button type="submit" volt:loading.class="opacity-70" volt:loading.action="saveStatusProbe"
+                    volt:loading.delay="80ms" volt:loading.min-duration="320ms"
+                    style="border:1px solid rgba(59,130,246,0.28);background:rgba(30,64,175,0.16);color:#dbeafe;border-radius:10px;padding:10px 16px;">
+                    Guardar y disparar success
+                </button>
+                <button type="button" data-volt-target="state-status-error-button" volt-click="failStatusProbe"
+                    volt:loading.action="failStatusProbe" volt:loading.delay="40ms"
+                    style="border:1px solid rgba(248,113,113,0.28);background:rgba(127,29,29,0.16);color:#fee2e2;border-radius:10px;padding:10px 16px;">
+                    Forzar error controlado
+                </button>
+                <span volt:loading="saveStatusProbe"
+                    style="display:inline-flex;align-items:center;border:1px solid rgba(250,204,21,0.28);background:rgba(250,204,21,0.08);color:#fde68a;border-radius:10px;padding:10px 14px;">
+                    Guardando status runtime...
+                </span>
+            </div>
+        </form>
     </section>
 
     <section

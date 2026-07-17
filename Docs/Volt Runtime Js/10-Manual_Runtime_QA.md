@@ -149,6 +149,13 @@ Cobertura adicional del retry seguro en navegacion `GET`:
 - cierre UX de navegacion QA: `/runtimeEvents` ahora muestra un badge `incidentes en sesion` y un CTA `Ir a RequestLab`, de forma que el tester vea enseguida si hay contexto persistido y pueda saltar al laboratorio sin recordar la ruta
 - cierre operativo adicional: al entrar a `/runtimeRequestLab` por SPA desde `/runtimeEvents`, `SpaLab.js` rehidrata el wiring del lab automaticamente, evitando que el CTA deje una pantalla visualmente cargada pero sin bootstrap activo
 - revalidacion browser del CTA end-to-end: `runtimeEvents -> RequestLab -> Protocol error por validacion -> runtimeEvents` ya conserva `protocol-error` en `sessionStorage` y repinta el panel/badge de resiliencia al volver por SPA, con `status = 422`, `target = protocolValidationFailure` y mensaje `The given data was invalid.`
+- Sprint 1 `Estados Runtime` validado en `/runtimeState`: editar `volt:model="statusProbeTitle"` activa `dirty.target = statusProbeTitle` con debounce `200ms`; `saveStatusProbe` expone `success.action = saveStatusProbe` y `success.target = state-status-form`; `failStatusProbe` expone `error.action = failStatusProbe`, `error.target = state-status-error-button` y mensaje `Server Error`
+- `QA-13 Foco`: `OK` en `/runtimeFocus`
+  - el input/textarea conservan el target activo tras `Disparar patch reactivo`
+  - el inspector mantiene `focus-selection-range` y `focus-selection-direction` cuando existe una seleccion valida
+- `QA-14 Scroll`: `OK` en `/runtimeFocus`
+  - el contenedor `data-volt-preserve-scroll` restaura `focus-scroll-box-top` despues del patch
+  - el mismo lab deja visible el scroll interno del control activo mediante `focus-selection-scroll-top`
 
 ### Cobertura Automatizada Complementaria 2026-07-13
 
