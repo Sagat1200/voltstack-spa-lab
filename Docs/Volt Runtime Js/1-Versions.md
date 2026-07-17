@@ -711,6 +711,14 @@ Usar esta seccion para marcar hitos reales conforme avancemos.
 - `[x]` retry automatico seguro para navegacion `GET` con politica declarativa/programatica, hook `volt:request-retry` y soporte inicial para errores transitorios
 - `[x]` destino `/runtimeRequestLabRetryOnce` y acceso desde la home para validar un fallo transitorio seguido de exito en el siguiente intento del runtime
 - `[x]` validacion manual inicial del retry de navegacion: `Telemetry navigation` con `count = 5`, `outcomes = success:5`, `avg duration = 213.74 ms`, `max duration = 542.6 ms`, `avg response = 33860 B`, `max response = 58213 B`, `avg patch = 21.24 ms`, `max patch = 29 ms`
+- `[x]` endurecimiento visual de `/runtimeRequestLab` para hacer obvia la politica vigente de resiliencia: `actions POST` sin retry automatico, `navegacion GET` con retry opt-in y monitor live del ultimo evento/request + conectividad del navegador
+- `[x]` correccion del retry de navegacion `GET` para que los errores HTTP transitorios expuestos como `payload.error` tambien entren en `shouldRetryNavigationRequest(...)` antes de propagarse como `request-error`
+- `[x]` observabilidad post-navegacion del retry en `/runtimeRequestLabRetryOnce`, leyendo desde `sessionStorage` el ultimo `volt:request-retry` para exponer `retryAttempt`, `status`, `errorKind`, `retryDelayMs` y `finalUrl` en una tarjeta visible
+- `[x]` observabilidad post-navegacion de `abort` y `stale`, persistiendo el ultimo lifecycle de navegacion en `sessionStorage` y renderizandolo tanto en `/runtimeRequestLab` como en `/runtimeEvents`
+- `[x]` panel unificado de resiliencia en `/runtimeRequestLab`, con `ultimo incidente` + tablero de escenarios observados (`retry`, `abort`, `stale`, `network-error`, `timeout`, `protocol-error`) bajo el mismo lenguaje visual
+- `[x]` el panel unificado de resiliencia tambien se replica en `/runtimeEvents` para que el resumen sea visible al aterrizar desde el request lab o al recargar la pantalla directamente
+- `[x]` `/runtimeEvents` expone ademas un CTA directo a `/runtimeRequestLab` y un badge de `incidentes en sesion` para guiar la reproduccion QA sin depender de recordar rutas
+- `[x]` `RequestLab` rehidrata su wiring JS desde el cliente persistente `SpaLab.js`, de modo que siga operativo tambien al entrar por navegacion SPA desde otras pantallas
 
 ## Proximo Bloque Recomendado
 

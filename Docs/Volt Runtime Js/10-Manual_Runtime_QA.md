@@ -141,6 +141,14 @@ Cobertura adicional del retry seguro en navegacion `GET`:
 - `max patch = 29 ms`
 - guardrail automatizado del skeleton: el destino `/runtimeRequestLabRetryOnce` queda fijado con primer intento `500` y segundo intento `200`
 - lectura operativa: resultado compatible con un fallo transitorio absorbido por el retry automatico, sin degradacion visible del patch DOM
+- revalidacion browser posterior al endurecimiento de `/runtimeRequestLab`: con listener persistido en `sessionStorage`, `Retry navigation once` vuelve a confirmar `volt:request-retry` con `retryAttempt = 1`, `errorKind = http-error`, `status = 500` y navegacion final exitosa en un solo click
+- cierre UX adicional: `/runtimeRequestLabRetryOnce` ahora pinta ese resumen persistido en la propia pantalla destino para que QA vea `retryAttempt`, `status`, `errorKind`, `retryDelayMs` y `finalUrl` sin abrir DevTools
+- cierre UX adicional para lifecycle: `Abort previous navigation` y `Stale navigation` ahora dejan un resumen persistido visible en `/runtimeEvents` y/o `/runtimeRequestLab`, mostrando `eventName`, `errorKind`, `target`, `message` y `finalUrl` despues de navegar
+- revalidacion browser del cierre lifecycle: `Stale navigation` ya muestra `volt:request-stale`, `outcome = stale` y `finalUrl = /runtimeRequestLabSlow` en `/runtimeRequestLab`; `Abort previous navigation` ya muestra `volt:request-abort`, `outcome = aborted` y mensaje de supersession en `/runtimeEvents`
+- endurecimiento UX adicional del lab: `/runtimeRequestLab` ahora concentra un panel unificado de resiliencia que resume el ultimo incidente y deja marcados como observados `retry`, `abort`, `stale`, `network-error`, `timeout` y `protocol-error`; `/runtimeEvents` replica el panel para que el resumen sea visible tambien al aterrizar fuera del lab
+- cierre UX de navegacion QA: `/runtimeEvents` ahora muestra un badge `incidentes en sesion` y un CTA `Ir a RequestLab`, de forma que el tester vea enseguida si hay contexto persistido y pueda saltar al laboratorio sin recordar la ruta
+- cierre operativo adicional: al entrar a `/runtimeRequestLab` por SPA desde `/runtimeEvents`, `SpaLab.js` rehidrata el wiring del lab automaticamente, evitando que el CTA deje una pantalla visualmente cargada pero sin bootstrap activo
+- revalidacion browser del CTA end-to-end: `runtimeEvents -> RequestLab -> Protocol error por validacion -> runtimeEvents` ya conserva `protocol-error` en `sessionStorage` y repinta el panel/badge de resiliencia al volver por SPA, con `status = 422`, `target = protocolValidationFailure` y mensaje `The given data was invalid.`
 
 ### Cobertura Automatizada Complementaria 2026-07-13
 

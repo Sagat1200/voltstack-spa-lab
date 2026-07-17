@@ -25,109 +25,307 @@ final class EventsPage extends Component
 @section('head')
 <meta name="volt-navigation-mode" content="auto" data-volt-head-key="events-mode">
 <script data-volt-head-key="events-demo-bridge">
-    (() => {
-        if (window.__voltEventsDemoBridgeInstalled) {
+(() => {
+    if (window.__voltEventsDemoBridgeInstalled) {
+        return;
+    }
+
+    window.__voltEventsDemoBridgeInstalled = true;
+
+    function state() {
+        return window.Volt && window.Volt.state ? window.Volt.state : null;
+    }
+
+    function setClient(path, value) {
+        const api = state();
+
+        if (!api) {
             return;
         }
 
-        window.__voltEventsDemoBridgeInstalled = true;
+        api.set(path, value, {
+            scope: 'client'
+        });
+    }
 
-        function state() {
-            return window.Volt && window.Volt.state ? window.Volt.state : null;
+    function setShared(path, value) {
+        const api = state();
+
+        if (!api) {
+            return;
         }
 
-        function setClient(path, value) {
-            const api = state();
+        api.set(path, value, {
+            scope: 'shared'
+        });
+    }
 
-            if (!api) {
-                return;
-            }
+    function increment(path, scope) {
+        const api = state();
 
-            api.set(path, value, {
-                scope: 'client'
-            });
+        if (!api) {
+            return;
         }
 
-        function setShared(path, value) {
-            const api = state();
+        const current = api.get(path, {
+            scope
+        });
+        const nextValue = typeof current === 'number' ? current + 1 : 1;
 
-            if (!api) {
-                return;
-            }
+        api.set(path, nextValue, {
+            scope
+        });
+    }
 
-            api.set(path, value, {
-                scope: 'shared'
-            });
+    function reflectDispatch(event) {
+        const api = state();
+
+        if (!api) {
+            return;
         }
 
-        function increment(path, scope) {
-            const api = state();
+        const detail = event && event.detail && typeof event.detail === 'object' ?
+            event.detail : {};
+        const originalEvent = detail.originalEvent && typeof detail.originalEvent === 'object' ?
+            detail.originalEvent :
+            null;
+        const sourceElement = detail.sourceElement && typeof detail.sourceElement === 'object' ?
+            detail.sourceElement :
+            null;
 
-            if (!api) {
-                return;
-            }
+        increment('events.dispatchCount', 'client');
+        setClient('events.lastDispatchName', event.type);
+        setClient('events.lastDirective', typeof detail.directive === 'string' ? detail.directive :
+            '(sin directive)');
+        setClient('events.lastOriginalType', originalEvent && typeof originalEvent.type === 'string' ? originalEvent
+            .type : '(sin originalEvent)');
+        setClient('events.lastSourceTag', sourceElement && sourceElement.tagName ? sourceElement.tagName
+            .toLowerCase() : '(sin source)');
+        setClient('events.lastScopeId', typeof detail.scopeId === 'string' ? detail.scopeId : '(sin scopeId)');
+        setClient('events.lastComponent', typeof detail.component === 'string' && detail.component !== '' ? detail
+            .component : '(sin component)');
+        setClient('events.lastDispatchAt', new Date().toLocaleTimeString());
 
-            const current = api.get(path, {
-                scope
-            });
-            const nextValue = typeof current === 'number' ? current + 1 : 1;
-
-            api.set(path, nextValue, {
-                scope
-            });
+        if (event.type === 'demo.events.audit') {
+            increment('events.auditCount', 'shared');
         }
 
-        function reflectDispatch(event) {
-            const api = state();
+        if (event.type === 'demo.events.submit') {
+            increment('events.submitCount', 'shared');
+        }
 
-            if (!api) {
-                return;
+        if (event.type === 'demo.events.enter') {
+            increment('events.enterCount', 'shared');
+        }
+    }
+
+    [
+        'demo.events.alpha',
+        'demo.events.audit',
+        'demo.events.submit',
+        'demo.events.enter',
+    ].forEach((name) => {
+        document.addEventListener(name, reflectDispatch);
+    });
+})();
+</script>
+<script data-volt-head-key="events-resilience-panel">
+(() => {
+    function updateText(selector, value) {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    function readJson(key) {
+        if (typeof sessionStorage === 'undefined') {
+            return null;
+        }
+
+        try {
+            const raw = sessionStorage.getItem(key);
+            if (!raw) {
+                return null;
             }
 
-            const detail = event && event.detail && typeof event.detail === 'object' ?
-                event.detail : {};
-            const originalEvent = detail.originalEvent && typeof detail.originalEvent === 'object' ?
-                detail.originalEvent :
-                null;
-            const sourceElement = detail.sourceElement && typeof detail.sourceElement === 'object' ?
-                detail.sourceElement :
-                null;
+            return JSON.parse(raw);
+        } catch (error) {
+            return null;
+        }
+    }
 
-            increment('events.dispatchCount', 'client');
-            setClient('events.lastDispatchName', event.type);
-            setClient('events.lastDirective', typeof detail.directive === 'string' ? detail.directive :
-                '(sin directive)');
-            setClient('events.lastOriginalType', originalEvent && typeof originalEvent.type === 'string' ? originalEvent
-                .type : '(sin originalEvent)');
-            setClient('events.lastSourceTag', sourceElement && sourceElement.tagName ? sourceElement.tagName
-                .toLowerCase() : '(sin source)');
-            setClient('events.lastScopeId', typeof detail.scopeId === 'string' ? detail.scopeId : '(sin scopeId)');
-            setClient('events.lastComponent', typeof detail.component === 'string' && detail.component !== '' ? detail
-                .component : '(sin component)');
-            setClient('events.lastDispatchAt', new Date().toLocaleTimeString());
+    function readArray(key) {
+        const parsed = readJson(key);
+        return Array.isArray(parsed) ? parsed : [];
+    }
 
-            if (event.type === 'demo.events.audit') {
-                increment('events.auditCount', 'shared');
-            }
+    function renderLifecycleSummary() {
+        if (!document.querySelector('[data-runtime-check="nav-lifecycle-event"]')) {
+            return;
+        }
 
-            if (event.type === 'demo.events.submit') {
-                increment('events.submitCount', 'shared');
-            }
+        const summary = readJson('volt.requestLab.lastNavigationLifecycle');
+        if (!summary || typeof summary !== 'object') {
+            updateText('[data-runtime-check="nav-lifecycle-event"]', 'sin resumen persistido');
+            updateText('[data-runtime-check="nav-lifecycle-outcome"]', 'sin dato');
+            updateText('[data-runtime-check="nav-lifecycle-target"]', 'sin target');
+            updateText('[data-runtime-check="nav-lifecycle-status"]', 'sin dato');
+            updateText('[data-runtime-check="nav-lifecycle-message"]', 'mensaje sin dato');
+            updateText('[data-runtime-check="nav-lifecycle-final-url"]', 'finalUrl = sin dato');
+            updateText('[data-runtime-check="nav-lifecycle-captured-at"]', 'capturado en = sin dato');
+            return;
+        }
 
-            if (event.type === 'demo.events.enter') {
-                increment('events.enterCount', 'shared');
-            }
+        updateText('[data-runtime-check="nav-lifecycle-event"]', typeof summary.eventName === 'string' && summary
+            .eventName !== '' ? summary.eventName : 'sin resumen');
+        updateText('[data-runtime-check="nav-lifecycle-outcome"]', typeof summary.errorKind === 'string' && summary
+            .errorKind !== '' ? summary.errorKind : (typeof summary.outcome === 'string' ? summary.outcome :
+                'sin dato'));
+        updateText('[data-runtime-check="nav-lifecycle-target"]', typeof summary.target === 'string' && summary
+            .target !== '' ? summary.target : 'sin target');
+        updateText('[data-runtime-check="nav-lifecycle-status"]', typeof summary.status === 'number' ? String(
+            summary.status) : 'sin dato');
+        updateText('[data-runtime-check="nav-lifecycle-message"]', typeof summary.message === 'string' && summary
+            .message !== '' ? summary.message : 'mensaje sin dato');
+        updateText('[data-runtime-check="nav-lifecycle-final-url"]', 'finalUrl = ' + (typeof summary.finalUrl ===
+            'string' && summary.finalUrl !== '' ? summary.finalUrl : 'sin dato'));
+        updateText('[data-runtime-check="nav-lifecycle-captured-at"]', 'capturado en = ' + (typeof summary
+            .capturedAt === 'string' && summary.capturedAt !== '' ? summary.capturedAt : 'sin dato'));
+    }
+
+    function renderScenarioChip(scenarioKey, history) {
+        const match = history.find((entry) => entry && entry.scenarioKey === scenarioKey);
+        if (!match) {
+            updateText('[data-runtime-check="resilience-scenario-' + scenarioKey + '"]', 'pendiente');
+            return;
+        }
+
+        updateText(
+            '[data-runtime-check="resilience-scenario-' + scenarioKey + '"]',
+            'observado · ' + (typeof match.outcome === 'string' && match.outcome !== '' ? match.outcome :
+                'sin outcome')
+        );
+    }
+
+    function renderIncidentSessionStatus() {
+        const summary = readJson('volt.requestLab.lastResilienceSummary');
+        const history = readArray('volt.requestLab.resilienceHistory');
+        const badge = document.querySelector('[data-runtime-check="events-session-incidents-badge"]');
+        const detail = document.querySelector('[data-runtime-check="events-session-incidents-detail"]');
+
+        if (!badge || !detail) {
+            return;
+        }
+
+        if (!summary || typeof summary !== 'object') {
+            badge.textContent = 'Sin incidentes en sesion';
+            badge.style.borderColor = 'rgba(148,163,184,0.28)';
+            badge.style.background = 'rgba(15,23,42,0.82)';
+            badge.style.color = '#cbd5e1';
+            detail.textContent = 'El flujo QA puede arrancar limpio desde esta pantalla o saltar al request lab.';
+            return;
+        }
+
+        const scenarioKey = typeof summary.scenarioKey === 'string' && summary.scenarioKey !== '' ? summary
+            .scenarioKey : 'incidente';
+        const count = Array.isArray(history) ? history.length : 0;
+        badge.textContent = 'Hay incidentes en sesion';
+        badge.style.borderColor = 'rgba(248,113,113,0.28)';
+        badge.style.background = 'rgba(127,29,29,0.22)';
+        badge.style.color = '#fee2e2';
+        detail.textContent = 'Ultimo incidente: ' + scenarioKey + ' · registros persistidos: ' + String(count);
+    }
+
+    function renderResiliencePanel() {
+        if (!document.querySelector('[data-runtime-check="resilience-current-scenario"]')) {
+            return;
+        }
+
+        const summary = readJson('volt.requestLab.lastResilienceSummary');
+        const history = readArray('volt.requestLab.resilienceHistory');
+
+        if (!summary || typeof summary !== 'object') {
+            updateText('[data-runtime-check="resilience-current-scenario"]', 'sin incidentes');
+            updateText('[data-runtime-check="resilience-current-outcome"]', 'sin dato');
+            updateText('[data-runtime-check="resilience-current-scope"]', 'sin scope');
+            updateText('[data-runtime-check="resilience-current-status"]', 'sin dato');
+            updateText('[data-runtime-check="resilience-current-target"]', 'target = sin dato');
+            updateText('[data-runtime-check="resilience-current-message"]', 'mensaje = sin dato');
+            updateText('[data-runtime-check="resilience-current-final-url"]', 'finalUrl = sin dato');
+            updateText('[data-runtime-check="resilience-current-captured-at"]', 'capturado en = sin dato');
+        } else {
+            updateText(
+                '[data-runtime-check="resilience-current-scenario"]',
+                typeof summary.scenarioKey === 'string' && summary.scenarioKey !== '' ? summary.scenarioKey : (
+                    typeof summary.eventName === 'string' ? summary.eventName : 'sin escenario')
+            );
+            updateText('[data-runtime-check="resilience-current-outcome"]', typeof summary.outcome === 'string' &&
+                summary.outcome !== '' ? summary.outcome : 'sin dato');
+            updateText('[data-runtime-check="resilience-current-scope"]', typeof summary.scope === 'string' &&
+                summary.scope !== '' ? summary.scope : 'sin scope');
+            updateText('[data-runtime-check="resilience-current-status"]', typeof summary.status === 'number' ?
+                String(summary.status) : 'sin dato');
+            updateText('[data-runtime-check="resilience-current-target"]', 'target = ' + (typeof summary.target ===
+                'string' && summary.target !== '' ? summary.target : 'sin dato'));
+            updateText('[data-runtime-check="resilience-current-message"]', 'mensaje = ' + (typeof summary
+                .message === 'string' && summary.message !== '' ? summary.message : 'sin dato'));
+            updateText('[data-runtime-check="resilience-current-final-url"]', 'finalUrl = ' + (typeof summary
+                .finalUrl === 'string' && summary.finalUrl !== '' ? summary.finalUrl : 'sin dato'));
+            updateText('[data-runtime-check="resilience-current-captured-at"]', 'capturado en = ' + (typeof summary
+                .capturedAt === 'string' && summary.capturedAt !== '' ? summary.capturedAt : 'sin dato'));
         }
 
         [
-            'demo.events.alpha',
-            'demo.events.audit',
-            'demo.events.submit',
-            'demo.events.enter',
-        ].forEach((name) => {
-            document.addEventListener(name, reflectDispatch);
-        });
-    })();
+            'retry',
+            'abort',
+            'stale',
+            'network-error',
+            'timeout',
+            'protocol-error'
+        ].forEach((scenarioKey) => renderScenarioChip(scenarioKey, history));
+    }
+
+    function clearResiliencePanel() {
+        if (typeof sessionStorage === 'undefined') {
+            return;
+        }
+
+        try {
+            sessionStorage.removeItem('volt.requestLab.lastResilienceSummary');
+            sessionStorage.removeItem('volt.requestLab.resilienceHistory');
+        } catch (error) {
+            return;
+        }
+
+        renderResiliencePanel();
+    }
+
+    window.__spaLabEventsResiliencePanel = window.__spaLabEventsResiliencePanel || {};
+    window.__spaLabEventsResiliencePanel.render = function() {
+        if (window.__spaLabRequestLab) {
+            if (typeof window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard === 'function') {
+                window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard();
+            }
+            if (typeof window.__spaLabRequestLab.renderResiliencePanel === 'function') {
+                window.__spaLabRequestLab.renderResiliencePanel();
+            }
+        } else {
+            renderLifecycleSummary();
+            renderResiliencePanel();
+        }
+        renderIncidentSessionStatus();
+    };
+    window.__spaLabEventsResiliencePanel.clear = clearResiliencePanel;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        window.__spaLabEventsResiliencePanel.render();
+    });
+    document.addEventListener('volt:navigated', () => {
+        window.setTimeout(() => window.__spaLabEventsResiliencePanel.render(), 0);
+    });
+    window.setTimeout(() => window.__spaLabEventsResiliencePanel.render(), 0);
+})();
 </script>
 @endsection
 
@@ -153,6 +351,18 @@ final class EventsPage extends Component
             <strong style="font-size:14px;color:#fff7ed;">{{ $requestMarker }}</strong>
             <span style="font-size:13px;color:#fed7aa;">La limpieza borra state, pero un listener con
                 <code>.once</code> queda consumido hasta que la pagina se vuelva a montar.</span>
+            <span data-runtime-check="events-session-incidents-badge"
+                style="display:inline-flex;align-items:center;border:1px solid rgba(148,163,184,0.28);background:rgba(15,23,42,0.82);color:#cbd5e1;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">
+                Sin incidentes en sesion
+            </span>
+            <a href="/runtimeRequestLab" volt:navigate
+                style="display:inline-flex;align-items:center;border:1px solid rgba(253,186,116,0.28);background:rgba(124,45,18,0.22);color:#fff7ed;border-radius:10px;padding:10px 14px;text-decoration:none;">
+                Ir a RequestLab
+            </a>
+            <span data-runtime-check="events-session-incidents-detail"
+                style="font-size:13px;color:#fed7aa;line-height:1.7;">
+                El flujo QA puede arrancar limpio desde esta pantalla o saltar al request lab.
+            </span>
         </div>
     </section>
 
@@ -175,6 +385,144 @@ final class EventsPage extends Component
             <span style="color:#94a3b8;font-size:13px;">Ultima accion:</span>
             <strong volt:text="client:events.lastAction ?? 'sin acciones aun'" style="color:#f8fafc;">sin acciones
                 aun</strong>
+        </div>
+    </section>
+
+    <section
+        style="display:grid;gap:18px;border:1px solid rgba(56,189,248,0.24);background:#0f172a;border-radius:20px;padding:24px;color:#e2e8f0;">
+        <div style="display:grid;gap:8px;">
+            <h2 style="margin:0;font-size:24px;">Resumen persistido de navegacion</h2>
+            <p style="margin:0;color:#94a3b8;line-height:1.7;max-inline-size:74ch;">
+                Cuando llegas aqui desde <code>/runtimeRequestLab</code>, esta tarjeta refleja el ultimo lifecycle de
+                navegacion persistido por el lab para que <code>abort</code>, <code>stale</code> o <code>retry</code>
+                queden visibles sin abrir DevTools.
+            </p>
+        </div>
+
+        <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:start;">
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(56,189,248,0.2);background:rgba(8,47,73,0.18);border-radius:14px;padding:14px;">
+                <strong style="color:#7dd3fc;">Evento</strong>
+                <span data-runtime-check="nav-lifecycle-event" style="font-size:15px;color:#e0f2fe;">sin resumen</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(245,158,11,0.2);background:rgba(120,53,15,0.18);border-radius:14px;padding:14px;">
+                <strong style="color:#fde68a;">Outcome</strong>
+                <span data-runtime-check="nav-lifecycle-outcome" style="font-size:15px;color:#fef3c7;">sin dato</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(16,185,129,0.2);background:rgba(6,95,70,0.18);border-radius:14px;padding:14px;">
+                <strong style="color:#d1fae5;">Target</strong>
+                <span data-runtime-check="nav-lifecycle-target" style="font-size:15px;color:#d1fae5;">sin target</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(217,70,239,0.2);background:rgba(88,28,135,0.16);border-radius:14px;padding:14px;">
+                <strong style="color:#f5d0fe;">Status</strong>
+                <span data-runtime-check="nav-lifecycle-status" style="font-size:15px;color:#f5d0fe;">sin dato</span>
+            </article>
+        </div>
+
+        <span data-runtime-check="nav-lifecycle-message" style="font-size:13px;color:#cbd5e1;line-height:1.7;">mensaje
+            sin dato</span>
+        <span data-runtime-check="nav-lifecycle-final-url"
+            style="font-size:13px;color:#93c5fd;line-height:1.7;">finalUrl = sin dato</span>
+        <span data-runtime-check="nav-lifecycle-captured-at"
+            style="font-size:13px;color:#94a3b8;line-height:1.7;">capturado en = sin dato</span>
+    </section>
+
+    <section
+        style="display:grid;gap:18px;border:1px solid rgba(71,85,105,1);background:#020617;border-radius:20px;padding:24px;color:#e2e8f0;">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+            <div style="display:grid;gap:8px;">
+                <h2 style="margin:0;font-size:24px;">Panel unificado de resiliencia</h2>
+                <p style="margin:0;color:#94a3b8;line-height:1.7;max-inline-size:76ch;">
+                    Relee el ultimo incidente persistido por <code>/runtimeRequestLab</code> y marca los escenarios ya
+                    observados en esta sesion.
+                </p>
+            </div>
+            <button type="button"
+                onclick="if(window.__spaLabEventsResiliencePanel && typeof window.__spaLabEventsResiliencePanel.clear === 'function'){ window.__spaLabEventsResiliencePanel.clear(); }"
+                style="border:1px solid rgba(148,163,184,0.28);background:rgba(15,23,42,0.82);color:#e2e8f0;border-radius:10px;padding:10px 14px;cursor:pointer;">
+                Limpiar panel
+            </button>
+        </div>
+
+        <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:start;">
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(56,189,248,0.2);background:rgba(8,47,73,0.18);border-radius:14px;padding:14px;">
+                <strong>Ultimo escenario</strong>
+                <span data-runtime-check="resilience-current-scenario" style="font-size:18px;color:#e0f2fe;">sin
+                    incidentes</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(245,158,11,0.2);background:rgba(120,53,15,0.18);border-radius:14px;padding:14px;">
+                <strong>Outcome</strong>
+                <span data-runtime-check="resilience-current-outcome" style="font-size:18px;color:#fde68a;">sin
+                    dato</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(16,185,129,0.2);background:rgba(6,95,70,0.18);border-radius:14px;padding:14px;">
+                <strong>Scope</strong>
+                <span data-runtime-check="resilience-current-scope" style="font-size:18px;color:#d1fae5;">sin
+                    scope</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(217,70,239,0.2);background:rgba(88,28,135,0.16);border-radius:14px;padding:14px;">
+                <strong>Status</strong>
+                <span data-runtime-check="resilience-current-status" style="font-size:18px;color:#f5d0fe;">sin
+                    dato</span>
+            </article>
+        </div>
+
+        <div
+            style="display:grid;gap:8px;border:1px solid rgba(51,65,85,1);background:#0f172a;border-radius:16px;padding:16px;color:#cbd5e1;">
+            <span data-runtime-check="resilience-current-target"
+                style="font-size:13px;color:#93c5fd;line-height:1.7;">target = sin dato</span>
+            <span data-runtime-check="resilience-current-message"
+                style="font-size:13px;color:#cbd5e1;line-height:1.7;">mensaje = sin dato</span>
+            <span data-runtime-check="resilience-current-final-url"
+                style="font-size:13px;color:#93c5fd;line-height:1.7;">finalUrl = sin dato</span>
+            <span data-runtime-check="resilience-current-captured-at"
+                style="font-size:13px;color:#94a3b8;line-height:1.7;">capturado en = sin dato</span>
+        </div>
+
+        <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:start;">
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(74,222,128,0.2);background:rgba(20,83,45,0.16);border-radius:14px;padding:14px;">
+                <strong style="color:#bbf7d0;">Retry</strong>
+                <span data-runtime-check="resilience-scenario-retry"
+                    style="font-size:14px;color:#dcfce7;">pendiente</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(56,189,248,0.2);background:rgba(8,47,73,0.18);border-radius:14px;padding:14px;">
+                <strong style="color:#7dd3fc;">Abort</strong>
+                <span data-runtime-check="resilience-scenario-abort"
+                    style="font-size:14px;color:#e0f2fe;">pendiente</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(163,230,53,0.2);background:rgba(63,98,18,0.18);border-radius:14px;padding:14px;">
+                <strong style="color:#d9f99d;">Stale</strong>
+                <span data-runtime-check="resilience-scenario-stale"
+                    style="font-size:14px;color:#ecfccb;">pendiente</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(59,130,246,0.2);background:rgba(30,64,175,0.18);border-radius:14px;padding:14px;">
+                <strong style="color:#bfdbfe;">Network error</strong>
+                <span data-runtime-check="resilience-scenario-network-error"
+                    style="font-size:14px;color:#dbeafe;">pendiente</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(250,204,21,0.2);background:rgba(113,63,18,0.18);border-radius:14px;padding:14px;">
+                <strong style="color:#fde68a;">Timeout</strong>
+                <span data-runtime-check="resilience-scenario-timeout"
+                    style="font-size:14px;color:#fef3c7;">pendiente</span>
+            </article>
+            <article
+                style="display:grid;gap:8px;border:1px solid rgba(244,114,182,0.2);background:rgba(131,24,67,0.16);border-radius:14px;padding:14px;">
+                <strong style="color:#f9a8d4;">Protocol error</strong>
+                <span data-runtime-check="resilience-scenario-protocol-error"
+                    style="font-size:14px;color:#fce7f3;">pendiente</span>
+            </article>
         </div>
     </section>
 

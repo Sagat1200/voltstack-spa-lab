@@ -1322,7 +1322,48 @@ function registerRuntimeStateExampleControls() {
   syncRuntimeStateExamples()
 }
 
+function bootstrapRequestLabPage() {
+  const requestLabMarker = document.querySelector('[data-runtime-check="action-endpoint-status"]')
+
+  if (!requestLabMarker) {
+    return
+  }
+
+  if (window.__spaLabRequestLab && typeof window.__spaLabRequestLab.syncVisibleState === 'function') {
+    window.__spaLabRequestLab.syncVisibleState()
+    return
+  }
+
+  const inlineBootstrap = Array.from(document.querySelectorAll('script')).find((script) => {
+    const content = typeof script.textContent === 'string' ? script.textContent : ''
+
+    return content.includes('window.__spaLabRequestLab = window.__spaLabRequestLab || {};') &&
+      content.includes('window.__spaLabRequestLab.syncVisibleState();')
+  })
+
+  if (!inlineBootstrap) {
+    return
+  }
+
+  try {
+    window.eval(inlineBootstrap.textContent)
+  } catch (error) {
+    console.error('RequestLab SPA bootstrap failed from SpaLab.js.', error)
+  }
+}
+
 registerVoltHookExamples()
 registerCacheExampleControls()
 registerRuntimeStateExampleControls()
 registerRuntimeEfficiencyExamples()
+document.addEventListener('DOMContentLoaded', () => {
+  window.requestAnimationFrame(() => {
+    bootstrapRequestLabPage()
+  })
+})
+document.addEventListener('volt:navigated', () => {
+  window.requestAnimationFrame(() => {
+    bootstrapRequestLabPage()
+  })
+})
+bootstrapRequestLabPage()
