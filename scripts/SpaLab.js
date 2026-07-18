@@ -16,6 +16,9 @@ const HOOK_EVENTS = [
   'volt:request-error',
   'volt:request-abort',
   'volt:request-stale',
+  'volt:busy-start',
+  'volt:busy-change',
+  'volt:busy-end',
   'volt:dirty',
   'volt:clean',
   'volt:error-cleared',
@@ -151,6 +154,7 @@ const navigationArrivalState = {
 }
 
 const NAVIGATION_DEBUG_STORAGE_KEY = 'volt.runtimeEvents.lastNavigationDebug'
+const RUNTIME_BUSY_STORAGE_KEY = 'volt.runtimeEvents.busySnapshot'
 
 const navigationDebugState = {
   stage: 'idle',
@@ -167,6 +171,21 @@ const navigationDebugState = {
   detail: {
     waiting: 'Aun no hay intentos de navegacion capturados.',
   },
+}
+
+const runtimeBusyPanelState = {
+  lastEvent: 'boot',
+  updatedAt: null,
+  snapshot: null,
+  lastActiveSnapshot: null,
+  lastActionActiveSnapshot: null,
+  documentSnapshot: null,
+  detail: {
+    waiting: 'Aun no hay snapshots busy capturados.',
+  },
+  scheduled: false,
+  pendingReason: 'boot',
+  pendingDetail: {},
 }
 
 const runtimeStateExampleState = {
@@ -261,6 +280,55 @@ function runtimeTelemetryApi() {
 
 function runtimeComponentsApi() {
   return window.Volt && window.Volt.components ? window.Volt.components : null
+}
+
+function runtimeBusyApi() {
+  return window.Volt && window.Volt.busy ? window.Volt.busy : null
+}
+
+function readDocumentBusySnapshot() {
+  const element = document.body || document.documentElement
+
+  if (!element || typeof element.getAttribute !== 'function') {
+    return {
+      active: false,
+      kind: 'idle',
+      phase: 'idle',
+      source: 'idle',
+      requestId: null,
+      component: null,
+      action: null,
+      target: null,
+    }
+  }
+
+  return {
+    active: element.getAttribute('data-volt-busy') === 'true',
+    kind: element.getAttribute('data-volt-busy-kind') || 'idle',
+    phase: element.getAttribute('data-volt-busy-phase') || 'idle',
+    source: element.getAttribute('data-volt-busy-source') || 'idle',
+    requestId: element.getAttribute('data-volt-busy-request-id') || null,
+    component: element.getAttribute('data-volt-busy-component') || null,
+    action: element.getAttribute('data-volt-busy-action') || null,
+    target: element.getAttribute('data-volt-busy-target') || null,
+  }
+}
+
+function readRuntimeBusySnapshot() {
+  const api = runtimeBusyApi()
+
+  if (!api || typeof api.current !== 'function') {
+    return readDocumentBusySnapshot()
+  }
+
+  const snapshot = api.current()
+  return snapshot && typeof snapshot === 'object'
+    ? normalizeHookValue(snapshot)
+    : readDocumentBusySnapshot()
+}
+
+function hasRuntimeBusyPanel() {
+  return !!document.querySelector('[data-runtime-busy-panel]')
 }
 
 function resolvedNavigationMetric(value, options = {}) {
@@ -1087,6 +1155,296 @@ function registerNavigationDebugPanel() {
   applyPersistedNavigationDebugState()
 }
 
+
+function readPersistedRuntimeBusyPanelState() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return null
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(RUNTIME_BUSY_STORAGE_KEY)
+
+    if (!raw) {
+      return null
+    }
+
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch (error) {
+    return null
+  }
+}
+
+function persistRuntimeBusyPanelState() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return
+  }
+
+  try {
+    window.sessionStorage.setItem(RUNTIME_BUSY_STORAGE_KEY, JSON.stringify({
+      lastEvent: runtimeBusyPanelState.lastEvent,
+      updatedAt: runtimeBusyPanelState.updatedAt,
+      snapshot: runtimeBusyPanelState.snapshot,
+      lastActiveSnapshot: runtimeBusyPanelState.lastActiveSnapshot,
+      lastActionActiveSnapshot: runtimeBusyPanelState.lastActionActiveSnapshot,
+      documentSnapshot: runtimeBusyPanelState.documentSnapshot,
+      detail: runtimeBusyPanelState.detail,
+    }))
+  } catch (error) {
+    // noop: the lab should stay usable even if sessionStorage is unavailable
+  }
+}
+
+function busyMirrorStatus(snapshot, documentSnapshot) {
+  const current = snapshot && typeof snapshot === 'object' ? snapshot : {}
+  const doc = documentSnapshot && typeof documentSnapshot === 'object' ? documentSnapshot : {}
+  const fields = ['active', 'kind', 'phase', 'source', 'requestId', 'component', 'action', 'target']
+
+  return fields.every((field) => {
+    const left = Object.prototype.hasOwnProperty.call(current, field) ? current[field] : null
+    const right = Object.prototype.hasOwnProperty.call(doc, field) ? doc[field] : null
+    return left === right
+  })
+}
+
+function isBusyActionSnapshot(snapshot) {
+  return !!(
+    snapshot &&
+    typeof snapshot === 'object' &&
+    snapshot.active === true &&
+    snapshot.kind === 'action'
+  )
+}
+
+function syncRuntimeBusyPanel() {
+  if (!hasRuntimeBusyPanel()) {
+    return
+  }
+
+  const snapshot = runtimeBusyPanelState.snapshot && typeof runtimeBusyPanelState.snapshot === 'object'
+    ? runtimeBusyPanelState.snapshot
+    : readRuntimeBusySnapshot()
+  const documentSnapshot = runtimeBusyPanelState.documentSnapshot && typeof runtimeBusyPanelState.documentSnapshot === 'object'
+    ? runtimeBusyPanelState.documentSnapshot
+    : readDocumentBusySnapshot()
+  const lastActiveSnapshot = runtimeBusyPanelState.lastActiveSnapshot && typeof runtimeBusyPanelState.lastActiveSnapshot === 'object'
+    ? runtimeBusyPanelState.lastActiveSnapshot
+    : null
+  const lastActionActiveSnapshot = runtimeBusyPanelState.lastActionActiveSnapshot && typeof runtimeBusyPanelState.lastActionActiveSnapshot === 'object'
+    ? runtimeBusyPanelState.lastActionActiveSnapshot
+    : null
+  const mirror = busyMirrorStatus(snapshot, documentSnapshot) ? 'consistente' : 'drift'
+
+  document.querySelectorAll('[data-runtime-busy-panel]').forEach((panel) => {
+    const kindNode = panel.querySelector('[data-runtime-check="busy-current-kind"] span')
+    const phaseNode = panel.querySelector('[data-runtime-check="busy-current-phase"] span')
+    const requestNode = panel.querySelector('[data-runtime-check="busy-current-request"] span')
+    const mirrorNode = panel.querySelector('[data-runtime-check="busy-current-mirror"] span')
+    const actionNode = panel.querySelector('[data-runtime-check="busy-current-action"]')
+    const componentNode = panel.querySelector('[data-runtime-check="busy-current-component"]')
+    const targetNode = panel.querySelector('[data-runtime-check="busy-current-target"]')
+    const documentNode = panel.querySelector('[data-runtime-check="busy-document-kind"]')
+    const lastActiveNode = panel.querySelector('[data-runtime-check="busy-last-active-summary"]')
+    const lastActionNode = panel.querySelector('[data-runtime-check="busy-last-action-summary"]')
+    const lastEventNode = panel.querySelector('[data-runtime-check="busy-last-event"]')
+    const updatedNode = panel.querySelector('[data-runtime-check="busy-updated-at"]')
+    const detailNode = panel.querySelector('[data-runtime-check="busy-detail"]')
+
+    if (kindNode) {
+      kindNode.textContent = `kind = ${snapshot.kind || 'idle'} (${snapshot.active ? 'active' : 'idle'})`
+    }
+
+    if (phaseNode) {
+      phaseNode.textContent = `phase = ${snapshot.phase || 'idle'}`
+    }
+
+    if (requestNode) {
+      requestNode.textContent = `requestId = ${snapshot.requestId || 'sin requestId'} | source = ${snapshot.source || 'idle'}`
+    }
+
+    if (mirrorNode) {
+      mirrorNode.textContent = `mirror = ${mirror}`
+    }
+
+    if (actionNode) {
+      actionNode.textContent = `action = ${snapshot.action || 'sin action'}`
+    }
+
+    if (componentNode) {
+      componentNode.textContent = `component = ${snapshot.component || 'sin component'}`
+    }
+
+    if (targetNode) {
+      targetNode.textContent = `target = ${snapshot.target || 'sin target'}`
+    }
+
+    if (documentNode) {
+      documentNode.textContent = `doc.kind = ${documentSnapshot.kind || 'idle'} | doc.phase = ${documentSnapshot.phase || 'idle'}`
+    }
+
+    if (lastActiveNode) {
+      lastActiveNode.textContent = lastActiveSnapshot
+        ? `ultimo busy = ${lastActiveSnapshot.kind || 'sin kind'} | phase = ${lastActiveSnapshot.phase || 'sin phase'} | requestId = ${lastActiveSnapshot.requestId || 'sin requestId'} | action = ${lastActiveSnapshot.action || 'sin action'} | component = ${lastActiveSnapshot.component || 'sin component'}`
+        : 'ultimo busy = sin snapshot activo persistido'
+    }
+
+    if (lastActionNode) {
+      lastActionNode.textContent = lastActionActiveSnapshot
+        ? `ultima accion busy = ${lastActionActiveSnapshot.kind || 'sin kind'} | phase = ${lastActionActiveSnapshot.phase || 'sin phase'} | requestId = ${lastActionActiveSnapshot.requestId || 'sin requestId'} | action = ${lastActionActiveSnapshot.action || 'sin action'} | component = ${lastActionActiveSnapshot.component || 'sin component'}`
+        : 'ultima accion busy = sin snapshot de action persistido'
+    }
+
+    if (lastEventNode) {
+      lastEventNode.textContent = `lastEvent = ${runtimeBusyPanelState.lastEvent || 'boot'}`
+    }
+
+    if (updatedNode) {
+      updatedNode.textContent = `actualizado = ${runtimeBusyPanelState.updatedAt || 'sin dato'}`
+    }
+
+    if (detailNode) {
+      detailNode.textContent = serializeStateExample(runtimeBusyPanelState.detail || {
+        waiting: 'Aun no hay snapshots busy capturados.',
+      })
+    }
+  })
+}
+
+function setRuntimeBusyPanelState(eventName, detail) {
+  const normalizedDetail = normalizeHookValue(detail || {})
+  const detailSnapshot = normalizedDetail && typeof normalizedDetail === 'object' && !Array.isArray(normalizedDetail) &&
+    (
+      Object.prototype.hasOwnProperty.call(normalizedDetail, 'active') ||
+      Object.prototype.hasOwnProperty.call(normalizedDetail, 'kind') ||
+      Object.prototype.hasOwnProperty.call(normalizedDetail, 'phase') ||
+      Object.prototype.hasOwnProperty.call(normalizedDetail, 'source')
+    )
+    ? normalizedDetail
+    : null
+
+  runtimeBusyPanelState.lastEvent = typeof eventName === 'string' && eventName !== '' ? eventName : 'manual'
+  runtimeBusyPanelState.updatedAt = new Date().toISOString()
+  runtimeBusyPanelState.snapshot = readRuntimeBusySnapshot()
+  if (detailSnapshot && detailSnapshot.active === true) {
+    runtimeBusyPanelState.lastActiveSnapshot = detailSnapshot
+  } else if (runtimeBusyPanelState.snapshot && runtimeBusyPanelState.snapshot.active) {
+    runtimeBusyPanelState.lastActiveSnapshot = runtimeBusyPanelState.snapshot
+  }
+  if (isBusyActionSnapshot(detailSnapshot)) {
+    runtimeBusyPanelState.lastActionActiveSnapshot = detailSnapshot
+  } else if (isBusyActionSnapshot(runtimeBusyPanelState.snapshot)) {
+    runtimeBusyPanelState.lastActionActiveSnapshot = runtimeBusyPanelState.snapshot
+  }
+  runtimeBusyPanelState.documentSnapshot = readDocumentBusySnapshot()
+  runtimeBusyPanelState.detail = {
+    eventName: runtimeBusyPanelState.lastEvent,
+    runtimeSnapshot: runtimeBusyPanelState.snapshot,
+    eventSnapshot: detailSnapshot,
+    lastActiveSnapshot: runtimeBusyPanelState.lastActiveSnapshot,
+    lastActionActiveSnapshot: runtimeBusyPanelState.lastActionActiveSnapshot,
+    documentSnapshot: runtimeBusyPanelState.documentSnapshot,
+    detail: normalizedDetail,
+  }
+
+  persistRuntimeBusyPanelState()
+  syncRuntimeBusyPanel()
+}
+
+function clearRuntimeBusyPanelState() {
+  runtimeBusyPanelState.lastEvent = 'manual-clear'
+  runtimeBusyPanelState.updatedAt = new Date().toISOString()
+  runtimeBusyPanelState.snapshot = readRuntimeBusySnapshot()
+  runtimeBusyPanelState.lastActiveSnapshot = null
+  runtimeBusyPanelState.lastActionActiveSnapshot = null
+  runtimeBusyPanelState.documentSnapshot = readDocumentBusySnapshot()
+  runtimeBusyPanelState.detail = {
+    cleared: true,
+    runtimeSnapshot: runtimeBusyPanelState.snapshot,
+    lastActiveSnapshot: runtimeBusyPanelState.lastActiveSnapshot,
+    lastActionActiveSnapshot: runtimeBusyPanelState.lastActionActiveSnapshot,
+    documentSnapshot: runtimeBusyPanelState.documentSnapshot,
+  }
+
+  persistRuntimeBusyPanelState()
+  syncRuntimeBusyPanel()
+}
+
+function scheduleRuntimeBusyPanelSync(reason = 'manual', detail = {}) {
+  runtimeBusyPanelState.pendingReason = reason
+  runtimeBusyPanelState.pendingDetail = detail
+
+  if (runtimeBusyPanelState.scheduled) {
+    return
+  }
+
+  runtimeBusyPanelState.scheduled = true
+
+  window.requestAnimationFrame(() => {
+    runtimeBusyPanelState.scheduled = false
+    const nextReason = runtimeBusyPanelState.pendingReason
+    const nextDetail = runtimeBusyPanelState.pendingDetail
+    runtimeBusyPanelState.pendingReason = 'manual'
+    runtimeBusyPanelState.pendingDetail = {}
+    setRuntimeBusyPanelState(nextReason, nextDetail)
+  })
+}
+
+function applyPersistedRuntimeBusyPanelState() {
+  const persisted = readPersistedRuntimeBusyPanelState()
+
+  if (!persisted) {
+    scheduleRuntimeBusyPanelSync('boot')
+    return
+  }
+
+  runtimeBusyPanelState.lastEvent = typeof persisted.lastEvent === 'string' ? persisted.lastEvent : 'boot'
+  runtimeBusyPanelState.updatedAt = typeof persisted.updatedAt === 'string' ? persisted.updatedAt : null
+  runtimeBusyPanelState.snapshot = persisted.snapshot && typeof persisted.snapshot === 'object'
+    ? persisted.snapshot
+    : readRuntimeBusySnapshot()
+  runtimeBusyPanelState.lastActiveSnapshot = persisted.lastActiveSnapshot && typeof persisted.lastActiveSnapshot === 'object'
+    ? persisted.lastActiveSnapshot
+    : null
+  runtimeBusyPanelState.lastActionActiveSnapshot = persisted.lastActionActiveSnapshot && typeof persisted.lastActionActiveSnapshot === 'object'
+    ? persisted.lastActionActiveSnapshot
+    : null
+  runtimeBusyPanelState.documentSnapshot = persisted.documentSnapshot && typeof persisted.documentSnapshot === 'object'
+    ? persisted.documentSnapshot
+    : readDocumentBusySnapshot()
+  runtimeBusyPanelState.detail = persisted.detail && typeof persisted.detail === 'object'
+    ? persisted.detail
+    : {
+      waiting: 'Aun no hay snapshots busy capturados.',
+    }
+
+  syncRuntimeBusyPanel()
+}
+
+function registerRuntimeBusyPanel() {
+  window.__spaLabRuntimeBusyPanel = window.__spaLabRuntimeBusyPanel || {}
+  window.__spaLabRuntimeBusyPanel.render = function(reason = 'manual-render') {
+    scheduleRuntimeBusyPanelSync(reason)
+  }
+  window.__spaLabRuntimeBusyPanel.clear = clearRuntimeBusyPanelState
+
+  ;['volt:busy-start', 'volt:busy-change', 'volt:busy-end'].forEach((eventName) => {
+    document.addEventListener(eventName, (event) => {
+      scheduleRuntimeBusyPanelSync(eventName, event.detail || {})
+    })
+  })
+
+  ;['volt:request-start', 'volt:request-finish', 'volt:navigated'].forEach((eventName) => {
+    document.addEventListener(eventName, (event) => {
+      scheduleRuntimeBusyPanelSync(eventName, event.detail || {})
+    })
+  })
+
+  window.addEventListener('load', () => {
+    scheduleRuntimeBusyPanelSync('window-load')
+  })
+
+  applyPersistedRuntimeBusyPanelState()
+}
 function runtimeStateApi() {
   return window.Volt && window.Volt.state ? window.Volt.state : null
 }
@@ -1910,19 +2268,19 @@ function bootstrapRequestLabPage() {
     return
   }
 
-  const inlineBootstrap = Array.from(document.querySelectorAll('script')).find((script) => {
-    const content = typeof script.textContent === 'string' ? script.textContent : ''
-
-    return content.includes('window.__spaLabRequestLab = window.__spaLabRequestLab || {};') &&
-      content.includes('window.__spaLabRequestLab.syncVisibleState();')
-  })
+  const inlineBootstrap = document.querySelector('script[data-runtime-request-lab-bootstrap="true"]')
 
   if (!inlineBootstrap) {
     return
   }
 
   try {
-    window.eval(inlineBootstrap.textContent)
+    const runtimeBootstrap = document.createElement('script')
+    runtimeBootstrap.type = 'text/javascript'
+    runtimeBootstrap.setAttribute('data-runtime-request-lab-executed', 'true')
+    runtimeBootstrap.textContent = inlineBootstrap.textContent
+    document.body.appendChild(runtimeBootstrap)
+    runtimeBootstrap.remove()
   } catch (error) {
     console.error('RequestLab SPA bootstrap failed from SpaLab.js.', error)
   }
@@ -1932,6 +2290,7 @@ registerVoltHookExamples()
 registerNavigationDebugPanel()
 registerCacheExampleControls()
 registerRuntimeStateExampleControls()
+registerRuntimeBusyPanel()
 registerRuntimeEfficiencyExamples()
 document.addEventListener('DOMContentLoaded', () => {
   window.requestAnimationFrame(() => {

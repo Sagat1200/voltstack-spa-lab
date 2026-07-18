@@ -81,20 +81,19 @@ final class RequestLabPage extends Component
             return;
         }
 
-        const scripts = Array.from(document.querySelectorAll('script'));
-        const inlineBootstrap = scripts.find((script) => {
-            const content = typeof script.textContent === 'string' ? script.textContent : '';
-
-            return content.includes('window.__spaLabRequestLab = window.__spaLabRequestLab || {};') &&
-                content.includes('window.__spaLabRequestLab.syncVisibleState();');
-        });
+        const inlineBootstrap = document.querySelector('script[data-runtime-request-lab-bootstrap="true"]');
 
         if (!inlineBootstrap) {
             return;
         }
 
         try {
-            window.eval(inlineBootstrap.textContent);
+            const runtimeBootstrap = document.createElement('script');
+            runtimeBootstrap.type = 'text/javascript';
+            runtimeBootstrap.setAttribute('data-runtime-request-lab-executed', 'true');
+            runtimeBootstrap.textContent = inlineBootstrap.textContent;
+            document.body.appendChild(runtimeBootstrap);
+            runtimeBootstrap.remove();
         } catch (error) {
             console.error('RequestLab SPA bootstrap failed.', error);
         }
@@ -515,7 +514,7 @@ final class RequestLabPage extends Component
         </a>
     </section>
 </div>
-<script>
+<script data-runtime-request-lab-bootstrap="true">
 window.__spaLabRequestLab = window.__spaLabRequestLab || {};
 window.__spaLabRequestLab.defaultActionEndpoint = '/_volt/action';
 window.__spaLabRequestLab.retrySummaryStorageKey = 'volt.requestLab.lastNavigationRetry';

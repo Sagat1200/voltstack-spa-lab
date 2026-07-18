@@ -611,6 +611,8 @@ Instrumentacion util para navegador real:
 - `[x]` el panel de eficiencia de `/runtimeEvents` reduce trabajo inicial: hace un sync resumido en `boot`, difiere el sync completo a `window.load` y coalesce refreshes repetidos en un solo frame
 - `[x]` `/runtimeEvents` suma un panel contractual de diagnostico de navegacion SPA con `href`, `requestId`, `outcome`, `finalUrl`, `scroll.before`, `scroll.after` y detalle serializado del ultimo intento de `volt:navigate`
 - `[x]` el runtime SPA serializa clicks de enlaces mientras una navegacion sigue en vuelo: conserva solo el ultimo intento (`latest-wins`) y lo ejecuta al cerrar la visita activa para evitar carreras entre vistas
+- `[x]` el layout SPA del lab expone un estado visual global de navegacion con chip `idle/navegando`, overlay ligero y bloqueo temporal de enlaces `volt:navigate` mientras `data-volt-navigating="true"`
+- `[x]` el runtime base publica `data-volt-busy-*` en `html/body`, emite `volt:busy-start/change/end`, expone `window.Volt.busy` y monta una busy bar discreta por defecto con `opt-out` via `volt-busy-ui`
 - `[x]` guardrails server-side del skeleton para `/runtimeEvents`, fijando hook inspector, paneles `efficiency-*`, tarjetas `Telemetry *` y links operativos hacia `runtimeAdvancedDirectives`, `runtimeState` y `runtimeModelSync`
 - `[x]` guardrails adicionales del skeleton para `runtimeEvents` y `/_volt/runtime.js`, fijando estado base del panel de eficiencia (`boot`, `(pendiente)`, snapshots `latest`) y la API publica `window.Volt.telemetry` / `window.Volt.components`
 - `[x]` pasada browser guiada sobre `/runtimeEvents -> /runtimeState -> captureSelectiveSync -> /runtimeEvents`, confirmando `navigation:2`, `action:1`, `patch:3`, `latest` coherentes y la nota operativa de que `captureSelectiveSync` solo envia valores ya persistidos en el store runtime
@@ -620,6 +622,9 @@ Instrumentacion util para navegador real:
 - `[x]` optimizacion del arranque de `/runtimeEvents`: placeholders iniciales + sync completo tras `window.load`, validado en navegador con `Runtime summary snapshot`, `Active components summary` y tarjetas `Latest *` apareciendo despues de la carga completa
 - `[x]` validacion browser del diagnostico de navegacion en `/runtimeEvents -> /spaReactive -> /cacheExample -> /spaReactive -> /runtimeEvents`, confirmando persistencia del ultimo intento SPA con `outcome = success`, `requestId`, `href`, `finalUrl`, `scroll.before` y `scroll.after`
 - `[x]` validacion browser de navegacion rapida entre `/cacheExample`, `/counterExample` y `/formExample`: 16 secuencias rapidas completadas con `lastWinsCount = 16`, sin clicks perdidos ni vistas atascadas
+- `[x]` validacion browser del UX global de navegacion en `/navigationTransition`: durante `volt:before-navigate` el indicador cambia a `Estado navegacion SPA: navegando`, los enlaces observados pasan a `pointer-events: none` y al finalizar la transicion regresan a `idle`
+- `[x]` validacion browser del contrato `busy` del runtime base en `/ -> /islandExample`: `window.Volt.busy.current()` y `data-volt-busy-*` reflejan `navigation` y `action`, la busy bar aparece tanto en navegacion SPA como en `POST /_volt/action`
+- `[x]` `/runtimeEvents` expone un panel visual del contrato `busy` con snapshot actual, espejo documental (`data-volt-busy-*`), ultimo `busy` activo y ultima accion `busy` persistida para no perder `action/component/requestId` al regresar por SPA
 
 ## Bitacora De Avance
 
@@ -734,6 +739,8 @@ Usar esta seccion para marcar hitos reales conforme avancemos.
 - `[x]` `/runtimeEvents` coalesce el trabajo del panel de eficiencia y elimina el render redundante del panel de resiliencia durante el arranque
 - `[x]` `SpaLab.js` persiste en `sessionStorage` el ultimo intento de navegacion SPA para volverlo visible en `/runtimeEvents` aun despues de cambiar de vista
 - `[x]` `visit()` acepta `queueIfBusy` para enlaces `volt:navigate`; cuando una visita esta activa, el runtime cola solo el ultimo click del usuario y lo reprocesa tras emitir `volt:request-finish`
+- `[x]` `SpaLab.js` sincroniza `data-volt-navigating` con el chip global del layout y aplica `aria-disabled`, `tabindex=-1` y `data-runtime-nav-link-disabled` a los enlaces de navegacion mientras la SPA esta ocupada
+- `[x]` el lab deja de implementar por su cuenta la UX busy: `spa.volt.php` ya no monta overlay/chip propios y `SpaLab.js` delega el estado global al runtime base; ademas se corrige el layout para que `#volt-portals-root` no envuelva el `<main>` con `pointer-events-none`
 
 ## Proximo Bloque Recomendado
 

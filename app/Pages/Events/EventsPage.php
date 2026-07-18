@@ -25,322 +25,322 @@ final class EventsPage extends Component
 @section('head')
 <meta name="volt-navigation-mode" content="auto" data-volt-head-key="events-mode">
 <script data-volt-head-key="events-demo-bridge">
-(() => {
-    if (window.__voltEventsDemoBridgeInstalled) {
-        return;
-    }
-
-    window.__voltEventsDemoBridgeInstalled = true;
-
-    function state() {
-        return window.Volt && window.Volt.state ? window.Volt.state : null;
-    }
-
-    function setClient(path, value) {
-        const api = state();
-
-        if (!api) {
+    (() => {
+        if (window.__voltEventsDemoBridgeInstalled) {
             return;
         }
 
-        api.set(path, value, {
-            scope: 'client'
-        });
-    }
+        window.__voltEventsDemoBridgeInstalled = true;
 
-    function setShared(path, value) {
-        const api = state();
-
-        if (!api) {
-            return;
+        function state() {
+            return window.Volt && window.Volt.state ? window.Volt.state : null;
         }
 
-        api.set(path, value, {
-            scope: 'shared'
-        });
-    }
+        function setClient(path, value) {
+            const api = state();
 
-    function increment(path, scope) {
-        const api = state();
-
-        if (!api) {
-            return;
-        }
-
-        const current = api.get(path, {
-            scope
-        });
-        const nextValue = typeof current === 'number' ? current + 1 : 1;
-
-        api.set(path, nextValue, {
-            scope
-        });
-    }
-
-    function reflectDispatch(event) {
-        const api = state();
-
-        if (!api) {
-            return;
-        }
-
-        const detail = event && event.detail && typeof event.detail === 'object' ?
-            event.detail : {};
-        const originalEvent = detail.originalEvent && typeof detail.originalEvent === 'object' ?
-            detail.originalEvent :
-            null;
-        const sourceElement = detail.sourceElement && typeof detail.sourceElement === 'object' ?
-            detail.sourceElement :
-            null;
-
-        increment('events.dispatchCount', 'client');
-        setClient('events.lastDispatchName', event.type);
-        setClient('events.lastDirective', typeof detail.directive === 'string' ? detail.directive :
-            '(sin directive)');
-        setClient('events.lastOriginalType', originalEvent && typeof originalEvent.type === 'string' ? originalEvent
-            .type : '(sin originalEvent)');
-        setClient('events.lastSourceTag', sourceElement && sourceElement.tagName ? sourceElement.tagName
-            .toLowerCase() : '(sin source)');
-        setClient('events.lastScopeId', typeof detail.scopeId === 'string' ? detail.scopeId : '(sin scopeId)');
-        setClient('events.lastComponent', typeof detail.component === 'string' && detail.component !== '' ? detail
-            .component : '(sin component)');
-        setClient('events.lastDispatchAt', new Date().toLocaleTimeString());
-
-        if (event.type === 'demo.events.audit') {
-            increment('events.auditCount', 'shared');
-        }
-
-        if (event.type === 'demo.events.submit') {
-            increment('events.submitCount', 'shared');
-        }
-
-        if (event.type === 'demo.events.enter') {
-            increment('events.enterCount', 'shared');
-        }
-    }
-
-    [
-        'demo.events.alpha',
-        'demo.events.audit',
-        'demo.events.submit',
-        'demo.events.enter',
-    ].forEach((name) => {
-        document.addEventListener(name, reflectDispatch);
-    });
-})();
-</script>
-<script data-volt-head-key="events-resilience-panel">
-(() => {
-    let scheduled = false;
-
-    function updateText(selector, value) {
-        const element = document.querySelector(selector);
-        if (element) {
-            element.textContent = value;
-        }
-    }
-
-    function readJson(key) {
-        if (typeof sessionStorage === 'undefined') {
-            return null;
-        }
-
-        try {
-            const raw = sessionStorage.getItem(key);
-            if (!raw) {
-                return null;
+            if (!api) {
+                return;
             }
 
-            return JSON.parse(raw);
-        } catch (error) {
-            return null;
-        }
-    }
-
-    function readArray(key) {
-        const parsed = readJson(key);
-        return Array.isArray(parsed) ? parsed : [];
-    }
-
-    function renderLifecycleSummary() {
-        if (!document.querySelector('[data-runtime-check="nav-lifecycle-event"]')) {
-            return;
+            api.set(path, value, {
+                scope: 'client'
+            });
         }
 
-        const summary = readJson('volt.requestLab.lastNavigationLifecycle');
-        if (!summary || typeof summary !== 'object') {
-            updateText('[data-runtime-check="nav-lifecycle-event"]', 'sin resumen persistido');
-            updateText('[data-runtime-check="nav-lifecycle-outcome"]', 'sin dato');
-            updateText('[data-runtime-check="nav-lifecycle-target"]', 'sin target');
-            updateText('[data-runtime-check="nav-lifecycle-status"]', 'sin dato');
-            updateText('[data-runtime-check="nav-lifecycle-message"]', 'mensaje sin dato');
-            updateText('[data-runtime-check="nav-lifecycle-final-url"]', 'finalUrl = sin dato');
-            updateText('[data-runtime-check="nav-lifecycle-captured-at"]', 'capturado en = sin dato');
-            return;
+        function setShared(path, value) {
+            const api = state();
+
+            if (!api) {
+                return;
+            }
+
+            api.set(path, value, {
+                scope: 'shared'
+            });
         }
 
-        updateText('[data-runtime-check="nav-lifecycle-event"]', typeof summary.eventName === 'string' && summary
-            .eventName !== '' ? summary.eventName : 'sin resumen');
-        updateText('[data-runtime-check="nav-lifecycle-outcome"]', typeof summary.errorKind === 'string' && summary
-            .errorKind !== '' ? summary.errorKind : (typeof summary.outcome === 'string' ? summary.outcome :
-                'sin dato'));
-        updateText('[data-runtime-check="nav-lifecycle-target"]', typeof summary.target === 'string' && summary
-            .target !== '' ? summary.target : 'sin target');
-        updateText('[data-runtime-check="nav-lifecycle-status"]', typeof summary.status === 'number' ? String(
-            summary.status) : 'sin dato');
-        updateText('[data-runtime-check="nav-lifecycle-message"]', typeof summary.message === 'string' && summary
-            .message !== '' ? summary.message : 'mensaje sin dato');
-        updateText('[data-runtime-check="nav-lifecycle-final-url"]', 'finalUrl = ' + (typeof summary.finalUrl ===
-            'string' && summary.finalUrl !== '' ? summary.finalUrl : 'sin dato'));
-        updateText('[data-runtime-check="nav-lifecycle-captured-at"]', 'capturado en = ' + (typeof summary
-            .capturedAt === 'string' && summary.capturedAt !== '' ? summary.capturedAt : 'sin dato'));
-    }
+        function increment(path, scope) {
+            const api = state();
 
-    function renderScenarioChip(scenarioKey, history) {
-        const match = history.find((entry) => entry && entry.scenarioKey === scenarioKey);
-        if (!match) {
-            updateText('[data-runtime-check="resilience-scenario-' + scenarioKey + '"]', 'pendiente');
-            return;
+            if (!api) {
+                return;
+            }
+
+            const current = api.get(path, {
+                scope
+            });
+            const nextValue = typeof current === 'number' ? current + 1 : 1;
+
+            api.set(path, nextValue, {
+                scope
+            });
         }
 
-        updateText(
-            '[data-runtime-check="resilience-scenario-' + scenarioKey + '"]',
-            'observado · ' + (typeof match.outcome === 'string' && match.outcome !== '' ? match.outcome :
-                'sin outcome')
-        );
-    }
+        function reflectDispatch(event) {
+            const api = state();
 
-    function renderIncidentSessionStatus() {
-        const summary = readJson('volt.requestLab.lastResilienceSummary');
-        const history = readArray('volt.requestLab.resilienceHistory');
-        const badge = document.querySelector('[data-runtime-check="events-session-incidents-badge"]');
-        const detail = document.querySelector('[data-runtime-check="events-session-incidents-detail"]');
+            if (!api) {
+                return;
+            }
 
-        if (!badge || !detail) {
-            return;
-        }
+            const detail = event && event.detail && typeof event.detail === 'object' ?
+                event.detail : {};
+            const originalEvent = detail.originalEvent && typeof detail.originalEvent === 'object' ?
+                detail.originalEvent :
+                null;
+            const sourceElement = detail.sourceElement && typeof detail.sourceElement === 'object' ?
+                detail.sourceElement :
+                null;
 
-        if (!summary || typeof summary !== 'object') {
-            badge.textContent = 'Sin incidentes en sesion';
-            badge.style.borderColor = 'rgba(148,163,184,0.28)';
-            badge.style.background = 'rgba(15,23,42,0.82)';
-            badge.style.color = '#cbd5e1';
-            detail.textContent = 'El flujo QA puede arrancar limpio desde esta pantalla o saltar al request lab.';
-            return;
-        }
+            increment('events.dispatchCount', 'client');
+            setClient('events.lastDispatchName', event.type);
+            setClient('events.lastDirective', typeof detail.directive === 'string' ? detail.directive :
+                '(sin directive)');
+            setClient('events.lastOriginalType', originalEvent && typeof originalEvent.type === 'string' ? originalEvent
+                .type : '(sin originalEvent)');
+            setClient('events.lastSourceTag', sourceElement && sourceElement.tagName ? sourceElement.tagName
+                .toLowerCase() : '(sin source)');
+            setClient('events.lastScopeId', typeof detail.scopeId === 'string' ? detail.scopeId : '(sin scopeId)');
+            setClient('events.lastComponent', typeof detail.component === 'string' && detail.component !== '' ? detail
+                .component : '(sin component)');
+            setClient('events.lastDispatchAt', new Date().toLocaleTimeString());
 
-        const scenarioKey = typeof summary.scenarioKey === 'string' && summary.scenarioKey !== '' ? summary
-            .scenarioKey : 'incidente';
-        const count = Array.isArray(history) ? history.length : 0;
-        badge.textContent = 'Hay incidentes en sesion';
-        badge.style.borderColor = 'rgba(248,113,113,0.28)';
-        badge.style.background = 'rgba(127,29,29,0.22)';
-        badge.style.color = '#fee2e2';
-        detail.textContent = 'Ultimo incidente: ' + scenarioKey + ' · registros persistidos: ' + String(count);
-    }
+            if (event.type === 'demo.events.audit') {
+                increment('events.auditCount', 'shared');
+            }
 
-    function renderResiliencePanel() {
-        if (!document.querySelector('[data-runtime-check="resilience-current-scenario"]')) {
-            return;
-        }
+            if (event.type === 'demo.events.submit') {
+                increment('events.submitCount', 'shared');
+            }
 
-        const summary = readJson('volt.requestLab.lastResilienceSummary');
-        const history = readArray('volt.requestLab.resilienceHistory');
-
-        if (!summary || typeof summary !== 'object') {
-            updateText('[data-runtime-check="resilience-current-scenario"]', 'sin incidentes');
-            updateText('[data-runtime-check="resilience-current-outcome"]', 'sin dato');
-            updateText('[data-runtime-check="resilience-current-scope"]', 'sin scope');
-            updateText('[data-runtime-check="resilience-current-status"]', 'sin dato');
-            updateText('[data-runtime-check="resilience-current-target"]', 'target = sin dato');
-            updateText('[data-runtime-check="resilience-current-message"]', 'mensaje = sin dato');
-            updateText('[data-runtime-check="resilience-current-final-url"]', 'finalUrl = sin dato');
-            updateText('[data-runtime-check="resilience-current-captured-at"]', 'capturado en = sin dato');
-        } else {
-            updateText(
-                '[data-runtime-check="resilience-current-scenario"]',
-                typeof summary.scenarioKey === 'string' && summary.scenarioKey !== '' ? summary.scenarioKey : (
-                    typeof summary.eventName === 'string' ? summary.eventName : 'sin escenario')
-            );
-            updateText('[data-runtime-check="resilience-current-outcome"]', typeof summary.outcome === 'string' &&
-                summary.outcome !== '' ? summary.outcome : 'sin dato');
-            updateText('[data-runtime-check="resilience-current-scope"]', typeof summary.scope === 'string' &&
-                summary.scope !== '' ? summary.scope : 'sin scope');
-            updateText('[data-runtime-check="resilience-current-status"]', typeof summary.status === 'number' ?
-                String(summary.status) : 'sin dato');
-            updateText('[data-runtime-check="resilience-current-target"]', 'target = ' + (typeof summary.target ===
-                'string' && summary.target !== '' ? summary.target : 'sin dato'));
-            updateText('[data-runtime-check="resilience-current-message"]', 'mensaje = ' + (typeof summary
-                .message === 'string' && summary.message !== '' ? summary.message : 'sin dato'));
-            updateText('[data-runtime-check="resilience-current-final-url"]', 'finalUrl = ' + (typeof summary
-                .finalUrl === 'string' && summary.finalUrl !== '' ? summary.finalUrl : 'sin dato'));
-            updateText('[data-runtime-check="resilience-current-captured-at"]', 'capturado en = ' + (typeof summary
-                .capturedAt === 'string' && summary.capturedAt !== '' ? summary.capturedAt : 'sin dato'));
+            if (event.type === 'demo.events.enter') {
+                increment('events.enterCount', 'shared');
+            }
         }
 
         [
-            'retry',
-            'abort',
-            'stale',
-            'network-error',
-            'timeout',
-            'protocol-error'
-        ].forEach((scenarioKey) => renderScenarioChip(scenarioKey, history));
-    }
+            'demo.events.alpha',
+            'demo.events.audit',
+            'demo.events.submit',
+            'demo.events.enter',
+        ].forEach((name) => {
+            document.addEventListener(name, reflectDispatch);
+        });
+    })();
+</script>
+<script data-volt-head-key="events-resilience-panel">
+    (() => {
+        let scheduled = false;
 
-    function clearResiliencePanel() {
-        if (typeof sessionStorage === 'undefined') {
-            return;
+        function updateText(selector, value) {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.textContent = value;
+            }
         }
 
-        try {
-            sessionStorage.removeItem('volt.requestLab.lastResilienceSummary');
-            sessionStorage.removeItem('volt.requestLab.resilienceHistory');
-        } catch (error) {
-            return;
+        function readJson(key) {
+            if (typeof sessionStorage === 'undefined') {
+                return null;
+            }
+
+            try {
+                const raw = sessionStorage.getItem(key);
+                if (!raw) {
+                    return null;
+                }
+
+                return JSON.parse(raw);
+            } catch (error) {
+                return null;
+            }
         }
 
-        renderResiliencePanel();
-    }
+        function readArray(key) {
+            const parsed = readJson(key);
+            return Array.isArray(parsed) ? parsed : [];
+        }
 
-    window.__spaLabEventsResiliencePanel = window.__spaLabEventsResiliencePanel || {};
-    window.__spaLabEventsResiliencePanel.render = function() {
-        if (window.__spaLabRequestLab) {
-            if (typeof window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard === 'function') {
-                window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard();
+        function renderLifecycleSummary() {
+            if (!document.querySelector('[data-runtime-check="nav-lifecycle-event"]')) {
+                return;
             }
-            if (typeof window.__spaLabRequestLab.renderResiliencePanel === 'function') {
-                window.__spaLabRequestLab.renderResiliencePanel();
+
+            const summary = readJson('volt.requestLab.lastNavigationLifecycle');
+            if (!summary || typeof summary !== 'object') {
+                updateText('[data-runtime-check="nav-lifecycle-event"]', 'sin resumen persistido');
+                updateText('[data-runtime-check="nav-lifecycle-outcome"]', 'sin dato');
+                updateText('[data-runtime-check="nav-lifecycle-target"]', 'sin target');
+                updateText('[data-runtime-check="nav-lifecycle-status"]', 'sin dato');
+                updateText('[data-runtime-check="nav-lifecycle-message"]', 'mensaje sin dato');
+                updateText('[data-runtime-check="nav-lifecycle-final-url"]', 'finalUrl = sin dato');
+                updateText('[data-runtime-check="nav-lifecycle-captured-at"]', 'capturado en = sin dato');
+                return;
             }
-        } else {
-            renderLifecycleSummary();
+
+            updateText('[data-runtime-check="nav-lifecycle-event"]', typeof summary.eventName === 'string' && summary
+                .eventName !== '' ? summary.eventName : 'sin resumen');
+            updateText('[data-runtime-check="nav-lifecycle-outcome"]', typeof summary.errorKind === 'string' && summary
+                .errorKind !== '' ? summary.errorKind : (typeof summary.outcome === 'string' ? summary.outcome :
+                    'sin dato'));
+            updateText('[data-runtime-check="nav-lifecycle-target"]', typeof summary.target === 'string' && summary
+                .target !== '' ? summary.target : 'sin target');
+            updateText('[data-runtime-check="nav-lifecycle-status"]', typeof summary.status === 'number' ? String(
+                summary.status) : 'sin dato');
+            updateText('[data-runtime-check="nav-lifecycle-message"]', typeof summary.message === 'string' && summary
+                .message !== '' ? summary.message : 'mensaje sin dato');
+            updateText('[data-runtime-check="nav-lifecycle-final-url"]', 'finalUrl = ' + (typeof summary.finalUrl ===
+                'string' && summary.finalUrl !== '' ? summary.finalUrl : 'sin dato'));
+            updateText('[data-runtime-check="nav-lifecycle-captured-at"]', 'capturado en = ' + (typeof summary
+                .capturedAt === 'string' && summary.capturedAt !== '' ? summary.capturedAt : 'sin dato'));
+        }
+
+        function renderScenarioChip(scenarioKey, history) {
+            const match = history.find((entry) => entry && entry.scenarioKey === scenarioKey);
+            if (!match) {
+                updateText('[data-runtime-check="resilience-scenario-' + scenarioKey + '"]', 'pendiente');
+                return;
+            }
+
+            updateText(
+                '[data-runtime-check="resilience-scenario-' + scenarioKey + '"]',
+                'observado · ' + (typeof match.outcome === 'string' && match.outcome !== '' ? match.outcome :
+                    'sin outcome')
+            );
+        }
+
+        function renderIncidentSessionStatus() {
+            const summary = readJson('volt.requestLab.lastResilienceSummary');
+            const history = readArray('volt.requestLab.resilienceHistory');
+            const badge = document.querySelector('[data-runtime-check="events-session-incidents-badge"]');
+            const detail = document.querySelector('[data-runtime-check="events-session-incidents-detail"]');
+
+            if (!badge || !detail) {
+                return;
+            }
+
+            if (!summary || typeof summary !== 'object') {
+                badge.textContent = 'Sin incidentes en sesion';
+                badge.style.borderColor = 'rgba(148,163,184,0.28)';
+                badge.style.background = 'rgba(15,23,42,0.82)';
+                badge.style.color = '#cbd5e1';
+                detail.textContent = 'El flujo QA puede arrancar limpio desde esta pantalla o saltar al request lab.';
+                return;
+            }
+
+            const scenarioKey = typeof summary.scenarioKey === 'string' && summary.scenarioKey !== '' ? summary
+                .scenarioKey : 'incidente';
+            const count = Array.isArray(history) ? history.length : 0;
+            badge.textContent = 'Hay incidentes en sesion';
+            badge.style.borderColor = 'rgba(248,113,113,0.28)';
+            badge.style.background = 'rgba(127,29,29,0.22)';
+            badge.style.color = '#fee2e2';
+            detail.textContent = 'Ultimo incidente: ' + scenarioKey + ' · registros persistidos: ' + String(count);
+        }
+
+        function renderResiliencePanel() {
+            if (!document.querySelector('[data-runtime-check="resilience-current-scenario"]')) {
+                return;
+            }
+
+            const summary = readJson('volt.requestLab.lastResilienceSummary');
+            const history = readArray('volt.requestLab.resilienceHistory');
+
+            if (!summary || typeof summary !== 'object') {
+                updateText('[data-runtime-check="resilience-current-scenario"]', 'sin incidentes');
+                updateText('[data-runtime-check="resilience-current-outcome"]', 'sin dato');
+                updateText('[data-runtime-check="resilience-current-scope"]', 'sin scope');
+                updateText('[data-runtime-check="resilience-current-status"]', 'sin dato');
+                updateText('[data-runtime-check="resilience-current-target"]', 'target = sin dato');
+                updateText('[data-runtime-check="resilience-current-message"]', 'mensaje = sin dato');
+                updateText('[data-runtime-check="resilience-current-final-url"]', 'finalUrl = sin dato');
+                updateText('[data-runtime-check="resilience-current-captured-at"]', 'capturado en = sin dato');
+            } else {
+                updateText(
+                    '[data-runtime-check="resilience-current-scenario"]',
+                    typeof summary.scenarioKey === 'string' && summary.scenarioKey !== '' ? summary.scenarioKey : (
+                        typeof summary.eventName === 'string' ? summary.eventName : 'sin escenario')
+                );
+                updateText('[data-runtime-check="resilience-current-outcome"]', typeof summary.outcome === 'string' &&
+                    summary.outcome !== '' ? summary.outcome : 'sin dato');
+                updateText('[data-runtime-check="resilience-current-scope"]', typeof summary.scope === 'string' &&
+                    summary.scope !== '' ? summary.scope : 'sin scope');
+                updateText('[data-runtime-check="resilience-current-status"]', typeof summary.status === 'number' ?
+                    String(summary.status) : 'sin dato');
+                updateText('[data-runtime-check="resilience-current-target"]', 'target = ' + (typeof summary.target ===
+                    'string' && summary.target !== '' ? summary.target : 'sin dato'));
+                updateText('[data-runtime-check="resilience-current-message"]', 'mensaje = ' + (typeof summary
+                    .message === 'string' && summary.message !== '' ? summary.message : 'sin dato'));
+                updateText('[data-runtime-check="resilience-current-final-url"]', 'finalUrl = ' + (typeof summary
+                    .finalUrl === 'string' && summary.finalUrl !== '' ? summary.finalUrl : 'sin dato'));
+                updateText('[data-runtime-check="resilience-current-captured-at"]', 'capturado en = ' + (typeof summary
+                    .capturedAt === 'string' && summary.capturedAt !== '' ? summary.capturedAt : 'sin dato'));
+            }
+
+            [
+                'retry',
+                'abort',
+                'stale',
+                'network-error',
+                'timeout',
+                'protocol-error'
+            ].forEach((scenarioKey) => renderScenarioChip(scenarioKey, history));
+        }
+
+        function clearResiliencePanel() {
+            if (typeof sessionStorage === 'undefined') {
+                return;
+            }
+
+            try {
+                sessionStorage.removeItem('volt.requestLab.lastResilienceSummary');
+                sessionStorage.removeItem('volt.requestLab.resilienceHistory');
+            } catch (error) {
+                return;
+            }
+
             renderResiliencePanel();
         }
-        renderIncidentSessionStatus();
-    };
-    window.__spaLabEventsResiliencePanel.clear = clearResiliencePanel;
-    window.__spaLabEventsResiliencePanel.scheduleRender = function() {
-        if (scheduled) {
-            return;
-        }
 
-        scheduled = true;
-        window.requestAnimationFrame(() => {
-            scheduled = false;
-            window.__spaLabEventsResiliencePanel.render();
+        window.__spaLabEventsResiliencePanel = window.__spaLabEventsResiliencePanel || {};
+        window.__spaLabEventsResiliencePanel.render = function() {
+            if (window.__spaLabRequestLab) {
+                if (typeof window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard === 'function') {
+                    window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard();
+                }
+                if (typeof window.__spaLabRequestLab.renderResiliencePanel === 'function') {
+                    window.__spaLabRequestLab.renderResiliencePanel();
+                }
+            } else {
+                renderLifecycleSummary();
+                renderResiliencePanel();
+            }
+            renderIncidentSessionStatus();
+        };
+        window.__spaLabEventsResiliencePanel.clear = clearResiliencePanel;
+        window.__spaLabEventsResiliencePanel.scheduleRender = function() {
+            if (scheduled) {
+                return;
+            }
+
+            scheduled = true;
+            window.requestAnimationFrame(() => {
+                scheduled = false;
+                window.__spaLabEventsResiliencePanel.render();
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.__spaLabEventsResiliencePanel.scheduleRender();
         });
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        window.__spaLabEventsResiliencePanel.scheduleRender();
-    });
-    document.addEventListener('volt:navigated', () => {
-        window.__spaLabEventsResiliencePanel.scheduleRender();
-    });
-    if (document.readyState !== 'loading') {
-        window.__spaLabEventsResiliencePanel.scheduleRender();
-    }
-})();
+        document.addEventListener('volt:navigated', () => {
+            window.__spaLabEventsResiliencePanel.scheduleRender();
+        });
+        if (document.readyState !== 'loading') {
+            window.__spaLabEventsResiliencePanel.scheduleRender();
+        }
+    })();
 </script>
 @endsection
 
@@ -464,7 +464,8 @@ final class EventsPage extends Component
 
         <div data-runtime-navigation-debug
             style="display:grid;gap:16px;border:1px solid rgba(125,211,252,0.18);background:rgba(15,23,42,0.78);border-radius:16px;padding:18px;">
-            <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:start;">
+            <div
+                style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:start;">
                 <article
                     style="display:grid;gap:8px;border:1px solid rgba(56,189,248,0.2);background:rgba(8,47,73,0.18);border-radius:14px;padding:14px;">
                     <strong style="color:#7dd3fc;">Stage</strong>
@@ -473,20 +474,20 @@ final class EventsPage extends Component
                 <article
                     style="display:grid;gap:8px;border:1px solid rgba(245,158,11,0.2);background:rgba(120,53,15,0.18);border-radius:14px;padding:14px;">
                     <strong style="color:#fde68a;">Outcome</strong>
-                    <span data-runtime-check="nav-debug-outcome"
-                        style="font-size:15px;color:#fef3c7;">outcome = sin dato</span>
+                    <span data-runtime-check="nav-debug-outcome" style="font-size:15px;color:#fef3c7;">outcome = sin
+                        dato</span>
                 </article>
                 <article
                     style="display:grid;gap:8px;border:1px solid rgba(16,185,129,0.2);background:rgba(6,95,70,0.18);border-radius:14px;padding:14px;">
                     <strong style="color:#d1fae5;">Request</strong>
-                    <span data-runtime-check="nav-debug-request-id"
-                        style="font-size:15px;color:#d1fae5;">requestId = sin requestId</span>
+                    <span data-runtime-check="nav-debug-request-id" style="font-size:15px;color:#d1fae5;">requestId =
+                        sin requestId</span>
                 </article>
                 <article
                     style="display:grid;gap:8px;border:1px solid rgba(217,70,239,0.2);background:rgba(88,28,135,0.16);border-radius:14px;padding:14px;">
                     <strong style="color:#f5d0fe;">Ubicacion</strong>
-                    <span data-runtime-check="nav-debug-location"
-                        style="font-size:15px;color:#f5d0fe;">location = /runtimeEvents | finalUrl = sin
+                    <span data-runtime-check="nav-debug-location" style="font-size:15px;color:#f5d0fe;">location =
+                        /runtimeEvents | finalUrl = sin
                         finalUrl</span>
                 </article>
             </div>
@@ -873,6 +874,79 @@ final class EventsPage extends Component
             </p>
         </div>
 
+        <section data-runtime-busy-panel
+            style="display:grid;gap:16px;border:1px solid rgba(56,189,248,0.22);background:rgba(8,47,73,0.16);border-radius:18px;padding:18px;">
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+                <div style="display:grid;gap:8px;">
+                    <h3 style="margin:0;font-size:20px;">Contrato global <code>busy</code></h3>
+                    <p style="margin:0;color:#bae6fd;line-height:1.7;max-inline-size:76ch;">
+                        Relee <code>window.Volt.busy.current()</code> y el espejo documental
+                        <code>data-volt-busy-*</code> para validar que el runtime base publica el mismo estado durante
+                        navegacion y acciones.
+                    </p>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                    <button type="button"
+                        onclick="if(window.__spaLabRuntimeBusyPanel && typeof window.__spaLabRuntimeBusyPanel.render === 'function'){ window.__spaLabRuntimeBusyPanel.render('manual-refresh'); }"
+                        style="border:1px solid rgba(56,189,248,0.28);background:rgba(8,47,73,0.22);color:#e0f2fe;border-radius:10px;padding:10px 14px;cursor:pointer;">
+                        Refrescar busy
+                    </button>
+                    <button type="button"
+                        onclick="if(window.__spaLabRuntimeBusyPanel && typeof window.__spaLabRuntimeBusyPanel.clear === 'function'){ window.__spaLabRuntimeBusyPanel.clear(); }"
+                        style="border:1px solid rgba(148,163,184,0.28);background:rgba(15,23,42,0.82);color:#e2e8f0;border-radius:10px;padding:10px 14px;cursor:pointer;">
+                        Limpiar snapshot
+                    </button>
+                </div>
+            </div>
+
+            <div
+                style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:start;">
+                <article data-runtime-check="busy-current-kind"
+                    style="display:grid;gap:8px;border:1px solid rgba(56,189,248,0.2);background:rgba(8,47,73,0.18);border-radius:14px;padding:14px;">
+                    <strong style="color:#7dd3fc;">API kind</strong>
+                    <span style="font-size:15px;color:#e0f2fe;">kind = idle</span>
+                </article>
+                <article data-runtime-check="busy-current-phase"
+                    style="display:grid;gap:8px;border:1px solid rgba(245,158,11,0.2);background:rgba(120,53,15,0.18);border-radius:14px;padding:14px;">
+                    <strong style="color:#fde68a;">API phase</strong>
+                    <span style="font-size:15px;color:#fef3c7;">phase = idle</span>
+                </article>
+                <article data-runtime-check="busy-current-request"
+                    style="display:grid;gap:8px;border:1px solid rgba(16,185,129,0.2);background:rgba(6,95,70,0.18);border-radius:14px;padding:14px;">
+                    <strong style="color:#d1fae5;">Request / source</strong>
+                    <span style="font-size:15px;color:#d1fae5;">requestId = sin requestId | source = idle</span>
+                </article>
+                <article data-runtime-check="busy-current-mirror"
+                    style="display:grid;gap:8px;border:1px solid rgba(217,70,239,0.2);background:rgba(88,28,135,0.16);border-radius:14px;padding:14px;">
+                    <strong style="color:#f5d0fe;">Mirror API / document</strong>
+                    <span style="font-size:15px;color:#f5d0fe;">mirror = consistente</span>
+                </article>
+            </div>
+
+            <div
+                style="display:grid;gap:8px;border:1px solid rgba(51,65,85,1);background:#0f172a;border-radius:16px;padding:16px;color:#cbd5e1;">
+                <span data-runtime-check="busy-current-action"
+                    style="font-size:13px;color:#cbd5e1;line-height:1.7;">action = sin action</span>
+                <span data-runtime-check="busy-current-component"
+                    style="font-size:13px;color:#cbd5e1;line-height:1.7;">component = sin component</span>
+                <span data-runtime-check="busy-current-target"
+                    style="font-size:13px;color:#cbd5e1;line-height:1.7;">target = sin target</span>
+                <span data-runtime-check="busy-document-kind"
+                    style="font-size:13px;color:#93c5fd;line-height:1.7;">doc.kind = idle | doc.phase = idle</span>
+                <span data-runtime-check="busy-last-active-summary"
+                    style="font-size:13px;color:#bbf7d0;line-height:1.7;">ultimo busy = sin snapshot activo persistido</span>
+                <span data-runtime-check="busy-last-action-summary"
+                    style="font-size:13px;color:#fca5a5;line-height:1.7;">ultima accion busy = sin snapshot de action persistido</span>
+                <span data-runtime-check="busy-last-event"
+                    style="font-size:13px;color:#fde68a;line-height:1.7;">lastEvent = boot</span>
+                <span data-runtime-check="busy-updated-at"
+                    style="font-size:13px;color:#94a3b8;line-height:1.7;">actualizado = sin dato</span>
+            </div>
+
+            <pre data-runtime-check="busy-detail"
+                style="margin:0;border:1px solid rgba(51,65,85,1);background:#020617;border-radius:14px;padding:14px;color:#cbd5e1;overflow:auto;min-height:180px;">{"waiting":"Aun no hay snapshots busy capturados."}</pre>
+        </section>
+
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
             <button type="button" data-volt-efficiency-action="refresh"
                 style="border:1px solid rgba(34,197,94,0.28);background:rgba(20,83,45,0.18);color:#dcfce7;border-radius:10px;padding:10px 14px;cursor:pointer;">
@@ -933,41 +1007,54 @@ final class EventsPage extends Component
             <article data-runtime-check="efficiency-budget-boot"
                 style="display:grid;gap:8px;border:1px solid rgba(34,197,94,0.20);background:rgba(20,83,45,0.14);border-radius:16px;padding:16px;">
                 <strong style="color:#bbf7d0;">Budget boot</strong>
-                <span>estado = <strong data-volt-efficiency-budget-boot-status style="color:#f0fdf4;">pendiente</strong></span>
+                <span>estado = <strong data-volt-efficiency-budget-boot-status
+                        style="color:#f0fdf4;">pendiente</strong></span>
                 <span>actual = <strong data-volt-efficiency-budget-boot-value style="color:#f0fdf4;">n/d</strong></span>
-                <span>objetivo = <strong data-volt-efficiency-budget-boot-target style="color:#f0fdf4;">&lt; 150 ms</strong></span>
+                <span>objetivo = <strong data-volt-efficiency-budget-boot-target style="color:#f0fdf4;">&lt; 150
+                        ms</strong></span>
             </article>
 
             <article data-runtime-check="efficiency-budget-patch"
                 style="display:grid;gap:8px;border:1px solid rgba(59,130,246,0.20);background:rgba(30,64,175,0.14);border-radius:16px;padding:16px;">
                 <strong style="color:#bfdbfe;">Budget patch visual</strong>
-                <span>estado = <strong data-volt-efficiency-budget-patch-status style="color:#dbeafe;">pendiente</strong></span>
-                <span>actual = <strong data-volt-efficiency-budget-patch-value style="color:#dbeafe;">n/d</strong></span>
-                <span>objetivo = <strong data-volt-efficiency-budget-patch-target style="color:#dbeafe;">&lt; 120 ms</strong></span>
+                <span>estado = <strong data-volt-efficiency-budget-patch-status
+                        style="color:#dbeafe;">pendiente</strong></span>
+                <span>actual = <strong data-volt-efficiency-budget-patch-value
+                        style="color:#dbeafe;">n/d</strong></span>
+                <span>objetivo = <strong data-volt-efficiency-budget-patch-target style="color:#dbeafe;">&lt; 120
+                        ms</strong></span>
             </article>
 
             <article data-runtime-check="efficiency-budget-payload"
                 style="display:grid;gap:8px;border:1px solid rgba(245,158,11,0.20);background:rgba(120,53,15,0.16);border-radius:16px;padding:16px;">
                 <strong style="color:#fde68a;">Budget payload action</strong>
-                <span>estado = <strong data-volt-efficiency-budget-payload-status style="color:#fef3c7;">pendiente</strong></span>
-                <span>actual = <strong data-volt-efficiency-budget-payload-value style="color:#fef3c7;">n/d</strong></span>
-                <span>objetivo = <strong data-volt-efficiency-budget-payload-target style="color:#fef3c7;">&lt; 25 KB</strong></span>
+                <span>estado = <strong data-volt-efficiency-budget-payload-status
+                        style="color:#fef3c7;">pendiente</strong></span>
+                <span>actual = <strong data-volt-efficiency-budget-payload-value
+                        style="color:#fef3c7;">n/d</strong></span>
+                <span>objetivo = <strong data-volt-efficiency-budget-payload-target style="color:#fef3c7;">&lt; 25
+                        KB</strong></span>
             </article>
 
             <article data-runtime-check="efficiency-budget-buffer"
                 style="display:grid;gap:8px;border:1px solid rgba(168,85,247,0.20);background:rgba(88,28,135,0.16);border-radius:16px;padding:16px;">
                 <strong style="color:#f5d0fe;">Budget buffer runtime</strong>
-                <span>estado = <strong data-volt-efficiency-budget-buffer-status style="color:#faf5ff;">pendiente</strong></span>
-                <span>actual = <strong data-volt-efficiency-budget-buffer-value style="color:#faf5ff;">0 / 0</strong></span>
-                <span>objetivo = <strong data-volt-efficiency-budget-buffer-target style="color:#faf5ff;">telemetry &lt; 60 entradas</strong></span>
+                <span>estado = <strong data-volt-efficiency-budget-buffer-status
+                        style="color:#faf5ff;">pendiente</strong></span>
+                <span>actual = <strong data-volt-efficiency-budget-buffer-value style="color:#faf5ff;">0 /
+                        0</strong></span>
+                <span>objetivo = <strong data-volt-efficiency-budget-buffer-target style="color:#faf5ff;">telemetry &lt;
+                        60 entradas</strong></span>
             </article>
         </div>
 
         <article data-runtime-check="efficiency-budget-summary"
             style="display:grid;gap:10px;border:1px solid rgba(148,163,184,0.22);background:#020617;border-radius:16px;padding:16px;">
             <strong style="color:#e2e8f0;">Resumen contractual de budgets</strong>
-            <span>estado general = <strong data-volt-efficiency-budget-overall style="color:#f8fafc;">pendiente</strong></span>
-            <span>detalle = <strong data-volt-efficiency-budget-summary style="color:#cbd5e1;">Sin mediciones suficientes todavia.</strong></span>
+            <span>estado general = <strong data-volt-efficiency-budget-overall
+                    style="color:#f8fafc;">pendiente</strong></span>
+            <span>detalle = <strong data-volt-efficiency-budget-summary style="color:#cbd5e1;">Sin mediciones
+                    suficientes todavia.</strong></span>
         </article>
 
         <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">

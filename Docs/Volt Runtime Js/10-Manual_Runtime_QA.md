@@ -172,6 +172,21 @@ Cobertura adicional del retry seguro en navegacion `GET`:
   - desde `cacheExample`, hacer click rapido en `Ir a /counterExample` y enseguida en `Ir a /formExample`
   - repetir tambien el patron inverso y otras combinaciones entre `cacheExample`, `counterExample` y `formExample`
   - el ultimo click debe ganar de forma consistente; la URL final y el marker visible de la vista deben coincidir con el ultimo destino
+- `QA-19 Estado global de navegacion SPA`: `OK`
+  - abrir `/navigationTransition` desde la SPA y navegar a `/navigationTransitionAlt`
+  - durante `volt:before-navigate` el chip global debe pasar de `Estado navegacion SPA: idle` a `Estado navegacion SPA: navegando`
+  - mientras la transicion esta en vuelo, los enlaces `volt:navigate` observados deben quedar temporalmente con `pointer-events: none`
+  - al completar `volt:navigated`, el chip debe volver a `idle` y los enlaces deben recuperar su interaccion
+- `QA-20 Runtime busy base`: `OK`
+  - verificar en `window.Volt.busy.current()` los estados `idle`, `navigation` y `action`
+  - confirmar en `html/body` los atributos `data-volt-busy`, `data-volt-busy-kind`, `data-volt-busy-phase`, `data-volt-busy-source` y, cuando aplique, `data-volt-busy-request-id`, `data-volt-busy-component`, `data-volt-busy-action`
+  - validar que la busy bar inyectada por el runtime aparezca durante una navegacion SPA y durante un `POST /_volt/action` real
+  - comprobar que la UI minima del runtime se puede desactivar con `data-volt-busy-ui="off"` o `<meta name="volt-busy-ui" content="off">` si la app quiere opt-out visual
+- `QA-21 Panel visual del contrato busy`: `OK`
+  - abrir `/runtimeEvents`, limpiar el panel y navegar por SPA a `/islandExample`
+  - ejecutar `Incrementar` y volver a `/runtimeEvents`
+  - validar que `busy-last-action-summary` conserve `kind = action`, `requestId`, `action = increment` y `component = App\View\Components\IslandCounter` aunque el snapshot actual ya este en `idle` o haya sido reemplazado por la navegacion de retorno
+  - confirmar que `busy-detail` serializa `lastActionActiveSnapshot` junto al snapshot actual y al espejo documental
 
 ### Cobertura Automatizada Complementaria 2026-07-13
 

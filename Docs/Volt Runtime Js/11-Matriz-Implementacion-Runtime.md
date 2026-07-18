@@ -44,6 +44,9 @@ Objetivo: cruzar el contrato documentado del runtime con su implementacion real 
 24. `/runtimeEvents` difiere el llenado pesado del panel de eficiencia a `window.load`, coalesce refreshes en `requestAnimationFrame` y elimina el render redundante inicial del panel de resiliencia.
 25. `/runtimeEvents` incorpora un diagnostico contractual del ultimo intento de `volt:navigate`, persistido en `sessionStorage`, con `href`, `requestId`, `outcome`, `finalUrl`, `scroll.before`, `scroll.after` y detalle serializado del hook mas reciente.
 26. `visit()` soporta serializacion `latest-wins` para enlaces `volt:navigate`: si llega un nuevo click mientras una navegacion sigue activa, el runtime guarda solo el ultimo intento y lo ejecuta al finalizar la visita en vuelo.
+27. El runtime base publica un contrato global `busy` en `html/body` (`data-volt-busy-*`), emite `volt:busy-start/change/end`, expone `window.Volt.busy` y monta una busy bar minima por defecto; `spa-lab` ya no implementa ese estado por su cuenta y solo consume el contrato comun.
+28. `/runtimeEvents` ahora relee ese contrato sin consola: compara `window.Volt.busy.current()` contra el espejo documental, persiste el ultimo `busy` activo y conserva aparte la ultima accion `busy` para no perder `action/component/requestId` tras la navegacion de regreso al lab.
+29. El layout compartido del lab corrige la estructura de `#volt-portals-root`: los roots de portales siguen aislados con `pointer-events-none`, pero el `<main>` sale de ese wrapper para no bloquear clicks ni `POST /_volt/action` reales.
 
 ## Divergencias Detectadas Y Corregidas
 
