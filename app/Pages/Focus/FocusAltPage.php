@@ -86,7 +86,8 @@ final class FocusAltPage extends Component
         }
 
         function syncInspector(reason) {
-            const active = document.activeElement && typeof document.activeElement === 'object' ? document.activeElement : null;
+            const active = document.activeElement && typeof document.activeElement === 'object' ? document
+                .activeElement : null;
             const scrollBox = document.querySelector('[data-volt-target="focus-scroll-box"]');
             const selectionRange = isSelectable(active) && typeof active.selectionStart === 'number' &&
                 typeof active.selectionEnd === 'number' ?
@@ -95,7 +96,8 @@ final class FocusAltPage extends Component
             const selectionDirection = isSelectable(active) && typeof active.selectionDirection === 'string' ?
                 active.selectionDirection :
                 'none';
-            const innerScrollTop = isSelectable(active) && typeof active.scrollTop === 'number' ? Math.round(active.scrollTop) :
+            const innerScrollTop = isSelectable(active) && typeof active.scrollTop === 'number' ? Math.round(active
+                    .scrollTop) :
                 0;
 
             updateText('[data-runtime-check="focus-active-element"]', resolveFocusId(active));
@@ -108,7 +110,8 @@ final class FocusAltPage extends Component
             );
             updateText(
                 '[data-runtime-check="focus-scroll-box-left"]',
-                scrollBox && typeof scrollBox.scrollLeft === 'number' ? String(Math.round(scrollBox.scrollLeft)) : '0'
+                scrollBox && typeof scrollBox.scrollLeft === 'number' ? String(Math.round(scrollBox.scrollLeft)) :
+                '0'
             );
             updateText('[data-runtime-check="focus-inspector-reason"]', reason);
         }
@@ -256,10 +259,38 @@ final class FocusAltPage extends Component
     </section>
 
     <section
+        style="display:grid;gap:16px;border:1px solid rgba(34,197,94,0.24);background:rgba(6,78,59,0.16);border-radius:20px;padding:24px;color:#d1fae5;">
+        <div style="display:grid;gap:8px;">
+            <h2 style="margin:0;font-size:24px;">Longitud controlada para preserve scroll</h2>
+            <p style="margin:0;color:#a7f3d0;line-height:1.7;">
+                Este bloque agrega altura estable a la vista alterna para que la navegacion con
+                <code>volt:preserve-scroll</code> pueda aterrizar cerca de la misma posicion vertical y se vea con
+                claridad la diferencia frente al reset por defecto.
+            </p>
+        </div>
+
+        <div style="display:grid;gap:12px;">
+            @for ($index = 1; $index <= 10; $index++) <article
+                style="display:grid;gap:6px;border:1px solid rgba(34,197,94,0.18);background:rgba(15,23,42,0.32);border-radius:14px;padding:14px 16px;">
+                <strong style="color:#bbf7d0;">Fila estable {{ $index }}</strong>
+                <span style="color:#d1fae5;line-height:1.7;">
+                    El contenido se mantiene homogéneo para que el scroll observable dependa del contrato de
+                    navegacion y no de un salto brusco en la altura del documento.
+                </span>
+                </article>
+                @endfor
+        </div>
+    </section>
+
+    <section
         style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;border:1px solid rgba(51,65,85,1);background:#0f172a;border-radius:20px;padding:24px;color:#e2e8f0;">
-        <a href="/runtimeFocus" volt:navigate
+        <a href="/runtimeFocus" volt:navigate data-runtime-check="focus-alt-reset-scroll-link"
             style="display:inline-flex;align-items:center;border:1px solid rgba(59,130,246,0.30);background:rgba(30,64,175,0.16);color:#dbeafe;border-radius:10px;padding:10px 16px;text-decoration:none;">
-            Volver a runtimeFocus
+            Volver a runtimeFocus reseteando scroll
+        </a>
+        <a href="/runtimeFocus" volt:navigate volt:preserve-scroll data-runtime-check="focus-alt-preserve-scroll-link"
+            style="display:inline-flex;align-items:center;border:1px solid rgba(34,197,94,0.30);background:rgba(20,83,45,0.18);color:#dcfce7;border-radius:10px;padding:10px 16px;text-decoration:none;">
+            Volver a runtimeFocus preservando scroll
         </a>
         <a href="{{ route('spaReactive') }}" volt:navigate
             style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">

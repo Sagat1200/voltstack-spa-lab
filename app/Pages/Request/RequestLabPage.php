@@ -235,6 +235,17 @@ final class RequestLabPage extends Component
             </article>
         </div>
 
+        <div data-runtime-check="action-retry-contract"
+            style="display:grid;gap:8px;border:1px solid rgba(248,113,113,0.18);background:rgba(15,23,42,0.45);border-radius:16px;padding:16px;color:#fecaca;">
+            <strong style="color:#fee2e2;">Contrato operativo de replay</strong>
+            <span data-runtime-check="action-retry-network">network-error en action: recuperacion manual, sin replay
+                implicito.</span>
+            <span data-runtime-check="action-retry-timeout">timeout en action: revisar la causa y volver a disparar
+                manualmente.</span>
+            <span data-runtime-check="action-retry-protocol">protocol-error en action: corregir payload o estado y
+                reintentar de forma explicita.</span>
+        </div>
+
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
             <div volt:loading
                 style="border:1px solid rgba(34,211,238,0.28);background:rgba(8,47,73,0.3);color:#bae6fd;border-radius:999px;padding:8px 12px;font-size:13px;">
@@ -492,6 +503,12 @@ final class RequestLabPage extends Component
                     <span data-runtime-check="nav-lifecycle-status" style="font-size:15px;color:#f5d0fe;">sin
                         dato</span>
                 </article>
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(125,211,252,0.2);background:rgba(8,47,73,0.12);border-radius:14px;padding:14px;">
+                    <strong>Clasificacion</strong>
+                    <span data-runtime-check="nav-lifecycle-classification" style="font-size:15px;color:#bae6fd;">sin
+                        clasificar</span>
+                </article>
             </div>
             <span data-runtime-check="nav-lifecycle-message"
                 style="font-size:13px;color:#cbd5e1;line-height:1.7;">mensaje sin dato</span>
@@ -499,6 +516,27 @@ final class RequestLabPage extends Component
                 style="font-size:13px;color:#93c5fd;line-height:1.7;">finalUrl = sin dato</span>
             <span data-runtime-check="nav-lifecycle-captured-at"
                 style="font-size:13px;color:#94a3b8;line-height:1.7;">capturado en = sin dato</span>
+            <span data-runtime-check="nav-lifecycle-contract"
+                style="font-size:13px;color:#cbd5e1;line-height:1.7;">contrato = sin dato</span>
+        </div>
+
+        <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));align-items:start;">
+            <article data-runtime-check="nav-contract-abort-card"
+                style="display:grid;gap:8px;border:1px solid rgba(56,189,248,0.2);background:rgba(8,47,73,0.18);border-radius:14px;padding:14px;color:#e0f2fe;">
+                <strong style="color:#7dd3fc;">Abort</strong>
+                <span data-runtime-check="nav-contract-abort-summary">La visita vieja se cancela activamente porque otra
+                    mas nueva toma prioridad.</span>
+                <span data-runtime-check="nav-contract-abort-signal">Se espera <code>volt:request-abort</code> y mensaje
+                    de supersession.</span>
+            </article>
+            <article data-runtime-check="nav-contract-stale-card"
+                style="display:grid;gap:8px;border:1px solid rgba(163,230,53,0.2);background:rgba(63,98,18,0.18);border-radius:14px;padding:14px;color:#ecfccb;">
+                <strong style="color:#d9f99d;">Stale</strong>
+                <span data-runtime-check="nav-contract-stale-summary">La respuesta vieja logra volver, pero el runtime
+                    la descarta y conserva el resultado mas nuevo.</span>
+                <span data-runtime-check="nav-contract-stale-signal">Se espera <code>volt:request-stale</code> sin
+                    aplicar el payload tardio.</span>
+            </article>
         </div>
     </section>
 
@@ -619,7 +657,25 @@ window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard = function() {
             'finalUrl = sin dato');
         window.__spaLabRequestLab.updateText('[data-runtime-check="nav-lifecycle-captured-at"]',
             'capturado en = sin dato');
+        window.__spaLabRequestLab.updateText('[data-runtime-check="nav-lifecycle-classification"]',
+            'sin clasificar');
+        window.__spaLabRequestLab.updateText('[data-runtime-check="nav-lifecycle-contract"]',
+            'contrato = sin dato');
         return;
+    }
+
+    var classification = 'otro';
+    var contract = 'lectura pendiente';
+
+    if (summary.eventName === 'volt:request-abort') {
+        classification = 'abort';
+        contract = 'la visita anterior fue cancelada activamente por supersession de una mas nueva';
+    } else if (summary.eventName === 'volt:request-stale') {
+        classification = 'stale';
+        contract = 'la respuesta tardia se descarta y no debe aplicarse sobre la UI actual';
+    } else if (summary.eventName === 'volt:request-retry') {
+        classification = 'retry';
+        contract = 'solo la navegacion GET puede reintentarse automaticamente bajo politica segura';
     }
 
     window.__spaLabRequestLab.updateText(
@@ -652,6 +708,8 @@ window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard = function() {
         'capturado en = ' + (typeof summary.capturedAt === 'string' && summary.capturedAt !== '' ? summary
             .capturedAt : 'sin dato')
     );
+    window.__spaLabRequestLab.updateText('[data-runtime-check="nav-lifecycle-classification"]', classification);
+    window.__spaLabRequestLab.updateText('[data-runtime-check="nav-lifecycle-contract"]', 'contrato = ' + contract);
 };
 
 window.__spaLabRequestLab.writeResilienceSummary = function(payload) {

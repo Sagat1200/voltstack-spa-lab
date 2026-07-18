@@ -115,7 +115,8 @@ final class FocusPage extends Component
         }
 
         function syncInspector(reason) {
-            const active = document.activeElement && typeof document.activeElement === 'object' ? document.activeElement : null;
+            const active = document.activeElement && typeof document.activeElement === 'object' ? document
+                .activeElement : null;
             const scrollBox = document.querySelector('[data-volt-target="focus-scroll-box"]');
             const selectionRange = isSelectable(active) && typeof active.selectionStart === 'number' &&
                 typeof active.selectionEnd === 'number' ?
@@ -124,7 +125,8 @@ final class FocusPage extends Component
             const selectionDirection = isSelectable(active) && typeof active.selectionDirection === 'string' ?
                 active.selectionDirection :
                 'none';
-            const innerScrollTop = isSelectable(active) && typeof active.scrollTop === 'number' ? Math.round(active.scrollTop) :
+            const innerScrollTop = isSelectable(active) && typeof active.scrollTop === 'number' ? Math.round(active
+                    .scrollTop) :
                 0;
 
             updateText('[data-runtime-check="focus-active-element"]', resolveFocusId(active));
@@ -137,7 +139,8 @@ final class FocusPage extends Component
             );
             updateText(
                 '[data-runtime-check="focus-scroll-box-left"]',
-                scrollBox && typeof scrollBox.scrollLeft === 'number' ? String(Math.round(scrollBox.scrollLeft)) : '0'
+                scrollBox && typeof scrollBox.scrollLeft === 'number' ? String(Math.round(scrollBox.scrollLeft)) :
+                '0'
             );
             updateText('[data-runtime-check="focus-inspector-reason"]', reason);
         }
@@ -276,9 +279,11 @@ final class FocusPage extends Component
                 </button>
                 <div
                     style="display:grid;gap:10px;border:1px solid rgba(96,165,250,0.20);background:rgba(30,64,175,0.12);border-radius:14px;padding:14px;">
-                    <span data-runtime-check="focus-patch-sequence" style="color:#bfdbfe;">patch.sequence = {{ $patchSequence }}</span>
+                    <span data-runtime-check="focus-patch-sequence" style="color:#bfdbfe;">patch.sequence =
+                        {{ $patchSequence }}</span>
                     <span data-runtime-check="focus-patch-summary" style="color:#dbeafe;">{{ $patchSummary }}</span>
-                    <span data-runtime-check="focus-patch-request-marker" style="color:#93c5fd;">request-marker = {{ $requestMarker }}</span>
+                    <span data-runtime-check="focus-patch-request-marker" style="color:#93c5fd;">request-marker =
+                        {{ $requestMarker }}</span>
                 </div>
             </article>
 
@@ -319,8 +324,7 @@ final class FocusPage extends Component
                         y no del propio contenido del laboratorio.
                     </span>
                 </article>
-                @for ($index = 1; $index <= 14; $index++)
-                    <article
+                @for ($index = 1; $index <= 14; $index++) <article
                     style="display:grid;gap:6px;border:1px solid rgba(245,158,11,0.16);background:rgba(15,23,42,0.35);border-radius:12px;padding:12px 14px;">
                     <strong style="color:#fef3c7;">Fila {{ $index }}</strong>
                     <span style="color:#fde68a;line-height:1.7;">
@@ -462,6 +466,51 @@ final class FocusPage extends Component
             <strong style="color:#cbd5e1;">Ultimo motivo del inspector</strong>
             <span data-runtime-check="focus-inspector-reason" style="color:#e2e8f0;">boot</span>
         </article>
+    </div>
+</section>
+
+<section
+    style="display:grid;gap:18px;border:1px solid rgba(14,165,233,0.24);background:rgba(8,47,73,0.18);border-radius:20px;padding:24px;color:#e0f2fe;">
+    <div style="display:grid;gap:8px;">
+        <h2 style="margin:0;font-size:24px;">Contrato de navegacion con preserve scroll</h2>
+        <p style="margin:0;color:#bae6fd;line-height:1.7;">
+            Desplaza la pagina hasta este bloque y compara ambos enlaces. El runtime debe reiniciar el documento a
+            <code>0</code> salvo que la navegacion declare <code>volt:preserve-scroll</code>.
+        </p>
+    </div>
+
+    <div style="display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start;">
+        <article
+            style="display:grid;gap:12px;border:1px solid rgba(56,189,248,0.24);background:rgba(8,47,73,0.22);border-radius:16px;padding:16px;">
+            <strong style="color:#67e8f9;">Navegacion que reinicia el documento</strong>
+            <a href="/runtimeFocusAlt" volt:navigate data-runtime-check="focus-nav-reset-link"
+                style="display:inline-flex;align-items:center;inline-size:max-content;border:1px solid rgba(56,189,248,0.28);background:rgba(8,47,73,0.34);color:#e0f2fe;border-radius:10px;padding:10px 14px;text-decoration:none;">
+                Ir a runtimeFocusAlt reseteando scroll
+            </a>
+            <span style="color:#bae6fd;line-height:1.7;">
+                Este enlace deja visible el contrato por defecto: al terminar la visita compatible, el documento
+                vuelve arriba.
+            </span>
+        </article>
+
+        <article
+            style="display:grid;gap:12px;border:1px solid rgba(34,197,94,0.24);background:rgba(20,83,45,0.20);border-radius:16px;padding:16px;">
+            <strong style="color:#86efac;">Navegacion con scroll preservado</strong>
+            <a href="/runtimeFocusAlt" volt:navigate volt:preserve-scroll data-runtime-check="focus-nav-preserve-link"
+                style="display:inline-flex;align-items:center;inline-size:max-content;border:1px solid rgba(34,197,94,0.28);background:rgba(20,83,45,0.32);color:#dcfce7;border-radius:10px;padding:10px 14px;text-decoration:none;">
+                Ir a runtimeFocusAlt preservando scroll
+            </a>
+            <span style="color:#bbf7d0;line-height:1.7;">
+                Si la ruta destino tiene altura suficiente, la SPA debe aterrizar aproximadamente en la misma posicion
+                vertical del documento.
+            </span>
+        </article>
+    </div>
+
+    <div data-runtime-check="focus-navigation-preserve-scroll-notes"
+        style="border:1px solid rgba(125,211,252,0.20);background:rgba(15,23,42,0.40);border-radius:14px;padding:14px 16px;color:#cbd5e1;line-height:1.7;">
+        QA sugerido: situate cerca de este bloque, navega primero con el enlace normal para confirmar
+        <code>scrollY = 0</code> y luego repite con el enlace marcado con <code>volt:preserve-scroll</code>.
     </div>
 </section>
 
