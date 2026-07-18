@@ -97,6 +97,7 @@ Impacta directamente:
 
 ### Bloque Activo 4. Eficiencia Y Presupuestos
 
+- `[-]` exponer budgets visibles en `/runtimeEvents` para `boot`, `patch`, `payload` y `buffer telemetry`
 - `[ ]` ejecutar la matriz de medicion definida mas abajo en este documento
 - `[ ]` fijar budgets reales para `boot`, `patch`, payload, memoria y sesiones largas
 - `[ ]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
@@ -606,11 +607,19 @@ Resultado despues de reducir el peso del runtime externo:
 Instrumentacion util para navegador real:
 
 - `[x]` laboratorio de eficiencia incrustado en `/runtimeEvents`, leyendo `window.Volt.telemetry`, `window.Volt.components` y `performance`
+- `[x]` `/runtimeEvents` expone budgets contractuales visibles para `boot`, `patch`, `payload action` y `buffer telemetry`, con estado `ok/alerta/pendiente` y resumen agregado sin abrir DevTools
+- `[x]` el panel de eficiencia de `/runtimeEvents` reduce trabajo inicial: hace un sync resumido en `boot`, difiere el sync completo a `window.load` y coalesce refreshes repetidos en un solo frame
+- `[x]` `/runtimeEvents` suma un panel contractual de diagnostico de navegacion SPA con `href`, `requestId`, `outcome`, `finalUrl`, `scroll.before`, `scroll.after` y detalle serializado del ultimo intento de `volt:navigate`
+- `[x]` el runtime SPA serializa clicks de enlaces mientras una navegacion sigue en vuelo: conserva solo el ultimo intento (`latest-wins`) y lo ejecuta al cerrar la visita activa para evitar carreras entre vistas
 - `[x]` guardrails server-side del skeleton para `/runtimeEvents`, fijando hook inspector, paneles `efficiency-*`, tarjetas `Telemetry *` y links operativos hacia `runtimeAdvancedDirectives`, `runtimeState` y `runtimeModelSync`
 - `[x]` guardrails adicionales del skeleton para `runtimeEvents` y `/_volt/runtime.js`, fijando estado base del panel de eficiencia (`boot`, `(pendiente)`, snapshots `latest`) y la API publica `window.Volt.telemetry` / `window.Volt.components`
 - `[x]` pasada browser guiada sobre `/runtimeEvents -> /runtimeState -> captureSelectiveSync -> /runtimeEvents`, confirmando `navigation:2`, `action:1`, `patch:3`, `latest` coherentes y la nota operativa de que `captureSelectiveSync` solo envia valores ya persistidos en el store runtime
 - `[x]` checklist manual dedicada en `9-Runtime-Efficiency-Browser-Validation.md`
 - `[x]` controles de refresco/reset para observar `navigation`, `action`, `patch`, payloads y roots activos sin abrir consola
+- `[x]` validacion browser del panel de budgets en `/runtimeEvents -> /runtimeModelSync -> /runtimeEvents`, confirmando `boot=alerta`, `patch=ok`, `payload=ok` y `buffer=ok` con datos reales de telemetria
+- `[x]` optimizacion del arranque de `/runtimeEvents`: placeholders iniciales + sync completo tras `window.load`, validado en navegador con `Runtime summary snapshot`, `Active components summary` y tarjetas `Latest *` apareciendo despues de la carga completa
+- `[x]` validacion browser del diagnostico de navegacion en `/runtimeEvents -> /spaReactive -> /cacheExample -> /spaReactive -> /runtimeEvents`, confirmando persistencia del ultimo intento SPA con `outcome = success`, `requestId`, `href`, `finalUrl`, `scroll.before` y `scroll.after`
+- `[x]` validacion browser de navegacion rapida entre `/cacheExample`, `/counterExample` y `/formExample`: 16 secuencias rapidas completadas con `lastWinsCount = 16`, sin clicks perdidos ni vistas atascadas
 
 ## Bitacora De Avance
 
@@ -721,6 +730,10 @@ Usar esta seccion para marcar hitos reales conforme avancemos.
 - `[x]` `RequestLab` rehidrata su wiring JS desde el cliente persistente `SpaLab.js`, de modo que siga operativo tambien al entrar por navegacion SPA desde otras pantallas
 - `[x]` `/runtimeState` suma un laboratorio explicito para `dirty`, `success` y `error`, con filtros por `action/target`, panel de `request-status` y markers estables para guardrails del skeleton
 - `[x]` `/runtimeFocus` suma un laboratorio contractual para restore de `focus`, `selection` y `scroll`, con patch server-driven, contenedor `data-volt-preserve-scroll`, inspector visible y markers estables para el skeleton
+- `[x]` `/runtimeEvents` suma un resumen contractual de budgets con `boot`, `patch`, `payload action` y `buffer telemetry`, mas estado agregado `ok/alerta/pendiente` aterrizado sobre la telemetria real del runtime
+- `[x]` `/runtimeEvents` coalesce el trabajo del panel de eficiencia y elimina el render redundante del panel de resiliencia durante el arranque
+- `[x]` `SpaLab.js` persiste en `sessionStorage` el ultimo intento de navegacion SPA para volverlo visible en `/runtimeEvents` aun despues de cambiar de vista
+- `[x]` `visit()` acepta `queueIfBusy` para enlaces `volt:navigate`; cuando una visita esta activa, el runtime cola solo el ultimo click del usuario y lo reprocesa tras emitir `volt:request-finish`
 
 ## Proximo Bloque Recomendado
 

@@ -260,7 +260,9 @@ final class CacheExamplePage extends Component
                 <h3 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Log reciente de cache</h3>
                 <span class="text-xs text-slate-500">Se conservan los ultimos 8 eventos visibles en esta seccion.</span>
             </div>
-            <ol data-volt-hook-log data-volt-hook-log-filter="cache-only" class="grid gap-3 mt-4"></ol>
+            <ol data-volt-hook-log data-volt-hook-log-filter="cache-only"
+                class="grid gap-3 mt-4 max-h-80 overflow-y-auto pr-1"
+                style="overflow-anchor:none;"></ol>
         </div>
     </article>
 
@@ -299,7 +301,7 @@ final class CacheExamplePage extends Component
     </article>
 
     <div class="flex flex-wrap gap-3 mt-8">
-        <a href="{{ route('spaReactive') }}" volt:navigate
+        <a href="{{ route('spaReactive') }}" volt:navigate volt:prefetch="none"
             style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
             Inicio Sistema SPA Full Reactive
         </a>

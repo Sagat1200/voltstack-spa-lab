@@ -156,6 +156,22 @@ Cobertura adicional del retry seguro en navegacion `GET`:
 - `QA-14 Scroll`: `OK` en `/runtimeFocus`
   - el contenedor `data-volt-preserve-scroll` restaura `focus-scroll-box-top` despues del patch
   - el mismo lab deja visible el scroll interno del control activo mediante `focus-selection-scroll-top`
+- `QA-15 Budgets de eficiencia`: `OK` en `/runtimeEvents`
+  - estado inicial visible sin DevTools: `boot=alerta`, `patch=pendiente`, `payload=pendiente`, `buffer=ok`
+  - flujo `/runtimeEvents -> /runtimeModelSync -> /runtimeEvents` actualiza budgets con datos reales y deja `patch=ok`, `payload=ok`, `buffer=ok`
+  - el refresh manual conserva el resumen contractual y no infla `telemetry entries`
+- `QA-16 Boot diferido del lab de eficiencia`: `OK` en `/runtimeEvents`
+  - el HTML inicial mantiene placeholders (`boot`, `(pendiente)`, `(sin datos)`) y difiere el llenado pesado a `window.load`
+  - `Runtime summary snapshot`, `Active components summary` y `Latest *` aparecen despues de `load`
+  - el refresh manual sigue operativo y el panel de resiliencia ya no re-renderiza dos veces en el arranque
+- `QA-17 Diagnostico SPA click + scroll`: `OK` en `/runtimeEvents`
+  - recorrer `/runtimeEvents -> /spaReactive -> /cacheExample -> /spaReactive -> /runtimeEvents`
+  - el panel `Diagnostico de click y scroll` debe reflejar el ultimo intento SPA con `href`, `requestId`, `outcome`, `location/finalUrl`, `scroll.before` y `scroll.after`
+  - el `pre` de detalle debe mostrar el payload serializado del ultimo hook relevante (`request-start`, `before-navigate`, `navigated` o `request-finish`)
+- `QA-18 Latest-wins en clicks rapidos`: `OK`
+  - desde `cacheExample`, hacer click rapido en `Ir a /counterExample` y enseguida en `Ir a /formExample`
+  - repetir tambien el patron inverso y otras combinaciones entre `cacheExample`, `counterExample` y `formExample`
+  - el ultimo click debe ganar de forma consistente; la URL final y el marker visible de la vista deben coincidir con el ultimo destino
 
 ### Cobertura Automatizada Complementaria 2026-07-13
 

@@ -131,6 +131,8 @@ final class EventsPage extends Component
 </script>
 <script data-volt-head-key="events-resilience-panel">
 (() => {
+    let scheduled = false;
+
     function updateText(selector, value) {
         const element = document.querySelector(selector);
         if (element) {
@@ -317,14 +319,27 @@ final class EventsPage extends Component
         renderIncidentSessionStatus();
     };
     window.__spaLabEventsResiliencePanel.clear = clearResiliencePanel;
+    window.__spaLabEventsResiliencePanel.scheduleRender = function() {
+        if (scheduled) {
+            return;
+        }
+
+        scheduled = true;
+        window.requestAnimationFrame(() => {
+            scheduled = false;
+            window.__spaLabEventsResiliencePanel.render();
+        });
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
-        window.__spaLabEventsResiliencePanel.render();
+        window.__spaLabEventsResiliencePanel.scheduleRender();
     });
     document.addEventListener('volt:navigated', () => {
-        window.setTimeout(() => window.__spaLabEventsResiliencePanel.render(), 0);
+        window.__spaLabEventsResiliencePanel.scheduleRender();
     });
-    window.setTimeout(() => window.__spaLabEventsResiliencePanel.render(), 0);
+    if (document.readyState !== 'loading') {
+        window.__spaLabEventsResiliencePanel.scheduleRender();
+    }
 })();
 </script>
 @endsection
@@ -428,6 +443,71 @@ final class EventsPage extends Component
             style="font-size:13px;color:#93c5fd;line-height:1.7;">finalUrl = sin dato</span>
         <span data-runtime-check="nav-lifecycle-captured-at"
             style="font-size:13px;color:#94a3b8;line-height:1.7;">capturado en = sin dato</span>
+    </section>
+
+    <section
+        style="display:grid;gap:18px;border:1px solid rgba(71,85,105,1);background:#020617;border-radius:20px;padding:24px;color:#e2e8f0;">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+            <div style="display:grid;gap:8px;">
+                <h2 style="margin:0;font-size:24px;">Diagnostico de click y scroll</h2>
+                <p style="margin:0;color:#94a3b8;line-height:1.7;max-inline-size:76ch;">
+                    Este panel deja visible el ultimo enlace con <code>volt:navigate</code> que recibio click, el
+                    <code>requestId</code> asociado y como quedo el <code>scrollY</code> antes y despues del intento.
+                </p>
+            </div>
+            <button type="button"
+                onclick="if(window.__spaLabNavigationDebug && typeof window.__spaLabNavigationDebug.clear === 'function'){ window.__spaLabNavigationDebug.clear(); }"
+                style="border:1px solid rgba(148,163,184,0.28);background:rgba(15,23,42,0.82);color:#e2e8f0;border-radius:10px;padding:10px 14px;cursor:pointer;">
+                Limpiar diagnostico
+            </button>
+        </div>
+
+        <div data-runtime-navigation-debug
+            style="display:grid;gap:16px;border:1px solid rgba(125,211,252,0.18);background:rgba(15,23,42,0.78);border-radius:16px;padding:18px;">
+            <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:start;">
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(56,189,248,0.2);background:rgba(8,47,73,0.18);border-radius:14px;padding:14px;">
+                    <strong style="color:#7dd3fc;">Stage</strong>
+                    <span data-runtime-check="nav-debug-stage" style="font-size:15px;color:#e0f2fe;">stage = idle</span>
+                </article>
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(245,158,11,0.2);background:rgba(120,53,15,0.18);border-radius:14px;padding:14px;">
+                    <strong style="color:#fde68a;">Outcome</strong>
+                    <span data-runtime-check="nav-debug-outcome"
+                        style="font-size:15px;color:#fef3c7;">outcome = sin dato</span>
+                </article>
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(16,185,129,0.2);background:rgba(6,95,70,0.18);border-radius:14px;padding:14px;">
+                    <strong style="color:#d1fae5;">Request</strong>
+                    <span data-runtime-check="nav-debug-request-id"
+                        style="font-size:15px;color:#d1fae5;">requestId = sin requestId</span>
+                </article>
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(217,70,239,0.2);background:rgba(88,28,135,0.16);border-radius:14px;padding:14px;">
+                    <strong style="color:#f5d0fe;">Ubicacion</strong>
+                    <span data-runtime-check="nav-debug-location"
+                        style="font-size:15px;color:#f5d0fe;">location = /runtimeEvents | finalUrl = sin
+                        finalUrl</span>
+                </article>
+            </div>
+
+            <div
+                style="display:grid;gap:8px;border:1px solid rgba(51,65,85,1);background:#0f172a;border-radius:16px;padding:16px;color:#cbd5e1;">
+                <span data-runtime-check="nav-debug-click-href"
+                    style="font-size:13px;color:#93c5fd;line-height:1.7;">href = sin href</span>
+                <span data-runtime-check="nav-debug-click-text"
+                    style="font-size:13px;color:#cbd5e1;line-height:1.7;">texto = sin texto</span>
+                <span data-runtime-check="nav-debug-scroll-before"
+                    style="font-size:13px;color:#fde68a;line-height:1.7;">scroll.before = sin dato</span>
+                <span data-runtime-check="nav-debug-scroll-after"
+                    style="font-size:13px;color:#bbf7d0;line-height:1.7;">scroll.after = sin dato</span>
+                <span data-runtime-check="nav-debug-updated-at"
+                    style="font-size:13px;color:#94a3b8;line-height:1.7;">actualizado = sin dato</span>
+            </div>
+
+            <pre data-runtime-check="nav-debug-detail"
+                style="margin:0;border:1px solid rgba(51,65,85,1);background:#020617;border-radius:14px;padding:14px;color:#cbd5e1;overflow:auto;min-height:160px;">{"waiting":"Aun no hay intentos de navegacion capturados."}</pre>
+        </div>
     </section>
 
     <section
@@ -849,6 +929,47 @@ final class EventsPage extends Component
             </article>
         </div>
 
+        <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
+            <article data-runtime-check="efficiency-budget-boot"
+                style="display:grid;gap:8px;border:1px solid rgba(34,197,94,0.20);background:rgba(20,83,45,0.14);border-radius:16px;padding:16px;">
+                <strong style="color:#bbf7d0;">Budget boot</strong>
+                <span>estado = <strong data-volt-efficiency-budget-boot-status style="color:#f0fdf4;">pendiente</strong></span>
+                <span>actual = <strong data-volt-efficiency-budget-boot-value style="color:#f0fdf4;">n/d</strong></span>
+                <span>objetivo = <strong data-volt-efficiency-budget-boot-target style="color:#f0fdf4;">&lt; 150 ms</strong></span>
+            </article>
+
+            <article data-runtime-check="efficiency-budget-patch"
+                style="display:grid;gap:8px;border:1px solid rgba(59,130,246,0.20);background:rgba(30,64,175,0.14);border-radius:16px;padding:16px;">
+                <strong style="color:#bfdbfe;">Budget patch visual</strong>
+                <span>estado = <strong data-volt-efficiency-budget-patch-status style="color:#dbeafe;">pendiente</strong></span>
+                <span>actual = <strong data-volt-efficiency-budget-patch-value style="color:#dbeafe;">n/d</strong></span>
+                <span>objetivo = <strong data-volt-efficiency-budget-patch-target style="color:#dbeafe;">&lt; 120 ms</strong></span>
+            </article>
+
+            <article data-runtime-check="efficiency-budget-payload"
+                style="display:grid;gap:8px;border:1px solid rgba(245,158,11,0.20);background:rgba(120,53,15,0.16);border-radius:16px;padding:16px;">
+                <strong style="color:#fde68a;">Budget payload action</strong>
+                <span>estado = <strong data-volt-efficiency-budget-payload-status style="color:#fef3c7;">pendiente</strong></span>
+                <span>actual = <strong data-volt-efficiency-budget-payload-value style="color:#fef3c7;">n/d</strong></span>
+                <span>objetivo = <strong data-volt-efficiency-budget-payload-target style="color:#fef3c7;">&lt; 25 KB</strong></span>
+            </article>
+
+            <article data-runtime-check="efficiency-budget-buffer"
+                style="display:grid;gap:8px;border:1px solid rgba(168,85,247,0.20);background:rgba(88,28,135,0.16);border-radius:16px;padding:16px;">
+                <strong style="color:#f5d0fe;">Budget buffer runtime</strong>
+                <span>estado = <strong data-volt-efficiency-budget-buffer-status style="color:#faf5ff;">pendiente</strong></span>
+                <span>actual = <strong data-volt-efficiency-budget-buffer-value style="color:#faf5ff;">0 / 0</strong></span>
+                <span>objetivo = <strong data-volt-efficiency-budget-buffer-target style="color:#faf5ff;">telemetry &lt; 60 entradas</strong></span>
+            </article>
+        </div>
+
+        <article data-runtime-check="efficiency-budget-summary"
+            style="display:grid;gap:10px;border:1px solid rgba(148,163,184,0.22);background:#020617;border-radius:16px;padding:16px;">
+            <strong style="color:#e2e8f0;">Resumen contractual de budgets</strong>
+            <span>estado general = <strong data-volt-efficiency-budget-overall style="color:#f8fafc;">pendiente</strong></span>
+            <span>detalle = <strong data-volt-efficiency-budget-summary style="color:#cbd5e1;">Sin mediciones suficientes todavia.</strong></span>
+        </article>
+
         <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">
             <article data-volt-efficiency-kind="navigation"
                 style="display:grid;gap:8px;border:1px solid rgba(45,212,191,0.20);background:rgba(17,94,89,0.16);border-radius:16px;padding:16px;">
@@ -946,7 +1067,9 @@ final class EventsPage extends Component
         <p style="margin:0;color:#94a3b8;line-height:1.7;">
             Flujo sugerido: 1) pulsa <code>Refrescar metricas</code>, 2) navega a
             <code>/runtimeModelSync</code> o <code>/runtimeState</code>, 3) genera acciones/payloads reales, 4) vuelve
-            aqui por SPA y compara los cards de navigation/action/patch sin abrir aun DevTools.
+            aqui por SPA y compara los cards de navigation/action/patch sin abrir aun DevTools. El panel de budgets
+            toma como referencia inicial <code>boot &lt; 150 ms</code>, <code>patch &lt; 120 ms</code>,
+            <code>payload action &lt; 25 KB</code> y <code>telemetry &lt; 60 entradas</code>.
         </p>
     </section>
 

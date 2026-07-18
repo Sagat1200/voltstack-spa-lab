@@ -150,6 +150,25 @@ const navigationArrivalState = {
   detail: {},
 }
 
+const NAVIGATION_DEBUG_STORAGE_KEY = 'volt.runtimeEvents.lastNavigationDebug'
+
+const navigationDebugState = {
+  stage: 'idle',
+  outcome: 'sin dato',
+  clickHref: null,
+  clickText: null,
+  requestId: null,
+  requestUrl: null,
+  finalUrl: null,
+  location: null,
+  scrollBefore: null,
+  scrollAfter: null,
+  updatedAt: null,
+  detail: {
+    waiting: 'Aun no hay intentos de navegacion capturados.',
+  },
+}
+
 const runtimeStateExampleState = {
   lastEvent: null,
   lastRequestEvent: null,
@@ -158,6 +177,9 @@ const runtimeStateExampleState = {
 const runtimeEfficiencyState = {
   lastUpdatedAt: null,
   lastReason: 'boot',
+  scheduled: false,
+  pendingReason: 'boot',
+  pendingDetailLevel: 'full',
 }
 
 function roundMetric(value) {
@@ -176,6 +198,49 @@ function formatBytes(value) {
   return typeof value === 'number' && Number.isFinite(value)
     ? `${Math.round(value)} B`
     : 'n/d'
+}
+
+function formatKilobytes(value) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? `${Math.round((value / 1024) * 100) / 100} KB`
+    : 'n/d'
+}
+
+function evaluateBudgetStatus(actual, target, options = {}) {
+  if (typeof actual !== 'number' || !Number.isFinite(actual)) {
+    return options.pendingLabel || 'pendiente'
+  }
+
+  if (actual <= target) {
+    return options.okLabel || 'ok'
+  }
+
+  return options.alertLabel || 'alerta'
+}
+
+function setBudgetCardState(card, status) {
+  if (!card) {
+    return
+  }
+
+  if (status === 'ok') {
+    card.style.borderColor = 'rgba(34,197,94,0.34)'
+    card.style.background = 'rgba(20,83,45,0.20)'
+    return
+  }
+
+  if (status === 'alerta') {
+    card.style.borderColor = 'rgba(239,68,68,0.38)'
+    card.style.background = 'rgba(127,29,29,0.22)'
+    return
+  }
+
+  card.style.borderColor = 'rgba(148,163,184,0.22)'
+  card.style.background = '#020617'
+}
+
+function hasRuntimeEfficiencyExample() {
+  return !!document.querySelector('[data-volt-efficiency-example]')
 }
 
 function formatOutcomes(outcomes) {
@@ -315,17 +380,60 @@ function updateRuntimeEfficiencyKindCard(root, kind, summary) {
   })
 }
 
-function syncRuntimeEfficiencyExamples(reason = 'manual') {
+function syncRuntimeEfficiencyExamples(reason = 'manual', detailLevel = 'full') {
+  if (!hasRuntimeEfficiencyExample()) {
+    return
+  }
+
+  const fullSync = detailLevel !== 'budget-only'
   const telemetry = runtimeTelemetryApi()
-  const components = runtimeComponentsApi()
+  const components = fullSync ? runtimeComponentsApi() : null
   const telemetrySummary = telemetry ? telemetry.summary() : null
-  const latestNavigation = telemetry ? telemetry.latest({ kind: 'navigation' }) : null
-  const latestAction = telemetry ? telemetry.latest({ kind: 'action' }) : null
-  const latestPatch = telemetry ? telemetry.latest({ kind: 'patch' }) : null
+  const latestNavigation = fullSync && telemetry ? telemetry.latest({ kind: 'navigation' }) : null
+  const latestAction = fullSync && telemetry ? telemetry.latest({ kind: 'action' }) : null
+  const latestPatch = fullSync && telemetry ? telemetry.latest({ kind: 'patch' }) : null
   const componentsSummary = components ? components.summary() : null
   const navigationPerformance = runtimeNavigationPerformanceSnapshot()
   const runtimeAssetPerformance = runtimeAssetPerformanceSnapshot()
   const now = new Date()
+  const bootBudgetTargetMs = 150
+  const patchBudgetTargetMs = 120
+  const actionPayloadBudgetBytes = 25 * 1024
+  const bufferUsage = telemetrySummary && typeof telemetrySummary.totalEntries === 'number'
+    ? telemetrySummary.totalEntries
+    : null
+  const bufferMax = telemetrySummary && typeof telemetrySummary.maxEntries === 'number'
+    ? telemetrySummary.maxEntries
+    : null
+  const bootActual = runtimeAssetPerformance && typeof runtimeAssetPerformance.duration === 'number'
+    ? runtimeAssetPerformance.duration
+    : null
+  const patchActual = telemetrySummary && telemetrySummary.patch &&
+    typeof telemetrySummary.patch.averagePatchDurationMs === 'number'
+    ? telemetrySummary.patch.averagePatchDurationMs
+    : null
+  const actionPayloadActual = telemetrySummary && telemetrySummary.action &&
+    typeof telemetrySummary.action.averageRequestPayloadBytes === 'number'
+    ? telemetrySummary.action.averageRequestPayloadBytes
+    : null
+  const bufferStatus = typeof bufferUsage === 'number' && typeof bufferMax === 'number'
+    ? evaluateBudgetStatus(bufferUsage, bufferMax)
+    : 'pendiente'
+  const bootStatus = evaluateBudgetStatus(bootActual, bootBudgetTargetMs)
+  const patchStatus = evaluateBudgetStatus(patchActual, patchBudgetTargetMs)
+  const payloadStatus = evaluateBudgetStatus(actionPayloadActual, actionPayloadBudgetBytes)
+  const statuses = [bootStatus, patchStatus, payloadStatus, bufferStatus]
+  const overallStatus = statuses.includes('alerta')
+    ? 'alerta'
+    : statuses.every((status) => status === 'ok')
+      ? 'ok'
+      : 'pendiente'
+  const budgetSummary = [
+    `boot=${bootStatus} (${formatMetric(bootActual)})`,
+    `patch=${patchStatus} (${formatMetric(patchActual)})`,
+    `payload=${payloadStatus} (${formatKilobytes(actionPayloadActual)})`,
+    `buffer=${bufferStatus} (${typeof bufferUsage === 'number' && typeof bufferMax === 'number' ? `${bufferUsage}/${bufferMax}` : 'n/d'})`,
+  ].join(' | ')
 
   runtimeEfficiencyState.lastUpdatedAt = now
   runtimeEfficiencyState.lastReason = reason
@@ -352,6 +460,20 @@ function syncRuntimeEfficiencyExamples(reason = 'manual') {
     const patchLatestNode = root.querySelector('[data-volt-efficiency-latest="patch"]')
     const statusNode = root.querySelector('[data-volt-efficiency-status]')
     const updatedNode = root.querySelector('[data-volt-efficiency-last-updated]')
+    const budgetBootCard = root.querySelector('[data-runtime-check="efficiency-budget-boot"]')
+    const budgetPatchCard = root.querySelector('[data-runtime-check="efficiency-budget-patch"]')
+    const budgetPayloadCard = root.querySelector('[data-runtime-check="efficiency-budget-payload"]')
+    const budgetBufferCard = root.querySelector('[data-runtime-check="efficiency-budget-buffer"]')
+    const budgetBootStatusNode = root.querySelector('[data-volt-efficiency-budget-boot-status]')
+    const budgetBootValueNode = root.querySelector('[data-volt-efficiency-budget-boot-value]')
+    const budgetPatchStatusNode = root.querySelector('[data-volt-efficiency-budget-patch-status]')
+    const budgetPatchValueNode = root.querySelector('[data-volt-efficiency-budget-patch-value]')
+    const budgetPayloadStatusNode = root.querySelector('[data-volt-efficiency-budget-payload-status]')
+    const budgetPayloadValueNode = root.querySelector('[data-volt-efficiency-budget-payload-value]')
+    const budgetBufferStatusNode = root.querySelector('[data-volt-efficiency-budget-buffer-status]')
+    const budgetBufferValueNode = root.querySelector('[data-volt-efficiency-budget-buffer-value]')
+    const budgetOverallNode = root.querySelector('[data-volt-efficiency-budget-overall]')
+    const budgetSummaryNode = root.querySelector('[data-volt-efficiency-budget-summary]')
 
     if (navTypeNode) {
       navTypeNode.textContent = navigationPerformance ? navigationPerformance.type : 'n/d'
@@ -409,7 +531,7 @@ function syncRuntimeEfficiencyExamples(reason = 'manual') {
       uniqueComponentsNode.textContent = componentsSummary ? String(componentsSummary.uniqueComponents) : '0'
     }
 
-    if (componentsDetailNode) {
+    if (componentsDetailNode && fullSync) {
       componentsDetailNode.textContent = serializeHookDetail(
         componentsSummary && Array.isArray(componentsSummary.components)
           ? componentsSummary.components
@@ -417,7 +539,7 @@ function syncRuntimeEfficiencyExamples(reason = 'manual') {
       )
     }
 
-    if (summaryNode) {
+    if (summaryNode && fullSync) {
       summaryNode.textContent = serializeHookDetail({
         navigationPerformance,
         runtimeAssetPerformance,
@@ -426,35 +548,108 @@ function syncRuntimeEfficiencyExamples(reason = 'manual') {
       })
     }
 
-    if (navLatestNode) {
+    if (navLatestNode && fullSync) {
       navLatestNode.textContent = serializeHookDetail(latestNavigation || {
         waiting: 'Aun no hay navegaciones registradas en window.Volt.telemetry.',
       })
     }
 
-    if (actionLatestNode) {
+    if (actionLatestNode && fullSync) {
       actionLatestNode.textContent = serializeHookDetail(latestAction || {
         waiting: 'Aun no hay acciones reactivas registradas en window.Volt.telemetry.',
       })
     }
 
-    if (patchLatestNode) {
+    if (patchLatestNode && fullSync) {
       patchLatestNode.textContent = serializeHookDetail(latestPatch || {
         waiting: 'Aun no hay patches registrados en window.Volt.telemetry.',
       })
     }
 
     if (statusNode) {
-      statusNode.textContent = `Actualizado por ${reason}`
+      statusNode.textContent = `Actualizado por ${reason} (${overallStatus}${fullSync ? '' : ', resumido'})`
     }
 
     if (updatedNode) {
       updatedNode.textContent = formatHookTime(now)
     }
 
+    if (budgetBootStatusNode) {
+      budgetBootStatusNode.textContent = bootStatus
+    }
+
+    if (budgetBootValueNode) {
+      budgetBootValueNode.textContent = formatMetric(bootActual)
+    }
+
+    if (budgetPatchStatusNode) {
+      budgetPatchStatusNode.textContent = patchStatus
+    }
+
+    if (budgetPatchValueNode) {
+      budgetPatchValueNode.textContent = formatMetric(patchActual)
+    }
+
+    if (budgetPayloadStatusNode) {
+      budgetPayloadStatusNode.textContent = payloadStatus
+    }
+
+    if (budgetPayloadValueNode) {
+      budgetPayloadValueNode.textContent = formatKilobytes(actionPayloadActual)
+    }
+
+    if (budgetBufferStatusNode) {
+      budgetBufferStatusNode.textContent = bufferStatus
+    }
+
+    if (budgetBufferValueNode) {
+      budgetBufferValueNode.textContent = typeof bufferUsage === 'number' && typeof bufferMax === 'number'
+        ? `${bufferUsage} / ${bufferMax}`
+        : 'n/d'
+    }
+
+    if (budgetOverallNode) {
+      budgetOverallNode.textContent = overallStatus
+    }
+
+    if (budgetSummaryNode) {
+      budgetSummaryNode.textContent = budgetSummary
+    }
+
+    setBudgetCardState(budgetBootCard, bootStatus)
+    setBudgetCardState(budgetPatchCard, patchStatus)
+    setBudgetCardState(budgetPayloadCard, payloadStatus)
+    setBudgetCardState(budgetBufferCard, bufferStatus)
+
     updateRuntimeEfficiencyKindCard(root, 'navigation', telemetrySummary ? telemetrySummary.navigation : null)
     updateRuntimeEfficiencyKindCard(root, 'action', telemetrySummary ? telemetrySummary.action : null)
     updateRuntimeEfficiencyKindCard(root, 'patch', telemetrySummary ? telemetrySummary.patch : null)
+  })
+}
+
+function scheduleRuntimeEfficiencySync(reason = 'manual', detailLevel = 'full') {
+  if (!hasRuntimeEfficiencyExample()) {
+    return
+  }
+
+  runtimeEfficiencyState.pendingReason = reason
+  runtimeEfficiencyState.pendingDetailLevel = runtimeEfficiencyState.pendingDetailLevel === 'full' || detailLevel === 'full'
+    ? 'full'
+    : detailLevel
+
+  if (runtimeEfficiencyState.scheduled) {
+    return
+  }
+
+  runtimeEfficiencyState.scheduled = true
+
+  window.requestAnimationFrame(() => {
+    runtimeEfficiencyState.scheduled = false
+    const nextReason = runtimeEfficiencyState.pendingReason
+    const nextDetailLevel = runtimeEfficiencyState.pendingDetailLevel
+    runtimeEfficiencyState.pendingReason = 'manual'
+    runtimeEfficiencyState.pendingDetailLevel = 'full'
+    syncRuntimeEfficiencyExamples(nextReason, nextDetailLevel)
   })
 }
 
@@ -474,17 +669,17 @@ function registerRuntimeEfficiencyExamples() {
 
     if (action === 'reset-telemetry' && telemetry) {
       telemetry.reset()
-      syncRuntimeEfficiencyExamples('manual-reset-telemetry')
+      scheduleRuntimeEfficiencySync('manual-reset-telemetry')
       return
     }
 
     if (action === 'refresh-components' && components) {
       components.refresh('efficiency-lab-manual')
-      syncRuntimeEfficiencyExamples('manual-refresh-components')
+      scheduleRuntimeEfficiencySync('manual-refresh-components')
       return
     }
 
-    syncRuntimeEfficiencyExamples('manual-refresh')
+    scheduleRuntimeEfficiencySync('manual-refresh')
   })
 
   ;[
@@ -494,17 +689,15 @@ function registerRuntimeEfficiencyExamples() {
     'volt:component-destroyed',
   ].forEach((eventName) => {
     document.addEventListener(eventName, () => {
-      window.requestAnimationFrame(() => {
-        syncRuntimeEfficiencyExamples(eventName)
-      })
+      scheduleRuntimeEfficiencySync(eventName)
     })
   })
 
   window.addEventListener('load', () => {
-    syncRuntimeEfficiencyExamples('window-load')
+    scheduleRuntimeEfficiencySync('window-load')
   })
 
-  syncRuntimeEfficiencyExamples('boot')
+  scheduleRuntimeEfficiencySync('boot', 'budget-only')
 }
 
 function currentNavigationEntry() {
@@ -607,6 +800,291 @@ function updateNavigationArrival(state) {
     : navigationArrivalState.detail
 
   syncNavigationArrivalIndicators()
+}
+
+function readPersistedNavigationDebugState() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return null
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(NAVIGATION_DEBUG_STORAGE_KEY)
+
+    if (!raw) {
+      return null
+    }
+
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch (error) {
+    return null
+  }
+}
+
+function persistNavigationDebugState() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return
+  }
+
+  try {
+    window.sessionStorage.setItem(NAVIGATION_DEBUG_STORAGE_KEY, JSON.stringify(navigationDebugState))
+  } catch (error) {
+    // noop: the lab should stay usable even if sessionStorage is unavailable
+  }
+}
+
+function setNavigationDebugState(patch) {
+  if (!patch || typeof patch !== 'object') {
+    return
+  }
+
+  Object.assign(navigationDebugState, patch, {
+    updatedAt: new Date().toISOString(),
+  })
+  persistNavigationDebugState()
+  syncNavigationDebugPanel()
+}
+
+function clearNavigationDebugState() {
+  navigationDebugState.stage = 'idle'
+  navigationDebugState.outcome = 'sin dato'
+  navigationDebugState.clickHref = null
+  navigationDebugState.clickText = null
+  navigationDebugState.requestId = null
+  navigationDebugState.requestUrl = null
+  navigationDebugState.finalUrl = null
+  navigationDebugState.location = window.location.pathname
+  navigationDebugState.scrollBefore = null
+  navigationDebugState.scrollAfter = null
+  navigationDebugState.updatedAt = new Date().toISOString()
+  navigationDebugState.detail = {
+    cleared: true,
+    message: 'Panel reiniciado manualmente.',
+  }
+
+  persistNavigationDebugState()
+  syncNavigationDebugPanel()
+}
+
+function formatNavigationDebugScroll(label, value) {
+  return `${label} = ${typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : 'sin dato'}`
+}
+
+function syncNavigationDebugPanel() {
+  document.querySelectorAll('[data-runtime-navigation-debug]').forEach((panel) => {
+    const stageNode = panel.querySelector('[data-runtime-check="nav-debug-stage"]')
+    const outcomeNode = panel.querySelector('[data-runtime-check="nav-debug-outcome"]')
+    const hrefNode = panel.querySelector('[data-runtime-check="nav-debug-click-href"]')
+    const textNode = panel.querySelector('[data-runtime-check="nav-debug-click-text"]')
+    const requestNode = panel.querySelector('[data-runtime-check="nav-debug-request-id"]')
+    const beforeNode = panel.querySelector('[data-runtime-check="nav-debug-scroll-before"]')
+    const afterNode = panel.querySelector('[data-runtime-check="nav-debug-scroll-after"]')
+    const locationNode = panel.querySelector('[data-runtime-check="nav-debug-location"]')
+    const updatedNode = panel.querySelector('[data-runtime-check="nav-debug-updated-at"]')
+    const detailNode = panel.querySelector('[data-runtime-check="nav-debug-detail"]')
+
+    if (stageNode) {
+      stageNode.textContent = `stage = ${navigationDebugState.stage || 'sin dato'}`
+    }
+
+    if (outcomeNode) {
+      outcomeNode.textContent = `outcome = ${navigationDebugState.outcome || 'sin dato'}`
+    }
+
+    if (hrefNode) {
+      hrefNode.textContent = `href = ${navigationDebugState.clickHref || 'sin href'}`
+    }
+
+    if (textNode) {
+      textNode.textContent = `texto = ${navigationDebugState.clickText || 'sin texto'}`
+    }
+
+    if (requestNode) {
+      requestNode.textContent = `requestId = ${navigationDebugState.requestId || 'sin requestId'}`
+    }
+
+    if (beforeNode) {
+      beforeNode.textContent = formatNavigationDebugScroll('scroll.before', navigationDebugState.scrollBefore)
+    }
+
+    if (afterNode) {
+      afterNode.textContent = formatNavigationDebugScroll('scroll.after', navigationDebugState.scrollAfter)
+    }
+
+    if (locationNode) {
+      const location = navigationDebugState.location || window.location.pathname
+      const finalUrl = navigationDebugState.finalUrl || navigationDebugState.requestUrl || 'sin finalUrl'
+      locationNode.textContent = `location = ${location} | finalUrl = ${finalUrl}`
+    }
+
+    if (updatedNode) {
+      updatedNode.textContent = `actualizado = ${navigationDebugState.updatedAt || 'sin dato'}`
+    }
+
+    if (detailNode) {
+      detailNode.textContent = serializeStateExample(navigationDebugState.detail || {
+        waiting: 'Aun no hay intentos de navegacion capturados.',
+      })
+    }
+  })
+}
+
+function voltNavigateLinkFromEvent(event) {
+  const element = event.target instanceof Element ? event.target.closest('a, area') : null
+
+  if (!element || typeof element.hasAttribute !== 'function') {
+    return null
+  }
+
+  const hasNavigateDirective = [
+    'volt:navigate',
+    'data-volt-navigate',
+    'volt-navigate',
+  ].some((attribute) => element.hasAttribute(attribute))
+
+  return hasNavigateDirective ? element : null
+}
+
+function recordNavigationDebugFromClick(event) {
+  const link = voltNavigateLinkFromEvent(event)
+
+  if (!link) {
+    return
+  }
+
+  const href = typeof link.href === 'string' && link.href !== ''
+    ? link.href
+    : link.getAttribute('href') || ''
+  const text = typeof link.textContent === 'string'
+    ? link.textContent.replace(/\s+/g, ' ').trim()
+    : ''
+
+  setNavigationDebugState({
+    stage: 'click',
+    outcome: 'esperando request',
+    clickHref: href || null,
+    clickText: text || null,
+    requestId: null,
+    requestUrl: href || null,
+    finalUrl: null,
+    location: window.location.pathname,
+    scrollBefore: window.scrollY,
+    scrollAfter: null,
+    detail: {
+      trigger: 'click',
+      href: href || null,
+      text: text || null,
+      pathname: window.location.pathname,
+      scrollY: Math.round(window.scrollY),
+    },
+  })
+}
+
+function applyPersistedNavigationDebugState() {
+  const persisted = readPersistedNavigationDebugState()
+
+  if (!persisted) {
+    navigationDebugState.location = window.location.pathname
+    syncNavigationDebugPanel()
+    return
+  }
+
+  Object.assign(navigationDebugState, persisted, {
+    location: typeof persisted.location === 'string' && persisted.location !== ''
+      ? persisted.location
+      : window.location.pathname,
+  })
+  syncNavigationDebugPanel()
+}
+
+function registerNavigationDebugPanel() {
+  window.__spaLabNavigationDebug = window.__spaLabNavigationDebug || {}
+  window.__spaLabNavigationDebug.clear = clearNavigationDebugState
+  window.__spaLabNavigationDebug.syncVisibleState = syncNavigationDebugPanel
+
+  document.addEventListener('click', (event) => {
+    recordNavigationDebugFromClick(event)
+  }, true)
+
+  document.addEventListener('volt:request-start', (event) => {
+    const detail = event.detail || {}
+
+    if (detail.type !== 'navigation') {
+      return
+    }
+
+    setNavigationDebugState({
+      stage: 'request-start',
+      outcome: 'request-start',
+      requestId: detail.requestId || null,
+      requestUrl: detail.url || navigationDebugState.requestUrl,
+      location: window.location.pathname,
+      scrollBefore: typeof navigationDebugState.scrollBefore === 'number' ? navigationDebugState.scrollBefore : window.scrollY,
+      detail: normalizeHookValue(detail || {}),
+    })
+  })
+
+  document.addEventListener('volt:before-navigate', (event) => {
+    const detail = event.detail || {}
+
+    setNavigationDebugState({
+      stage: 'before-navigate',
+      outcome: 'patching',
+      requestUrl: detail.url || navigationDebugState.requestUrl,
+      finalUrl: detail.finalUrl || navigationDebugState.finalUrl,
+      location: window.location.pathname,
+      detail: normalizeHookValue(detail || {}),
+    })
+  })
+
+  document.addEventListener('volt:navigated', (event) => {
+    const detail = event.detail || {}
+
+    window.requestAnimationFrame(() => {
+      setNavigationDebugState({
+        stage: 'navigated',
+        outcome: 'success',
+        requestUrl: detail.url || navigationDebugState.requestUrl,
+        finalUrl: detail.finalUrl || window.location.href,
+        location: window.location.pathname,
+        scrollAfter: window.scrollY,
+        detail: normalizeHookValue(detail || {}),
+      })
+    })
+  })
+
+  ;[
+    'volt:request-abort',
+    'volt:request-stale',
+    'volt:request-error',
+    'volt:request-finish',
+  ].forEach((eventName) => {
+    document.addEventListener(eventName, (event) => {
+      const detail = event.detail || {}
+
+      if (detail.type !== 'navigation') {
+        return
+      }
+
+      const stage = eventName.replace('volt:', '')
+      const outcome = eventName === 'volt:request-finish'
+        ? (detail.outcome || detail.errorKind || 'finished')
+        : (detail.errorKind || detail.outcome || stage)
+
+      setNavigationDebugState({
+        stage,
+        outcome,
+        requestId: detail.requestId || navigationDebugState.requestId,
+        requestUrl: detail.url || navigationDebugState.requestUrl,
+        finalUrl: detail.finalUrl || navigationDebugState.finalUrl,
+        location: window.location.pathname,
+        scrollAfter: window.scrollY,
+        detail: normalizeHookValue(detail || {}),
+      })
+    })
+  })
+
+  applyPersistedNavigationDebugState()
 }
 
 function runtimeStateApi() {
@@ -1451,6 +1929,7 @@ function bootstrapRequestLabPage() {
 }
 
 registerVoltHookExamples()
+registerNavigationDebugPanel()
 registerCacheExampleControls()
 registerRuntimeStateExampleControls()
 registerRuntimeEfficiencyExamples()

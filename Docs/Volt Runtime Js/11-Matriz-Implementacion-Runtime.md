@@ -40,6 +40,10 @@ Objetivo: cruzar el contrato documentado del runtime con su implementacion real 
 20. `RequestLab` rehidrata su wiring JS desde `SpaLab.js` cuando la pantalla se abre por SPA desde `/runtimeEvents` u otras rutas demo, evitando un lab visible pero sin bootstrap activo.
 21. `/runtimeState` incorpora un laboratorio contractual de estados runtime con `dirty` por debounce, `success/error` filtrados por `action/target` y un panel que relee `data-volt-request-status`, `data-volt-dirty-target`, `data-volt-success-*` y `data-volt-error-*`.
 22. `/runtimeFocus` incorpora un laboratorio contractual de restore UI con patch server-driven, `data-volt-preserve-scroll`, inspector visible de `focus/selection/scroll` y markers estables (`focus-*`) para guardrails del skeleton.
+23. `/runtimeEvents` incorpora un panel contractual de budgets que deriva `ok/alerta/pendiente` para `boot`, `patch`, `payload action` y `buffer telemetry`, apoyandose en `window.Volt.telemetry`, `window.Volt.components` y `performance`.
+24. `/runtimeEvents` difiere el llenado pesado del panel de eficiencia a `window.load`, coalesce refreshes en `requestAnimationFrame` y elimina el render redundante inicial del panel de resiliencia.
+25. `/runtimeEvents` incorpora un diagnostico contractual del ultimo intento de `volt:navigate`, persistido en `sessionStorage`, con `href`, `requestId`, `outcome`, `finalUrl`, `scroll.before`, `scroll.after` y detalle serializado del hook mas reciente.
+26. `visit()` soporta serializacion `latest-wins` para enlaces `volt:navigate`: si llega un nuevo click mientras una navegacion sigue activa, el runtime guarda solo el ultimo intento y lo ejecuta al finalizar la visita en vuelo.
 
 ## Divergencias Detectadas Y Corregidas
 
