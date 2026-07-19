@@ -393,6 +393,31 @@ function runtimeAssetPerformanceSnapshot() {
   }
 }
 
+function runtimeBootPerformanceSnapshot() {
+  if (typeof window === 'undefined' || !window.Volt || !window.Volt.telemetry || typeof window.Volt.telemetry.boot !== 'function') {
+    return null
+  }
+
+  const snapshot = window.Volt.telemetry.boot()
+
+  if (!snapshot || typeof snapshot !== 'object') {
+    return null
+  }
+
+  return {
+    invocationCount: typeof snapshot.invocationCount === 'number' ? snapshot.invocationCount : null,
+    readyState: typeof snapshot.readyState === 'string' ? snapshot.readyState : null,
+    totalDurationMs: typeof snapshot.totalDurationMs === 'number' ? roundMetric(snapshot.totalDurationMs) : null,
+    busyDurationMs: typeof snapshot.busyDurationMs === 'number' ? roundMetric(snapshot.busyDurationMs) : null,
+    syncDurationMs: typeof snapshot.syncDurationMs === 'number' ? roundMetric(snapshot.syncDurationMs) : null,
+    refreshDurationMs: typeof snapshot.refreshDurationMs === 'number' ? roundMetric(snapshot.refreshDurationMs) : null,
+    viewportPrefetchDurationMs: typeof snapshot.viewportPrefetchDurationMs === 'number' ? roundMetric(snapshot.viewportPrefetchDurationMs) : null,
+    heuristicPrefetchDurationMs: typeof snapshot.heuristicPrefetchDurationMs === 'number' ? roundMetric(snapshot.heuristicPrefetchDurationMs) : null,
+    rootCount: typeof snapshot.rootCount === 'number' ? snapshot.rootCount : null,
+    recordedAt: typeof snapshot.recordedAt === 'string' ? snapshot.recordedAt : null,
+  }
+}
+
 function updateRuntimeEfficiencyKindCard(root, kind, summary) {
   root.querySelectorAll(`[data-volt-efficiency-kind="${kind}"]`).forEach((card) => {
     const countNode = card.querySelector('[data-volt-efficiency-count]')
@@ -462,6 +487,7 @@ function syncRuntimeEfficiencyExamples(reason = 'manual', detailLevel = 'full') 
   const latestPatch = fullSync && telemetry ? telemetry.latest({ kind: 'patch' }) : null
   const componentsSummary = components ? components.summary() : null
   const navigationPerformance = runtimeNavigationPerformanceSnapshot()
+  const runtimeBootPerformance = runtimeBootPerformanceSnapshot()
   const runtimeAssetPerformance = runtimeAssetPerformanceSnapshot()
   const now = new Date()
   const bootBudgetTargetMs = 150
@@ -473,8 +499,8 @@ function syncRuntimeEfficiencyExamples(reason = 'manual', detailLevel = 'full') 
   const bufferMax = telemetrySummary && typeof telemetrySummary.maxEntries === 'number'
     ? telemetrySummary.maxEntries
     : null
-  const bootActual = runtimeAssetPerformance && typeof runtimeAssetPerformance.duration === 'number'
-    ? runtimeAssetPerformance.duration
+  const bootActual = runtimeBootPerformance && typeof runtimeBootPerformance.totalDurationMs === 'number'
+    ? runtimeBootPerformance.totalDurationMs
     : null
   const patchActual = telemetrySummary && telemetrySummary.patch &&
     typeof telemetrySummary.patch.averagePatchDurationMs === 'number'
@@ -610,6 +636,7 @@ function syncRuntimeEfficiencyExamples(reason = 'manual', detailLevel = 'full') 
     if (summaryNode && fullSync) {
       summaryNode.textContent = serializeHookDetail({
         navigationPerformance,
+        runtimeBootPerformance,
         runtimeAssetPerformance,
         telemetrySummary,
         componentsSummary,

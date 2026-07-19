@@ -934,9 +934,11 @@ final class EventsPage extends Component
                 <span data-runtime-check="busy-document-kind"
                     style="font-size:13px;color:#93c5fd;line-height:1.7;">doc.kind = idle | doc.phase = idle</span>
                 <span data-runtime-check="busy-last-active-summary"
-                    style="font-size:13px;color:#bbf7d0;line-height:1.7;">ultimo busy = sin snapshot activo persistido</span>
+                    style="font-size:13px;color:#bbf7d0;line-height:1.7;">ultimo busy = sin snapshot activo
+                    persistido</span>
                 <span data-runtime-check="busy-last-action-summary"
-                    style="font-size:13px;color:#fca5a5;line-height:1.7;">ultima accion busy = sin snapshot de action persistido</span>
+                    style="font-size:13px;color:#fca5a5;line-height:1.7;">ultima accion busy = sin snapshot de action
+                    persistido</span>
                 <span data-runtime-check="busy-last-event"
                     style="font-size:13px;color:#fde68a;line-height:1.7;">lastEvent = boot</span>
                 <span data-runtime-check="busy-updated-at"

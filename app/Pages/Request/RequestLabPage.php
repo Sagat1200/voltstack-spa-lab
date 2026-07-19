@@ -285,6 +285,31 @@ final class RequestLabPage extends Component
             </article>
         </div>
 
+        <div data-runtime-check="action-outcome-contract"
+            style="display:grid;gap:12px;border:1px solid rgba(248,113,113,0.18);background:rgba(15,23,42,0.55);border-radius:16px;padding:16px;color:#fecaca;">
+            <strong style="color:#fee2e2;">Diagnostico operativo de action</strong>
+            <div
+                style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:start;">
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(248,113,113,0.16);background:rgba(127,29,29,0.16);border-radius:14px;padding:14px;">
+                    <strong>Scope</strong>
+                    <span data-runtime-check="action-outcome-scope">sin scope</span>
+                </article>
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(248,113,113,0.16);background:rgba(127,29,29,0.16);border-radius:14px;padding:14px;">
+                    <strong>Retry esperado</strong>
+                    <span data-runtime-check="action-outcome-retry">sin dato</span>
+                </article>
+                <article
+                    style="display:grid;gap:8px;border:1px solid rgba(248,113,113,0.16);background:rgba(127,29,29,0.16);border-radius:14px;padding:14px;">
+                    <strong>Siguiente paso</strong>
+                    <span data-runtime-check="action-outcome-next-step">sin diagnostico</span>
+                </article>
+            </div>
+            <span data-runtime-check="action-outcome-summary" style="font-size:13px;line-height:1.7;color:#fecaca;">Aun
+                no hay un error reactivo registrado para clasificar.</span>
+        </div>
+
         <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start;">
             <article
                 style="display:grid;gap:10px;border:1px solid rgba(56,189,248,0.2);background:rgba(8,47,73,0.2);border-radius:16px;padding:16px;color:#e0f2fe;">
@@ -1036,6 +1061,21 @@ window.__spaLabRequestLab.syncActionEndpointStatus = function(endpointValue) {
     );
 };
 
+window.__spaLabRequestLab.renderActionOutcomeContract = function(payload) {
+    var state = payload && typeof payload === 'object' ? payload : {};
+    var scope = typeof state.scope === 'string' && state.scope !== '' ? state.scope : 'sin scope';
+    var retry = typeof state.retry === 'string' && state.retry !== '' ? state.retry : 'sin dato';
+    var nextStep = typeof state.nextStep === 'string' && state.nextStep !== '' ? state.nextStep : 'sin diagnostico';
+    var summary = typeof state.summary === 'string' && state.summary !== '' ?
+        state.summary :
+        'Aun no hay un error reactivo registrado para clasificar.';
+
+    window.__spaLabRequestLab.updateText('[data-runtime-check="action-outcome-scope"]', scope);
+    window.__spaLabRequestLab.updateText('[data-runtime-check="action-outcome-retry"]', retry);
+    window.__spaLabRequestLab.updateText('[data-runtime-check="action-outcome-next-step"]', nextStep);
+    window.__spaLabRequestLab.updateText('[data-runtime-check="action-outcome-summary"]', summary);
+};
+
 window.__spaLabRequestLab.syncLastRequestEvent = function(eventName, detail) {
     var meta = detail && typeof detail === 'object' ? detail : {};
     var target = meta.action || meta.url || meta.finalUrl || meta.component || 'sin target';
@@ -1049,6 +1089,44 @@ window.__spaLabRequestLab.syncLastRequestEvent = function(eventName, detail) {
     window.__spaLabRequestLab.updateText('[data-runtime-check="request-last-outcome"]', outcome);
     window.__spaLabRequestLab.updateText('[data-runtime-check="request-last-target"]', target);
     window.__spaLabRequestLab.updateText('[data-runtime-check="request-last-retry-count"]', retryCount);
+
+    if (meta.type === 'action') {
+        var actionSummary =
+            'Action observada sin error contractual. Si aparece un fallo, la recuperacion sigue siendo manual.';
+        var actionNextStep = 'monitorizando';
+
+        if (eventName === 'volt:request-error' && outcome === 'network-error') {
+            actionSummary =
+                'network-error en action: el runtime no reintenta el POST; restaura conectividad o endpoint y repite manualmente.';
+            actionNextStep = 'restaurar endpoint o red y volver a disparar la action';
+        } else if (eventName === 'volt:request-error' && outcome === 'timeout') {
+            actionSummary =
+                'timeout en action: el POST queda sin replay implicito; revisa latencia o timeout y reejecuta manualmente.';
+            actionNextStep = 'ajustar timeout o investigar latencia antes de reintentar manualmente';
+        } else if (eventName === 'volt:request-error' && outcome === 'protocol-error') {
+            actionSummary =
+                'protocol-error en action: corrige payload, validacion o estado del servidor y reintenta manualmente.';
+            actionNextStep = 'corregir payload o estado antes de repetir la action';
+        } else if (eventName === 'volt:request-abort') {
+            actionSummary =
+                'abort en action: una request mas nueva desplazo la anterior; no existe replay automatico del POST cancelado.';
+            actionNextStep = 'confirmar que la action final visible sea la mas reciente';
+        }
+
+        window.__spaLabRequestLab.renderActionOutcomeContract({
+            scope: 'action',
+            retry: '0 automatico',
+            nextStep: actionNextStep,
+            summary: actionSummary
+        });
+    } else if (meta.type === 'navigation') {
+        window.__spaLabRequestLab.renderActionOutcomeContract({
+            scope: 'navigation',
+            retry: 'usa tarjeta de navegacion',
+            nextStep: 'este diagnostico aplica solo a actions POST',
+            summary: 'El ultimo evento pertenece a navegacion; las politicas de retry automatico viven en el bloque GET.'
+        });
+    }
 
     if (
         eventName === 'volt:request-error' ||
@@ -1138,6 +1216,7 @@ window.__spaLabRequestLab.syncVisibleState = function() {
 
     window.__spaLabRequestLab.syncActionEndpointStatus(endpoint);
     window.__spaLabRequestLab.syncNetworkStatus();
+    window.__spaLabRequestLab.renderActionOutcomeContract();
     window.__spaLabRequestLab.renderResiliencePanel();
     window.__spaLabRequestLab.renderRetrySummaryCard();
     window.__spaLabRequestLab.renderNavigationLifecycleSummaryCard();

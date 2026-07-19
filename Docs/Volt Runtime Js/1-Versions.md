@@ -66,13 +66,16 @@ Con este cierre, el siguiente frente recomendado pasa a ser **Bloque Activo 2. A
 
 ### Bloque Activo 2. Automatizacion Del Contrato Critico
 
-- `[!]` convertir a pruebas automatizadas los casos criticos de navegacion y protocolo
+- `[x]` convertir a pruebas automatizadas y guardrails server-side los casos criticos de navegacion y protocolo viables sin harness browser dedicado
 - `[x]` `popstate`, reconciliacion de `head`, scripts duplicados y fallback por error HTTP
 - `[x]` `volt:submit`, `volt:model`, snapshot invalido, checksum roto, stale y abort
 - `[x]` fijar `accion no permitida` como error semantico del protocolo y dejar explicito que las acciones reactivas no hacen retry automatico en el contrato actual
-- `[ ]` preservar el comportamiento actual del protocolo reactivo sin regresiones
+- `[x]` preservar el comportamiento actual del protocolo reactivo sin regresiones en guardrails del skeleton, `RequestLab` y labs de foco/scroll
 - `[x]` blindar el contrato de error de `volt:submit` para validacion semantica y payloads invalidos del endpoint reactivo
 - `[x]` volver reproducibles `volt:request-abort` y `volt:request-stale` desde `/runtimeRequestLab` para QA operativa del runtime
+- `[x]` volver visible el contrato de `volt:preserve-scroll` en `/runtimeFocus` y `/runtimeFocusAlt`, con enlaces comparables de reset vs preserve y altura estable de destino para QA manual
+- `[x]` endurecer `/runtimeRequestLab` con clasificacion explicita de `abort` vs `stale`, contrato visual persistido del lifecycle y lectura operativa de `actions POST` sin retry automatico
+- `[x]` ampliar `SkeletonSpaRoadmapTest.php` con markers y source assertions para `volt:preserve-scroll`, `abort/stale` y diagnostico de `network-error` / `timeout` / `protocol-error` en actions
 
 Impacta directamente:
 
@@ -97,12 +100,27 @@ Impacta directamente:
 
 ### Bloque Activo 4. Eficiencia Y Presupuestos
 
-- `[-]` exponer budgets visibles en `/runtimeEvents` para `boot`, `patch`, `payload` y `buffer telemetry`
-- `[ ]` ejecutar la matriz de medicion definida mas abajo en este documento
+- `[x]` exponer budgets visibles en `/runtimeEvents` para `boot`, `patch`, `payload` y `buffer telemetry`
+- `[-]` ejecutar la matriz de medicion definida mas abajo en este documento
 - `[ ]` fijar budgets reales para `boot`, `patch`, payload, memoria y sesiones largas
 - `[ ]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
 
 Este bloque debe arrancar despues del cierre funcional del runtime actual, para medir un contrato ya estabilizado.
+
+Plan ejecutivo inmediato para este bloque:
+
+1. cerrar una linea base reproducible sobre 4 escenarios: `boot`, navegacion SPA compatible, action reactiva simple y `volt:model.sync`
+2. repetir cada escenario en dos condiciones: normal y degradada (`CPU throttling` + red lenta)
+3. capturar por escenario: `bootMs`, `patchDurationMs`, `request/response payload`, requests por interaccion, long tasks y lectura resumida de memoria
+4. fijar un resultado contractual inicial por escenario: `ok`, `alerta` o `pendiente`, con accion sugerida si rompe el umbral
+5. dejar para una segunda ronda: `prefetch + navigate`, sesion larga, listas grandes y multiples tabs
+
+Primer lote recomendado:
+
+- `boot`: ruta `/runtimeEvents`, porque ya concentra telemetria, budgets y paneles contractuales
+- navegacion SPA compatible: `/spaReactive -> /cacheExample -> /spaReactive`
+- action reactiva simple: `/runtimeRequestLab` con `Fast action` y `Timeout action`
+- `volt:model.sync`: `/runtimeModelSync` con escritura rapida y observacion de debounce / `stale` / `abort`
 
 ### Bloques Postergados Explicitamente
 
@@ -491,12 +509,12 @@ Matriz operativa sugerida:
 
 | Escenario | Herramienta | Metrica principal | Umbral orientativo | Resultado | Observaciones |
 | --- | --- | --- | --- | --- | --- |
-| Carga inicial del documento con runtime | DevTools Performance + Network | tiempo de boot inicial, long tasks, requests iniciales | boot `< 150ms`, long tasks `0`, requests sin duplicados | `[ ]` | |
-| Navegacion SPA entre dos vistas compatibles | DevTools Performance + Network | tiempo de patch visual, requests por click | patch `< 120ms`, requests `1` | `[ ]` | |
-| Navegacion SPA repetida 50 veces | DevTools Memory + Network | crecimiento de heap, hit ratio cache, listeners/timers | memoria `< 15%`, sin crecimiento monotono | `[ ]` | |
-| Navegacion con `prefetch` + `navigate` | DevTools Network | requests duplicadas, cache hit/miss, waterfall | sin duplicados, reuse observable | `[ ]` | |
-| Accion reactiva simple | DevTools Performance + logs backend | tiempo total visible, TTFB, payload request/response | `< 180ms`, JSON `< 25KB` | `[ ]` | |
-| `volt:model.sync` con escritura rapida | DevTools Network + Performance | requests por rafaga, debounce efectivo, stale/abort | sin tormenta de requests, abort/stale controlados | `[ ]` | |
+| Carga inicial del documento con runtime | DevTools Performance + Network | tiempo de boot inicial, long tasks, requests iniciales | boot `< 150ms`, long tasks `0`, requests sin duplicados | `[x]` | `/runtimeEvents` en frio: budget `boot = alerta` con runtime asset `326.3 ms`; `patch/payload = pendiente`; sin consola, pero con `@vite/client` abortado y doble `prefetch` visible hacia `/runtimeRequestLab` |
+| Navegacion SPA entre dos vistas compatibles | DevTools Performance + Network | tiempo de patch visual, requests por click | patch `< 120ms`, requests `1` | `[x]` | `/spaReactive -> /cacheExample -> /spaReactive`: `patchDurationMs` de navegacion `42.1 ms` y `23.5 ms`, ambos bajo umbral y sin `html fallback`; cada click hizo `GET` principal, pero el primer salto arrastro `2` CSS y la vuelta disparo un `prefetch` posterior a `/counterExample`; `cacheHit=false` y doble `volt:cache-miss prefetch` inicial a vigilar |
+| Navegacion SPA repetida 50 veces | DevTools Memory + Network | crecimiento de heap, hit ratio cache, listeners/timers | memoria `< 15%`, sin crecimiento monotono | `[x]` | `/spaReactive <-> /cacheExample` por 25 ciclos: `44` hits y `6` misses (hit rate `88%`), sin degradacion sostenida de latencia tras warm-up; pero el heap subio de `4.30 MB` a `8.47 MB` y el `<head>` termino con fuerte acumulacion de assets (`216` `<style>` y `55` `<script>`), señal clara de retencion/reinyeccion SPA a investigar |
+| Navegacion con `prefetch` + `navigate` | DevTools Network | requests duplicadas, cache hit/miss, waterfall | sin duplicados, reuse observable | `[x]` | `/cacheExample`: el caso `ttl=15s` hacia `/counterExample` confirma `cache-hit` real al click y evita un segundo fetch si el click ocurre dentro del TTL; la transicion baja de ~`310ms` a ~`90ms`. En contraste, `reload` invalida la entrada prefetcheada y vuelve a red, generando doble request con mejora marginal |
+| Accion reactiva simple | DevTools Performance + logs backend | tiempo total visible, TTFB, payload request/response | `< 180ms`, JSON `< 25KB` | `[x]` | `/runtimeRequestLab`: `fastAction` fue optimizada para no adjuntar `html` redundante cuando los `effects` ya cubren el patch; la respuesta bajo de `90441 B` a `689 B`, con `patchDurationMs=11.9` y sin `html fallback`; `Timeout action` sigue cortando en `120ms` sin alterar la UI; el payload ya queda dentro de budget, aunque `totalDurationMs~362.6` sigue por encima del objetivo |
+| `volt:model.sync` con escritura rapida | DevTools Network + Performance | requests por rafaga, debounce efectivo, stale/abort | sin tormenta de requests, abort/stale controlados | `[x]` | `/runtimeModelSync`: un burst de 5 cambios rapidos colapso en 1 POST `__volt_sync__`; el debounce visible quedo en ~`268-270ms` frente a `220ms` nominales; `abort` y `stale` se observaron de forma controlada sin que un payload viejo pise el valor final visible |
 | Rehidratacion de componente pequeno | Performance API + DevTools | tiempo de rehidratacion por componente | `< 16ms` | `[ ]` | |
 | Rehidratacion de pagina con multiples componentes | DevTools Performance | tiempo total de hidratacion y patch | alerta `> 250ms` | `[ ]` | |
 | Lista grande con `volt:for` | DevTools Performance + Memory | scripting, mutaciones DOM, heap | sin long tasks recurrentes `> 50ms` | `[ ]` | |
@@ -735,22 +753,33 @@ Usar esta seccion para marcar hitos reales conforme avancemos.
 - `[x]` `RequestLab` rehidrata su wiring JS desde el cliente persistente `SpaLab.js`, de modo que siga operativo tambien al entrar por navegacion SPA desde otras pantallas
 - `[x]` `/runtimeState` suma un laboratorio explicito para `dirty`, `success` y `error`, con filtros por `action/target`, panel de `request-status` y markers estables para guardrails del skeleton
 - `[x]` `/runtimeFocus` suma un laboratorio contractual para restore de `focus`, `selection` y `scroll`, con patch server-driven, contenedor `data-volt-preserve-scroll`, inspector visible y markers estables para el skeleton
+- `[x]` `/runtimeFocus` y `/runtimeFocusAlt` suman un contrato visual explicito de navegacion con `volt:preserve-scroll`, diferenciando reset del documento vs preservacion y dejando links estables para guardrails del skeleton
 - `[x]` `/runtimeEvents` suma un resumen contractual de budgets con `boot`, `patch`, `payload action` y `buffer telemetry`, mas estado agregado `ok/alerta/pendiente` aterrizado sobre la telemetria real del runtime
+- `[x]` primera linea base browser del bloque de eficiencia sobre `/runtimeEvents`: `boot = alerta` con runtime asset `326.3 ms`, `buffer = ok (0/60)`, `patch/payload = pendiente`, sin errores de consola y con `window.Volt.telemetry` aun vacia al aterrizar en frio
+- `[x]` correccion semantica del budget `boot` en `/runtimeEvents`: el panel deja de usar `runtimeAssetPerformance.duration` y pasa a leer `window.Volt.telemetry.boot()`, separando el arranque ejecutado del runtime (`34.3 ms`, `ok`) del costo de transferencia del asset `/_volt/runtime.js` (`408.8 ms`)
+- `[x]` primera linea base browser de navegacion SPA compatible sobre `/spaReactive -> /cacheExample -> /spaReactive`: `patch` contractual bajo umbral (`42.1 ms` y `23.5 ms`), `outcome=success`, `cacheHit=false`, sin `html fallback`, con costo adicional de CSS en el primer salto y `prefetch` posterior a `/counterExample` al volver a la landing
+- `[x]` primera linea base browser de action reactiva simple sobre `/runtimeRequestLab`: `fastAction` funciona con patch por `effects` y sin `html fallback`, pero excede el budget con `totalDurationMs=391` y `responsePayloadBytes=90441`; `Timeout action` confirma el contrato de corte a `120ms`, sin patch aplicado y sin replay automatico del POST
+- `[x]` el protocolo reactivo deja de adjuntar `html` completo en actions cuyos `effects` seguros ya evitan fallback del cliente: `fastAction` baja de `90441 B` a `689 B`, mantiene actualizacion visible de `lab-action-status` y `lab-action-at`, y queda blindada con tests de protocolo para casos seguros e inseguros
+- `[x]` primera linea base browser de `volt:model.sync` sobre `/runtimeModelSync`: un burst normal de escritura se coalesce en 1 POST `__volt_sync__`, el debounce visible queda en ~`270ms`, y los escenarios controlados de `abort` y `stale` confirman que el ultimo valor gana sin aplicar patches tardios
+- `[x]` primera linea base browser de `prefetch + navigate` sobre `/cacheExample`: `ttl=15s` confirma reuse real con `volt:cache-hit` y sin segundo fetch al click; `reload` confirma el caso opuesto, invalidando la entrada prefetcheada y rehaciendo la request, por lo que el valor del prefetch depende de la politica de cache elegida
+- `[x]` primera linea base browser de navegacion SPA repetida 50 veces: el runtime mantiene `88%` de hit rate y latencia caliente estable, pero aparece una fuga observable en `<head>` con reinyeccion acumulativa de `<style>` y scripts inline, acompañada por crecimiento de heap de `4.30 MB` a `8.47 MB`
 - `[x]` `/runtimeEvents` coalesce el trabajo del panel de eficiencia y elimina el render redundante del panel de resiliencia durante el arranque
 - `[x]` `SpaLab.js` persiste en `sessionStorage` el ultimo intento de navegacion SPA para volverlo visible en `/runtimeEvents` aun despues de cambiar de vista
 - `[x]` `visit()` acepta `queueIfBusy` para enlaces `volt:navigate`; cuando una visita esta activa, el runtime cola solo el ultimo click del usuario y lo reprocesa tras emitir `volt:request-finish`
 - `[x]` `SpaLab.js` sincroniza `data-volt-navigating` con el chip global del layout y aplica `aria-disabled`, `tabindex=-1` y `data-runtime-nav-link-disabled` a los enlaces de navegacion mientras la SPA esta ocupada
 - `[x]` el lab deja de implementar por su cuenta la UX busy: `spa.volt.php` ya no monta overlay/chip propios y `SpaLab.js` delega el estado global al runtime base; ademas se corrige el layout para que `#volt-portals-root` no envuelva el `<main>` con `pointer-events-none`
+- `[x]` `/runtimeRequestLab` expone un diagnostico operativo de `actions POST` sin retry automatico, con `scope`, `retry esperado`, `siguiente paso` y mensajes diferenciados para `network-error`, `timeout`, `protocol-error` y `abort`
+- `[x]` `/runtimeRequestLab` refuerza la lectura contractual de concurrencia con tarjetas `Abort` / `Stale`, `classification` persistida del lifecycle de navegacion y resumen documental reutilizable al volver por SPA
 
 ## Proximo Bloque Recomendado
 
 Orden sugerido para seguir avanzando:
 
-1. ampliar la validacion de concurrencia para distinguir formalmente `stale` vs `aborted` segun el flujo
-2. extender el `retry` seguro hacia una politica mas completa o decidir explicitamente si queda limitado a navegacion `GET`
-3. ejecutar la matriz de eficiencia con la nueva `telemetria de latencia y payload`
+1. ejecutar la matriz de eficiencia con la nueva `telemetria de latencia y payload`
+2. fijar budgets reales para `boot`, `patch`, payload, memoria y sesiones largas
+3. decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
 4. revisar si ya conviene entrar a `nested components complejos`
-5. retomar `offline snapshots`, `queued actions` y `sync recovery` sobre la base del nuevo contrato de errores
+5. retomar `offline snapshots`, `queued actions` y `sync recovery` sobre la base del contrato de errores ya estabilizado
 
 ## Bloque Cerrado Reciente
 
