@@ -102,8 +102,8 @@ Impacta directamente:
 
 - `[x]` exponer budgets visibles en `/runtimeEvents` para `boot`, `patch`, `payload` y `buffer telemetry`
 - `[-]` ejecutar la matriz de medicion definida mas abajo en este documento
-- `[x]` agregar `/runtimeMatrix` como runner manual para capturar snapshots coherentes de `telemetry`, `runtime asset`, `heap` (si existe), exportar JSON por escenario, visualizar cobertura base `4x2` (escenario × condicion) y releer telemetria persistida entre rutas cuando el escenario ocurre fuera del runner
-- `[ ]` fijar budgets reales para `boot`, `patch`, payload, memoria y sesiones largas
+- `[x]` agregar `/runtimeMatrix` como runner manual para capturar snapshots coherentes de `telemetry`, `runtime asset`, `heap` (si existe), exportar JSON por escenario, visualizar cobertura base `4x2` (escenario × condicion), releer telemetria persistida entre rutas cuando el escenario ocurre fuera del runner y activar un harness reproducible para la condicion `degradada`
+- `[-]` fijar budgets iniciales para `boot`, `patch` y payload; memoria, carga fria degradada y sesiones largas siguen pendientes
 - `[ ]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
 
 Este bloque debe arrancar despues del cierre funcional del runtime actual, para medir un contrato ya estabilizado.
@@ -115,6 +115,28 @@ Plan ejecutivo inmediato para este bloque:
 3. capturar por escenario: `bootMs`, `patchDurationMs`, `request/response payload`, requests por interaccion, long tasks y lectura resumida de memoria
 4. fijar un resultado contractual inicial por escenario: `ok`, `alerta` o `pendiente`, con accion sugerida si rompe el umbral
 5. dejar para una segunda ronda: `prefetch + navigate`, sesion larga, listas grandes y multiples tabs
+
+Nota operativa del corte actual:
+
+- la condicion `degradada` del runner ya aplica un harness reproducible del lab (latencia artificial de red + bloqueo controlado de CPU en hooks del runtime) para `spa`, `action` y `volt:model.sync`
+- la validacion final de `boot` en degradacion real de carga fria sigue requiriendo una pasada externa con throttling de DevTools
+
+Budgets iniciales del corte actual:
+
+- `boot <= 150 ms`
+- `patch <= 120 ms`
+- `payload action <= 2 KB` para `action` y `volt:model.sync`
+- `payload navigation <= 50 KB` para `spa`
+- `telemetry buffer <= 60` entradas
+
+Evidencia usada para fijarlos:
+
+- `boot / normal`: `~22 ms`
+- `action-reactiva / normal`: `patch ~14.3 ms`, `payload 689 B`
+- `volt:model.sync / normal`: `patch ~12.9 ms`, `payload 699 B`
+- `action-reactiva / degradada`: `patch ~106.4 ms`, `payload 689 B`
+- `volt:model.sync / degradada`: `patch ~103.1 ms`, `payload 707 B`
+- `navegacion-spa / degradada`: `patch ~103 ms`, `payload ~39.7 KB`
 
 Primer lote recomendado:
 

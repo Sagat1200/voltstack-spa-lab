@@ -156,6 +156,7 @@ const navigationArrivalState = {
 const NAVIGATION_DEBUG_STORAGE_KEY = 'volt.runtimeEvents.lastNavigationDebug'
 const RUNTIME_BUSY_STORAGE_KEY = 'volt.runtimeEvents.busySnapshot'
 const RUNTIME_MATRIX_CARRYOVER_KEY = 'volt.runtimeMatrix.carryover'
+const RUNTIME_MATRIX_DEGRADATION_KEY = 'volt.runtimeMatrix.degradation'
 
 const navigationDebugState = {
   stage: 'idle',
@@ -207,6 +208,11 @@ const runtimeMatrixCarryoverState = {
   pendingReason: 'boot',
 }
 
+const runtimeMatrixDegradationState = {
+  fetchInstalled: false,
+  cpuInstalled: false,
+}
+
 function roundMetric(value) {
   return typeof value === 'number' && Number.isFinite(value)
     ? Math.round(value * 100) / 100
@@ -229,6 +235,131 @@ function formatKilobytes(value) {
   return typeof value === 'number' && Number.isFinite(value)
     ? `${Math.round((value / 1024) * 100) / 100} KB`
     : 'n/d'
+}
+
+function waitMs(duration) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, Math.max(0, duration))
+  })
+}
+
+function busyWaitMs(duration) {
+  const safeDuration = typeof duration === 'number' && Number.isFinite(duration)
+    ? Math.max(0, duration)
+    : 0
+
+  if (safeDuration <= 0 || !window.performance || typeof window.performance.now !== 'function') {
+    return
+  }
+
+  const startedAt = window.performance.now()
+
+  while (window.performance.now() - startedAt < safeDuration) {
+    // busy wait intencional para simular CPU degradada durante el harness
+  }
+}
+
+function readRuntimeMatrixDegradationProfile() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return null
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(RUNTIME_MATRIX_DEGRADATION_KEY)
+
+    if (!raw) {
+      return null
+    }
+
+    const parsed = JSON.parse(raw)
+
+    if (!parsed || typeof parsed !== 'object' || parsed.enabled !== true) {
+      return null
+    }
+
+    return {
+      enabled: true,
+      condition: typeof parsed.condition === 'string' ? parsed.condition : 'degradada',
+      networkDelayMs: typeof parsed.networkDelayMs === 'number' ? parsed.networkDelayMs : 400,
+      responseDelayMs: typeof parsed.responseDelayMs === 'number' ? parsed.responseDelayMs : 180,
+      cpuBlockMs: typeof parsed.cpuBlockMs === 'number' ? parsed.cpuBlockMs : 90,
+      source: typeof parsed.source === 'string' ? parsed.source : 'runtimeMatrix',
+    }
+  } catch (error) {
+    return null
+  }
+}
+
+function shouldApplyRuntimeMatrixDegradationToUrl(urlString) {
+  if (typeof urlString !== 'string' || urlString.trim() === '') {
+    return false
+  }
+
+  try {
+    const url = new URL(urlString, window.location.href)
+
+    if (url.origin !== window.location.origin) {
+      return false
+    }
+
+    if (url.pathname.startsWith('/_volt/')) {
+      return false
+    }
+
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
+function registerRuntimeMatrixDegradationHarness() {
+  if (!runtimeMatrixDegradationState.fetchInstalled && typeof window.fetch === 'function') {
+    const nativeFetch = window.fetch.bind(window)
+
+    window.fetch = async function runtimeMatrixDegradedFetch(input, init) {
+      const profile = readRuntimeMatrixDegradationProfile()
+      const requestUrl = typeof input === 'string'
+        ? input
+        : (input && typeof input.url === 'string' ? input.url : '')
+
+      if (!profile || !shouldApplyRuntimeMatrixDegradationToUrl(requestUrl)) {
+        return nativeFetch(input, init)
+      }
+
+      if (profile.networkDelayMs > 0) {
+        await waitMs(profile.networkDelayMs)
+      }
+
+      const response = await nativeFetch(input, init)
+
+      if (profile.responseDelayMs > 0) {
+        await waitMs(profile.responseDelayMs)
+      }
+
+      return response
+    }
+
+    runtimeMatrixDegradationState.fetchInstalled = true
+  }
+
+  if (!runtimeMatrixDegradationState.cpuInstalled) {
+    ;[
+      'volt:before-navigate',
+      'volt:before-patch',
+    ].forEach((eventName) => {
+      document.addEventListener(eventName, () => {
+        const profile = readRuntimeMatrixDegradationProfile()
+
+        if (!profile) {
+          return
+        }
+
+        busyWaitMs(profile.cpuBlockMs)
+      })
+    })
+
+    runtimeMatrixDegradationState.cpuInstalled = true
+  }
 }
 
 function evaluateBudgetStatus(actual, target, options = {}) {
@@ -289,11 +420,19 @@ function latestRuntimeTelemetryEntry(telemetry, kind) {
     return null
   }
 
+  const matchesKind = (entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return false
+    }
+
+    return entry.type === kind || entry.kind === kind
+  }
+
   const byType = telemetry.latest({
     type: kind,
   })
 
-  if (byType && typeof byType === 'object') {
+  if (matchesKind(byType)) {
     return byType
   }
 
@@ -301,7 +440,7 @@ function latestRuntimeTelemetryEntry(telemetry, kind) {
     kind: kind,
   })
 
-  return byKind && typeof byKind === 'object'
+  return matchesKind(byKind)
     ? byKind
     : null
 }
@@ -2431,6 +2570,7 @@ registerRuntimeStateExampleControls()
 registerRuntimeBusyPanel()
 registerRuntimeEfficiencyExamples()
 registerRuntimeMatrixCarryover()
+registerRuntimeMatrixDegradationHarness()
 document.addEventListener('DOMContentLoaded', () => {
   window.requestAnimationFrame(() => {
     bootstrapRequestLabPage()

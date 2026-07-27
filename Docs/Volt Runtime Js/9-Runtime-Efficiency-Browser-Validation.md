@@ -141,3 +141,27 @@ Se puede marcar esta pasada como util cuando:
 - la request a `/_volt/runtime.js` queda observable y separada del HTML
 - el panel permite detectar payloads altos, patches lentos o crecimiento raro de roots
 - los datos del laboratorio son suficientes para decidir el siguiente cuello de botella real antes de optimizar a ciegas
+
+## Corte Actual Del Bloque 4
+
+Budgets iniciales fijados con la evidencia reciente del runner:
+
+- `boot <= 150 ms`
+- `patch <= 120 ms`
+- `payload action <= 2 KB`
+- `payload navigation <= 50 KB`
+- `telemetry buffer <= 60`
+
+Lecturas representativas del corte:
+
+- `boot / normal`: `~22 ms`
+- `action-reactiva / normal`: `patch ~14.3 ms`, `payload 689 B`
+- `volt:model.sync / normal`: `patch ~12.9 ms`, `payload 699 B`
+- `action-reactiva / degradada`: `patch ~106.4 ms`, `payload 689 B`
+- `volt:model.sync / degradada`: `patch ~103.1 ms`, `payload 707 B`
+- `navegacion-spa / degradada`: `patch ~103 ms`, `payload ~39.7 KB`
+
+Nota:
+
+- la condicion `degradada` de `/runtimeMatrix` ya es un harness reproducible del lab (latencia artificial de red + bloqueo controlado de CPU en hooks runtime)
+- `boot / degradada` todavia requiere una pasada externa con throttling real de DevTools para cierre final de carga fria

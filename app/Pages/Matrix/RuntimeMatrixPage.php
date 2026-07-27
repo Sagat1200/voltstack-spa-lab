@@ -31,9 +31,17 @@ final class RuntimeMatrixPage extends Component
         const DEFAULT_BUDGETS = {
             bootMs: 150,
             patchMs: 120,
+            payloadActionBytes: 2 * 1024,
+            navigationPayloadBytes: 50 * 1024,
+            telemetryMaxEntries: 60,
+        };
+        const LEGACY_DEFAULT_BUDGETS = {
+            bootMs: 150,
+            patchMs: 120,
             payloadActionBytes: 25 * 1024,
             telemetryMaxEntries: 60,
         };
+        const CONFIG_VERSION = 2;
 
         const MATRIX_BASELINES = [{
                 id: 'boot',
@@ -73,7 +81,7 @@ final class RuntimeMatrixPage extends Component
 
         const SCENARIO_BUDGET_KEYS = {
             boot: ['boot', 'telemetry'],
-            spa: ['patch', 'telemetry'],
+            spa: ['patch', 'navigationPayload', 'telemetry'],
             action: ['patch', 'payloadAction', 'telemetry'],
             'model.sync': ['patch', 'payloadAction', 'telemetry'],
             'long-session': ['telemetry'],
@@ -82,6 +90,16 @@ final class RuntimeMatrixPage extends Component
         const STORAGE_KEY = 'volt.runtimeMatrix.runs';
         const CONFIG_KEY = 'volt.runtimeMatrix.config';
         const CARRYOVER_KEY = 'volt.runtimeMatrix.carryover';
+        const DEGRADATION_KEY = 'volt.runtimeMatrix.degradation';
+
+        const DEGRADED_PROFILE = {
+            enabled: true,
+            condition: 'degradada',
+            networkDelayMs: 400,
+            responseDelayMs: 180,
+            cpuBlockMs: 90,
+            source: 'runtimeMatrix',
+        };
 
         function reportDebug(hypothesisId, location, data) {
             fetch(DEBUG_URL, {
@@ -131,26 +149,59 @@ final class RuntimeMatrixPage extends Component
             }
         }
 
-        function readConfig() {
-            const saved = readJsonStorage(CONFIG_KEY);
+        function normalizeConfig(saved) {
             const normalized = saved && typeof saved === 'object' ? saved : {};
             const budgets = normalized.budgets && typeof normalized.budgets === 'object' ? normalized.budgets : {};
+            const isLegacyConfig = normalized.version !== CONFIG_VERSION;
+
+            const budgetValue = (key) => {
+                const savedValue = typeof budgets[key] === 'number' ? budgets[key] : null;
+
+                if (savedValue === null) {
+                    return DEFAULT_BUDGETS[key];
+                }
+
+                if (isLegacyConfig &&
+                    Object.prototype.hasOwnProperty.call(LEGACY_DEFAULT_BUDGETS, key) &&
+                    savedValue === LEGACY_DEFAULT_BUDGETS[key]) {
+                    return DEFAULT_BUDGETS[key];
+                }
+
+                return savedValue;
+            };
 
             return {
+                version: CONFIG_VERSION,
                 scenario: typeof normalized.scenario === 'string' && normalized.scenario !== '' ? normalized.scenario : 'boot',
                 condition: typeof normalized.condition === 'string' && normalized.condition !== '' ? normalized.condition : 'normal',
                 budgets: {
-                    bootMs: typeof budgets.bootMs === 'number' ? budgets.bootMs : DEFAULT_BUDGETS.bootMs,
-                    patchMs: typeof budgets.patchMs === 'number' ? budgets.patchMs : DEFAULT_BUDGETS.patchMs,
-                    payloadActionBytes: typeof budgets.payloadActionBytes === 'number' ? budgets.payloadActionBytes : DEFAULT_BUDGETS.payloadActionBytes,
-                    telemetryMaxEntries: typeof budgets.telemetryMaxEntries === 'number' ? budgets.telemetryMaxEntries : DEFAULT_BUDGETS.telemetryMaxEntries,
+                    bootMs: budgetValue('bootMs'),
+                    patchMs: budgetValue('patchMs'),
+                    payloadActionBytes: budgetValue('payloadActionBytes'),
+                    navigationPayloadBytes: budgetValue('navigationPayloadBytes'),
+                    telemetryMaxEntries: budgetValue('telemetryMaxEntries'),
                 },
             };
         }
 
+        function readConfig() {
+            return normalizeConfig(readJsonStorage(CONFIG_KEY));
+        }
+
         function writeConfig(next) {
-            const config = next && typeof next === 'object' ? next : {};
+            const config = normalizeConfig(next);
             return writeJsonStorage(CONFIG_KEY, config);
+        }
+
+        function ensureConfigIsCurrent() {
+            const saved = readJsonStorage(CONFIG_KEY);
+            const config = normalizeConfig(saved);
+
+            if (!saved || typeof saved !== 'object' || saved.version !== CONFIG_VERSION) {
+                writeJsonStorage(CONFIG_KEY, config);
+            }
+
+            return config;
         }
 
         function readRuns() {
@@ -173,6 +224,31 @@ final class RuntimeMatrixPage extends Component
         function readCarryover() {
             const raw = readJsonStorage(CARRYOVER_KEY);
             return raw && typeof raw === 'object' ? raw : null;
+        }
+
+        function readDegradationProfile() {
+            const raw = readJsonStorage(DEGRADATION_KEY);
+            return raw && typeof raw === 'object' ? raw : null;
+        }
+
+        function syncDegradationProfile(config) {
+            const nextConfig = config && typeof config === 'object' ? config : readConfig();
+            const condition = typeof nextConfig.condition === 'string' ? nextConfig.condition : 'normal';
+
+            if (condition === 'degradada') {
+                writeJsonStorage(DEGRADATION_KEY, DEGRADED_PROFILE);
+                return DEGRADED_PROFILE;
+            }
+
+            if (typeof sessionStorage !== 'undefined') {
+                try {
+                    sessionStorage.removeItem(DEGRADATION_KEY);
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            return null;
         }
 
         function safeNumber(value) {
@@ -332,6 +408,14 @@ final class RuntimeMatrixPage extends Component
             return value >= threshold ? 'ok' : 'alerta';
         }
 
+        function telemetryEntryMatches(entry, expectedType) {
+            if (!entry || typeof entry !== 'object') {
+                return false;
+            }
+
+            return entry.type === expectedType || entry.kind === expectedType;
+        }
+
         function statusColor(status) {
             if (status === 'ok') {
                 return '#86efac';
@@ -391,7 +475,9 @@ final class RuntimeMatrixPage extends Component
                 metrics.push('payload ' + budgets.payloadAction.valueBytes + ' B');
             }
 
-            if (scenario === 'spa' && latestNavigation && typeof latestNavigation.responsePayloadBytes === 'number') {
+            if (budgets.navigationPayload && typeof budgets.navigationPayload.valueBytes === 'number') {
+                metrics.push('navigation payload ' + budgets.navigationPayload.valueBytes + ' B');
+            } else if (scenario === 'spa' && latestNavigation && typeof latestNavigation.responsePayloadBytes === 'number') {
                 metrics.push('navigation payload ' + latestNavigation.responsePayloadBytes + ' B');
             }
 
@@ -494,6 +580,7 @@ final class RuntimeMatrixPage extends Component
             const condition = typeof meta.condition === 'string' && meta.condition !== '' ? meta.condition : config.condition;
             const budgetsConfig = meta.budgets && typeof meta.budgets === 'object' ? meta.budgets : config.budgets;
             const carryover = readCarryover();
+            const degradation = readDegradationProfile();
 
             const telemetry = window.Volt && window.Volt.telemetry ? window.Volt.telemetry : null;
             const components = window.Volt && window.Volt.components ? window.Volt.components : null;
@@ -526,20 +613,20 @@ final class RuntimeMatrixPage extends Component
             const effectiveLatestNavigation = useCarryover &&
                 carryoverLatest &&
                 carryoverLatest.navigation &&
-                typeof carryoverLatest.navigation === 'object' ?
+                telemetryEntryMatches(carryoverLatest.navigation, 'navigation') ?
                 carryoverLatest.navigation :
-                (telemetryLatestNavigation && typeof telemetryLatestNavigation === 'object' ? telemetryLatestNavigation : null);
+                (telemetryEntryMatches(telemetryLatestNavigation, 'navigation') ? telemetryLatestNavigation : null);
             const effectiveLatestAction = useCarryover &&
                 carryoverLatest &&
                 carryoverLatest.action &&
-                typeof carryoverLatest.action === 'object' ?
+                telemetryEntryMatches(carryoverLatest.action, 'action') ?
                 carryoverLatest.action :
-                (telemetryLatestAction && typeof telemetryLatestAction === 'object' ? telemetryLatestAction : null);
+                (telemetryEntryMatches(telemetryLatestAction, 'action') ? telemetryLatestAction : null);
             const effectiveLatestPatch = useCarryover ?
                 (scenario === 'spa' ?
-                    (effectiveLatestNavigation || (carryoverLatest && carryoverLatest.patch && typeof carryoverLatest.patch === 'object' ? carryoverLatest.patch : null)) :
-                    ((carryoverLatest && carryoverLatest.patch && typeof carryoverLatest.patch === 'object' ? carryoverLatest.patch : null) || effectiveLatestAction)) :
-                (telemetryLatestPatch && typeof telemetryLatestPatch === 'object' ? telemetryLatestPatch : null);
+                    (effectiveLatestNavigation || (carryoverLatest && telemetryEntryMatches(carryoverLatest.patch, 'patch') ? carryoverLatest.patch : null)) :
+                    ((carryoverLatest && telemetryEntryMatches(carryoverLatest.patch, 'patch') ? carryoverLatest.patch : null) || effectiveLatestAction)) :
+                (telemetryEntryMatches(telemetryLatestPatch, 'patch') ? telemetryLatestPatch : null);
             const effectiveTelemetrySummary = useCarryover &&
                 carryoverTelemetry &&
                 carryoverTelemetry.summary &&
@@ -561,6 +648,7 @@ final class RuntimeMatrixPage extends Component
                     condition,
                     budgets: budgetsConfig,
                     telemetrySource: useCarryover ? 'carryover' : 'current-page',
+                    degradation: degradation && typeof degradation === 'object' ? degradation : null,
                 },
                 runtimeAsset: summarizeResource('/_volt/runtime.js'),
                 heap: heapSnapshot(),
@@ -601,6 +689,11 @@ final class RuntimeMatrixPage extends Component
                 typeof effectiveLatestAction.responsePayloadBytes === 'number' ?
                 effectiveLatestAction.responsePayloadBytes :
                 null;
+            const navigationPayloadBytes = scenario === 'spa' &&
+                effectiveLatestNavigation &&
+                typeof effectiveLatestNavigation.responsePayloadBytes === 'number' ?
+                effectiveLatestNavigation.responsePayloadBytes :
+                null;
             const telemetrySize = effectiveTelemetrySize;
 
             snapshot.budgets = {
@@ -618,6 +711,11 @@ final class RuntimeMatrixPage extends Component
                     valueBytes: payloadActionBytes,
                     thresholdBytes: budgetsConfig.payloadActionBytes,
                     status: classify(payloadActionBytes, budgetsConfig.payloadActionBytes, 'lte'),
+                },
+                navigationPayload: {
+                    valueBytes: navigationPayloadBytes,
+                    thresholdBytes: budgetsConfig.navigationPayloadBytes,
+                    status: classify(navigationPayloadBytes, budgetsConfig.navigationPayloadBytes, 'lte'),
                 },
                 telemetry: {
                     value: telemetrySize,
@@ -669,10 +767,14 @@ final class RuntimeMatrixPage extends Component
             updateText('[data-runtime-matrix="captured-at"]', snapshot ? snapshot.capturedAt : '(pendiente)');
 
             const budgets = snapshot && snapshot.budgets ? snapshot.budgets : null;
+            const matrix = snapshot && snapshot.matrix && typeof snapshot.matrix === 'object' ? snapshot.matrix : null;
+            const payloadBudget = matrix && matrix.scenario === 'spa' ?
+                (budgets ? budgets.navigationPayload : null) :
+                (budgets ? budgets.payloadAction : null);
 
             updateText('[data-runtime-matrix="budget-boot"]', budgets ? budgets.boot.status : 'pendiente');
             updateText('[data-runtime-matrix="budget-patch"]', budgets ? budgets.patch.status : 'pendiente');
-            updateText('[data-runtime-matrix="budget-payload"]', budgets ? budgets.payloadAction.status : 'pendiente');
+            updateText('[data-runtime-matrix="budget-payload"]', payloadBudget ? payloadBudget.status : 'pendiente');
             updateText('[data-runtime-matrix="budget-telemetry"]', budgets ? budgets.telemetry.status : 'pendiente');
 
             updateJson('[data-runtime-matrix="snapshot-json"]', snapshot || {
@@ -752,7 +854,9 @@ final class RuntimeMatrixPage extends Component
                 const condition = entry && entry.matrix && typeof entry.matrix.condition === 'string' ? entry.matrix.condition : 'n/d';
                 const bootStatus = entry && entry.budgets && entry.budgets.boot ? entry.budgets.boot.status : 'pendiente';
                 const patchStatus = entry && entry.budgets && entry.budgets.patch ? entry.budgets.patch.status : 'pendiente';
-                const payloadStatus = entry && entry.budgets && entry.budgets.payloadAction ? entry.budgets.payloadAction.status : 'pendiente';
+                const payloadStatus = scenario === 'spa' ?
+                    (entry && entry.budgets && entry.budgets.navigationPayload ? entry.budgets.navigationPayload.status : 'pendiente') :
+                    (entry && entry.budgets && entry.budgets.payloadAction ? entry.budgets.payloadAction.status : 'pendiente');
 
                 const cells = [
                     createdAt,
@@ -800,6 +904,7 @@ final class RuntimeMatrixPage extends Component
             const bootMs = readNumberFormValue('[data-runtime-matrix="budget-boot-ms"]');
             const patchMs = readNumberFormValue('[data-runtime-matrix="budget-patch-ms"]');
             const payloadActionBytes = readNumberFormValue('[data-runtime-matrix="budget-payload-bytes"]');
+            const navigationPayloadBytes = readNumberFormValue('[data-runtime-matrix="budget-navigation-payload-bytes"]');
             const telemetryMaxEntries = readNumberFormValue('[data-runtime-matrix="budget-telemetry-max"]');
 
             const config = readConfig();
@@ -811,6 +916,7 @@ final class RuntimeMatrixPage extends Component
                     bootMs: typeof bootMs === 'number' ? bootMs : config.budgets.bootMs,
                     patchMs: typeof patchMs === 'number' ? patchMs : config.budgets.patchMs,
                     payloadActionBytes: typeof payloadActionBytes === 'number' ? payloadActionBytes : config.budgets.payloadActionBytes,
+                    navigationPayloadBytes: typeof navigationPayloadBytes === 'number' ? navigationPayloadBytes : config.budgets.navigationPayloadBytes,
                     telemetryMaxEntries: typeof telemetryMaxEntries === 'number' ? telemetryMaxEntries : config.budgets.telemetryMaxEntries,
                 },
             };
@@ -832,12 +938,14 @@ final class RuntimeMatrixPage extends Component
             setValue('[data-runtime-matrix="budget-boot-ms"]', budgets.bootMs);
             setValue('[data-runtime-matrix="budget-patch-ms"]', budgets.patchMs);
             setValue('[data-runtime-matrix="budget-payload-bytes"]', budgets.payloadActionBytes);
+            setValue('[data-runtime-matrix="budget-navigation-payload-bytes"]', budgets.navigationPayloadBytes);
             setValue('[data-runtime-matrix="budget-telemetry-max"]', budgets.telemetryMaxEntries);
         }
 
         function syncConfigFromForm() {
             const options = readMatrixOptionsFromForm();
             writeConfig(options);
+            syncDegradationProfile(options);
             return options;
         }
 
@@ -914,8 +1022,9 @@ final class RuntimeMatrixPage extends Component
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            const config = readConfig();
+            const config = ensureConfigIsCurrent();
             hydrateFormFromConfig(config);
+            syncDegradationProfile(config);
             setTimeout(() => {
                 window.__spaLabRuntimeMatrix.render('dom-ready');
             }, 50);
@@ -924,6 +1033,7 @@ final class RuntimeMatrixPage extends Component
         document.addEventListener('volt:navigated', () => {
             const config = readConfig();
             hydrateFormFromConfig(config);
+            syncDegradationProfile(config);
             setTimeout(() => {
                 window.__spaLabRuntimeMatrix.render('volt:navigated');
             }, 50);
@@ -950,8 +1060,9 @@ final class RuntimeMatrixPage extends Component
         });
 
         if (document.readyState !== 'loading') {
-            const config = readConfig();
+            const config = ensureConfigIsCurrent();
             hydrateFormFromConfig(config);
+            syncDegradationProfile(config);
             setTimeout(() => {
                 window.__spaLabRuntimeMatrix.render('eager');
             }, 50);
@@ -1041,6 +1152,11 @@ final class RuntimeMatrixPage extends Component
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
             </label>
             <label style="display:grid;gap:8px;color:#cbd5e1;">
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget payload nav (bytes)</span>
+                <input data-runtime-matrix="budget-navigation-payload-bytes" type="number" min="0" step="1"
+                    style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
+            </label>
+            <label style="display:grid;gap:8px;color:#cbd5e1;">
                 <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget buffer telemetry (max)</span>
                 <input data-runtime-matrix="budget-telemetry-max" type="number" min="0" step="1"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
@@ -1056,6 +1172,11 @@ final class RuntimeMatrixPage extends Component
                 Limpiar historial
             </button>
         </div>
+        <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.7;">
+            La condición <strong style="color:#f8fafc;">degradada</strong> activa un harness reproducible del lab:
+            añade latencia artificial de red y un bloqueo controlado de CPU en hooks del runtime. Nos sirve para comparar
+            escenarios dentro del runner; la validación final de carga fría con throttling real de DevTools sigue siendo una pasada aparte.
+        </p>
     </section>
 
     <section
