@@ -11,10 +11,10 @@
 
     <div class="grid gap-5 mt-8 md:grid-cols-2 xl:grid-cols-3">
         <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-cyan-400/40 hover:bg-slate-950"
-            href="/counterExample" volt:navigate volt:prefetch>
+            href="/counterExample" volt:navigate>
             <strong class="block text-lg text-white">/counterExample</strong>
             <span class="block mt-3 text-sm leading-6 text-slate-400">Componente reactivo inline con <code
-                    class="px-2 py-1 rounded bg-red-950 text-slate-200">volt-click</code>, <code
+                    class="px-2 py-1 rounded bg-slate-800 text-slate-200">volt-click</code>, <code
                     class="px-2 py-1 rounded bg-slate-800 text-slate-200">data-volt-target</code> y transiciones
                 declarativas, ideal para ver <code
                     class="px-2 py-1 rounded bg-slate-800 text-slate-200">volt-click</code>,
@@ -22,7 +22,7 @@
         </a>
 
         <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-cyan-400/40 hover:bg-slate-950"
-            href="/formExample" volt:navigate volt:prefetch="none">
+            href="/formExample" volt:navigate>
             <strong class="block text-lg text-white">/formExample</strong>
             <span class="block mt-3 text-sm leading-6 text-slate-400">Demo aislada del formulario con <code
                     class="px-2 py-1 rounded bg-slate-800 text-slate-200">volt:model</code>, <code

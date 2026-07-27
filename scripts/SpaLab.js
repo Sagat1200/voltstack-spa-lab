@@ -155,6 +155,7 @@ const navigationArrivalState = {
 
 const NAVIGATION_DEBUG_STORAGE_KEY = 'volt.runtimeEvents.lastNavigationDebug'
 const RUNTIME_BUSY_STORAGE_KEY = 'volt.runtimeEvents.busySnapshot'
+const RUNTIME_MATRIX_CARRYOVER_KEY = 'volt.runtimeMatrix.carryover'
 
 const navigationDebugState = {
   stage: 'idle',
@@ -199,6 +200,11 @@ const runtimeEfficiencyState = {
   scheduled: false,
   pendingReason: 'boot',
   pendingDetailLevel: 'full',
+}
+
+const runtimeMatrixCarryoverState = {
+  scheduled: false,
+  pendingReason: 'boot',
 }
 
 function roundMetric(value) {
@@ -276,6 +282,28 @@ function formatOutcomes(outcomes) {
 
 function runtimeTelemetryApi() {
   return window.Volt && window.Volt.telemetry ? window.Volt.telemetry : null
+}
+
+function latestRuntimeTelemetryEntry(telemetry, kind) {
+  if (!telemetry || typeof telemetry.latest !== 'function') {
+    return null
+  }
+
+  const byType = telemetry.latest({
+    type: kind,
+  })
+
+  if (byType && typeof byType === 'object') {
+    return byType
+  }
+
+  const byKind = telemetry.latest({
+    kind: kind,
+  })
+
+  return byKind && typeof byKind === 'object'
+    ? byKind
+    : null
 }
 
 function runtimeComponentsApi() {
@@ -416,6 +444,64 @@ function runtimeBootPerformanceSnapshot() {
     rootCount: typeof snapshot.rootCount === 'number' ? snapshot.rootCount : null,
     recordedAt: typeof snapshot.recordedAt === 'string' ? snapshot.recordedAt : null,
   }
+}
+
+function persistRuntimeMatrixCarryover(reason = 'manual') {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return
+  }
+
+  if (window.location.pathname === '/runtimeMatrix') {
+    return
+  }
+
+  const telemetry = runtimeTelemetryApi()
+  const components = runtimeComponentsApi()
+  const telemetrySummary = telemetry ? telemetry.summary() : null
+
+  try {
+    window.sessionStorage.setItem(RUNTIME_MATRIX_CARRYOVER_KEY, JSON.stringify({
+      capturedAt: new Date().toISOString(),
+      reason: reason,
+      url: window.location.href,
+      path: window.location.pathname,
+      runtimeAsset: runtimeAssetPerformanceSnapshot(),
+      telemetry: {
+        boot: runtimeBootPerformanceSnapshot(),
+        summary: telemetrySummary && typeof telemetrySummary === 'object' ? normalizeHookValue(telemetrySummary) : null,
+        latest: {
+          navigation: normalizeHookValue(latestRuntimeTelemetryEntry(telemetry, 'navigation')),
+          action: normalizeHookValue(latestRuntimeTelemetryEntry(telemetry, 'action')),
+          patch: normalizeHookValue(latestRuntimeTelemetryEntry(telemetry, 'patch')),
+        },
+        size: telemetry && typeof telemetry.size === 'function' ? telemetry.size() : null,
+        config: telemetry && typeof telemetry.config === 'function' ? normalizeHookValue(telemetry.config()) : null,
+      },
+      components: {
+        summary: components && typeof components.summary === 'function' ? normalizeHookValue(components.summary()) : null,
+        count: components && typeof components.count === 'function' ? components.count() : null,
+      },
+    }))
+  } catch (error) {
+    // noop: the lab should stay usable even if sessionStorage is unavailable
+  }
+}
+
+function scheduleRuntimeMatrixCarryoverPersist(reason = 'manual') {
+  runtimeMatrixCarryoverState.pendingReason = reason
+
+  if (runtimeMatrixCarryoverState.scheduled) {
+    return
+  }
+
+  runtimeMatrixCarryoverState.scheduled = true
+
+  window.requestAnimationFrame(() => {
+    runtimeMatrixCarryoverState.scheduled = false
+    const nextReason = runtimeMatrixCarryoverState.pendingReason
+    runtimeMatrixCarryoverState.pendingReason = 'manual'
+    persistRuntimeMatrixCarryover(nextReason)
+  })
 }
 
 function updateRuntimeEfficiencyKindCard(root, kind, summary) {
@@ -793,6 +879,31 @@ function registerRuntimeEfficiencyExamples() {
   })
 
   scheduleRuntimeEfficiencySync('boot', 'budget-only')
+}
+
+function registerRuntimeMatrixCarryover() {
+  ;[
+    'volt:request-finish',
+    'volt:request-error',
+    'volt:request-abort',
+    'volt:request-stale',
+    'volt:after-patch',
+    'volt:navigated',
+  ].forEach((eventName) => {
+    document.addEventListener(eventName, () => {
+      scheduleRuntimeMatrixCarryoverPersist(eventName)
+    })
+  })
+
+  document.addEventListener('DOMContentLoaded', () => {
+    scheduleRuntimeMatrixCarryoverPersist('dom-ready')
+  })
+
+  window.addEventListener('load', () => {
+    scheduleRuntimeMatrixCarryoverPersist('window-load')
+  })
+
+  scheduleRuntimeMatrixCarryoverPersist('boot')
 }
 
 function currentNavigationEntry() {
@@ -2319,6 +2430,7 @@ registerCacheExampleControls()
 registerRuntimeStateExampleControls()
 registerRuntimeBusyPanel()
 registerRuntimeEfficiencyExamples()
+registerRuntimeMatrixCarryover()
 document.addEventListener('DOMContentLoaded', () => {
   window.requestAnimationFrame(() => {
     bootstrapRequestLabPage()
