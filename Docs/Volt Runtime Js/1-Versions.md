@@ -102,6 +102,7 @@ Impacta directamente:
 
 - `[x]` exponer budgets visibles en `/runtimeEvents` para `boot`, `patch`, `payload` y `buffer telemetry`
 - `[-]` ejecutar la matriz de medicion definida mas abajo en este documento
+- `[x]` agregar `/runtimeMatrix` como runner manual para capturar snapshots coherentes de `telemetry`, `runtime asset`, `heap` (si existe) y exportar JSON por escenario
 - `[ ]` fijar budgets reales para `boot`, `patch`, payload, memoria y sesiones largas
 - `[ ]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
 

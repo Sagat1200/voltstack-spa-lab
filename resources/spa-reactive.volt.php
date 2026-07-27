@@ -117,6 +117,16 @@
                 <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">CustomEvent</code>.</span>
         </a>
 
+        <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-green-400/40 hover:bg-slate-950"
+            href="/runtimeMatrix" volt:navigate volt:prefetch="none">
+            <strong class="block text-lg text-white">/runtimeMatrix</strong>
+            <span class="block mt-3 text-sm leading-6 text-slate-400">Runner manual de la matriz de eficiencia.
+                Centraliza <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">snapshot</code> de
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">telemetry</code>,
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">runtime asset</code> y budgets para cerrar el
+                Bloque 4 (Eficiencia y Presupuestos) sin depender de DevTools.</span>
+        </a>
+
         <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-cyan-400/40 hover:bg-slate-950"
             href="/runtimeFocus" volt:navigate volt:prefetch="none">
             <strong class="block text-lg text-white">/runtimeFocus</strong>
