@@ -103,6 +103,7 @@ Impacta directamente:
 - `[x]` exponer budgets visibles en `/runtimeEvents` para `boot`, `patch`, `payload` y `buffer telemetry`
 - `[-]` ejecutar la matriz de medicion definida mas abajo en este documento
 - `[x]` agregar `/runtimeMatrix` como runner manual para capturar snapshots coherentes de `telemetry`, `runtime asset`, `heap` (si existe), exportar JSON por escenario, visualizar cobertura base `4x2` (escenario × condicion), releer telemetria persistida entre rutas cuando el escenario ocurre fuera del runner y activar un harness reproducible para la condicion `degradada`
+- `[x]` blindar `/runtimeMatrix` con guardrails server-side del skeleton para su contrato visible (controles, budgets separados, cobertura e inicializacion versionada)
 - `[-]` fijar budgets iniciales para `boot`, `patch` y payload; memoria, carga fria degradada y sesiones largas siguen pendientes
 - `[ ]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
 
