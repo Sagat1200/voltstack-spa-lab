@@ -7,6 +7,7 @@ namespace VoltStack\SPALab\Services\Provider\Routes;
 use Quantum\Facades\Route;
 use VoltStack\SPALab\Pages\Html\HtmlAltPage;
 use VoltStack\SPALab\Pages\Html\HtmlPage;
+use VoltStack\SPALab\Pages\Html\LargeListPage;
 
 class SpaLabHtmlRouteService
 {
@@ -14,5 +15,6 @@ class SpaLabHtmlRouteService
     {
         Route::get('/runtimeHtml', HtmlPage::class)->name('runtimeHtml');
         Route::get('/runtimeHtmlAlt', HtmlAltPage::class)->name('runtimeHtmlAlt');
+        Route::get('/runtimeLargeList', LargeListPage::class)->name('runtimeLargeList');
     }
 }

@@ -152,6 +152,14 @@ Budgets iniciales fijados con la evidencia reciente del runner:
 - `payload navigation <= 50 KB`
 - `telemetry buffer <= 60`
 
+Budgets iniciales de segunda ronda (sesion larga + cache + listas grandes):
+
+- `cache hit ratio >= 80%`
+- `cache duplicate misses <= 0` dentro del `ttl`
+- `listas grandes (2000) patch <= 400 ms`
+- `listas grandes (2000) payload <= 256 KB`
+- `sesion larga heap used <= 15 MB` (si el browser expone `performance.memory`)
+
 Lecturas representativas del corte:
 
 - `boot / normal`: `~22 ms`

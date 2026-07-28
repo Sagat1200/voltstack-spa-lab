@@ -33,6 +33,11 @@ final class RuntimeMatrixPage extends Component
             patchMs: 120,
             payloadActionBytes: 2 * 1024,
             navigationPayloadBytes: 50 * 1024,
+            largeListPatchMs: 400,
+            payloadLargeListBytes: 256 * 1024,
+            cacheHitRatioMinPercent: 80,
+            cacheDuplicateMissesMax: 0,
+            heapUsedMaxBytes: 15 * 1024 * 1024,
             telemetryMaxEntries: 60,
         };
         const LEGACY_DEFAULT_BUDGETS = {
@@ -84,13 +89,16 @@ final class RuntimeMatrixPage extends Component
             spa: ['patch', 'navigationPayload', 'telemetry'],
             action: ['patch', 'payloadAction', 'telemetry'],
             'model.sync': ['patch', 'payloadAction', 'telemetry'],
-            'long-session': ['telemetry'],
+            'large-list': ['largeListPatch', 'largeListPayload', 'telemetry'],
+            cache: ['cacheHitRatio', 'cacheDupMisses'],
+            'long-session': ['telemetry', 'heapUsed', 'cacheHitRatio', 'cacheDupMisses'],
         };
 
         const STORAGE_KEY = 'volt.runtimeMatrix.runs';
         const CONFIG_KEY = 'volt.runtimeMatrix.config';
         const CARRYOVER_KEY = 'volt.runtimeMatrix.carryover';
         const DEGRADATION_KEY = 'volt.runtimeMatrix.degradation';
+        const CACHE_STATS_KEY = 'volt.runtimeCache.stats';
 
         const DEGRADED_PROFILE = {
             enabled: true,
@@ -173,12 +181,18 @@ final class RuntimeMatrixPage extends Component
             return {
                 version: CONFIG_VERSION,
                 scenario: typeof normalized.scenario === 'string' && normalized.scenario !== '' ? normalized.scenario : 'boot',
-                condition: typeof normalized.condition === 'string' && normalized.condition !== '' ? normalized.condition : 'normal',
+                condition: typeof normalized.condition === 'string' && normalized.condition !== '' ? normalized
+                    .condition : 'normal',
                 budgets: {
                     bootMs: budgetValue('bootMs'),
                     patchMs: budgetValue('patchMs'),
                     payloadActionBytes: budgetValue('payloadActionBytes'),
                     navigationPayloadBytes: budgetValue('navigationPayloadBytes'),
+                    largeListPatchMs: budgetValue('largeListPatchMs'),
+                    payloadLargeListBytes: budgetValue('payloadLargeListBytes'),
+                    cacheHitRatioMinPercent: budgetValue('cacheHitRatioMinPercent'),
+                    cacheDuplicateMissesMax: budgetValue('cacheDuplicateMissesMax'),
+                    heapUsedMaxBytes: budgetValue('heapUsedMaxBytes'),
                     telemetryMaxEntries: budgetValue('telemetryMaxEntries'),
                 },
             };
@@ -357,7 +371,8 @@ final class RuntimeMatrixPage extends Component
                         return null;
                     }
 
-                    return 'link:' + rel + ':' + href + ':' + (node.getAttribute ? (node.getAttribute('as') || '') : '');
+                    return 'link:' + rel + ':' + href + ':' + (node.getAttribute ? (node.getAttribute('as') || '') :
+                        '');
                 }
 
                 if (tag === 'script') {
@@ -386,10 +401,12 @@ final class RuntimeMatrixPage extends Component
                 null;
 
             return {
-                total: typeof head.childElementCount === 'number' ? head.childElementCount : (head.children ? head.children.length : null),
+                total: typeof head.childElementCount === 'number' ? head.childElementCount : (head.children ? head
+                    .children.length : null),
                 keyed: queryCount('[data-volt-head-key]'),
                 managed: managedCount,
-                unmanaged: typeof managedCount === 'number' && typeof head.childElementCount === 'number' ? head.childElementCount - managedCount : null,
+                unmanaged: typeof managedCount === 'number' && typeof head.childElementCount === 'number' ? head
+                    .childElementCount - managedCount : null,
                 style: queryCount('style'),
                 script: queryCount('script'),
                 linkStylesheet: queryCount('link[rel="stylesheet"]'),
@@ -434,7 +451,8 @@ final class RuntimeMatrixPage extends Component
         }
 
         function summarizeRunStatus(entry) {
-            const scenario = entry && entry.matrix && typeof entry.matrix.scenario === 'string' ? entry.matrix.scenario : '';
+            const scenario = entry && entry.matrix && typeof entry.matrix.scenario === 'string' ? entry.matrix
+                .scenario : '';
             const budgets = entry && entry.budgets && typeof entry.budgets === 'object' ? entry.budgets : {};
             const keys = scenarioBudgetKeys(scenario);
             let hasPending = false;
@@ -457,10 +475,13 @@ final class RuntimeMatrixPage extends Component
         }
 
         function formatRunMetrics(entry) {
-            const scenario = entry && entry.matrix && typeof entry.matrix.scenario === 'string' ? entry.matrix.scenario : '';
+            const scenario = entry && entry.matrix && typeof entry.matrix.scenario === 'string' ? entry.matrix
+                .scenario : '';
             const budgets = entry && entry.budgets && typeof entry.budgets === 'object' ? entry.budgets : {};
-            const latest = entry && entry.telemetry && entry.telemetry.latest && typeof entry.telemetry.latest === 'object' ? entry.telemetry.latest : {};
-            const latestNavigation = latest.navigation && typeof latest.navigation === 'object' ? latest.navigation : null;
+            const latest = entry && entry.telemetry && entry.telemetry.latest && typeof entry.telemetry.latest ===
+                'object' ? entry.telemetry.latest : {};
+            const latestNavigation = latest.navigation && typeof latest.navigation === 'object' ? latest.navigation :
+                null;
             const metrics = [];
 
             if (budgets.boot && typeof budgets.boot.valueMs === 'number') {
@@ -475,10 +496,27 @@ final class RuntimeMatrixPage extends Component
                 metrics.push('payload ' + budgets.payloadAction.valueBytes + ' B');
             }
 
+            if (budgets.largeListPayload && typeof budgets.largeListPayload.valueBytes === 'number') {
+                metrics.push('payload ' + budgets.largeListPayload.valueBytes + ' B');
+            }
+
             if (budgets.navigationPayload && typeof budgets.navigationPayload.valueBytes === 'number') {
                 metrics.push('navigation payload ' + budgets.navigationPayload.valueBytes + ' B');
-            } else if (scenario === 'spa' && latestNavigation && typeof latestNavigation.responsePayloadBytes === 'number') {
+            } else if (scenario === 'spa' && latestNavigation && typeof latestNavigation.responsePayloadBytes ===
+                'number') {
                 metrics.push('navigation payload ' + latestNavigation.responsePayloadBytes + ' B');
+            }
+
+            if (budgets.cacheHitRatio && typeof budgets.cacheHitRatio.valuePercent === 'number') {
+                metrics.push('cache hit ' + budgets.cacheHitRatio.valuePercent + '%');
+            }
+
+            if (budgets.cacheDupMisses && typeof budgets.cacheDupMisses.value === 'number') {
+                metrics.push('cache dup misses ' + budgets.cacheDupMisses.value);
+            }
+
+            if (budgets.heapUsed && typeof budgets.heapUsed.valueBytes === 'number') {
+                metrics.push('heap ' + budgets.heapUsed.valueBytes + ' B');
             }
 
             if (budgets.telemetry && typeof budgets.telemetry.value === 'number') {
@@ -502,8 +540,10 @@ final class RuntimeMatrixPage extends Component
 
             const latestByCell = {};
             (Array.isArray(runs) ? runs : []).forEach((entry) => {
-                const scenario = entry && entry.matrix && typeof entry.matrix.scenario === 'string' ? entry.matrix.scenario : null;
-                const condition = entry && entry.matrix && typeof entry.matrix.condition === 'string' ? entry.matrix.condition : null;
+                const scenario = entry && entry.matrix && typeof entry.matrix.scenario === 'string' ? entry
+                    .matrix.scenario : null;
+                const condition = entry && entry.matrix && typeof entry.matrix.condition === 'string' ? entry
+                    .matrix.condition : null;
 
                 if (!scenario || !condition) {
                     return;
@@ -520,7 +560,8 @@ final class RuntimeMatrixPage extends Component
             MATRIX_BASELINES.forEach((baseline) => {
                 MATRIX_CONDITIONS.forEach((condition) => {
                     const key = baseline.id + '::' + condition.id;
-                    const entry = Object.prototype.hasOwnProperty.call(latestByCell, key) ? latestByCell[key] : null;
+                    const entry = Object.prototype.hasOwnProperty.call(latestByCell, key) ?
+                        latestByCell[key] : null;
                     const status = entry ? summarizeRunStatus(entry) : 'pendiente';
 
                     if (status === 'ok') {
@@ -534,8 +575,10 @@ final class RuntimeMatrixPage extends Component
                     const row = document.createElement('tr');
                     row.style.borderTop = '1px solid rgba(51,65,85,1)';
 
-                    const latestCapture = entry && typeof entry.capturedAt === 'string' ? entry.capturedAt : 'Pendiente';
-                    const metrics = entry ? formatRunMetrics(entry) : 'Sin captura para esta combinacion.';
+                    const latestCapture = entry && typeof entry.capturedAt === 'string' ? entry
+                        .capturedAt : 'Pendiente';
+                    const metrics = entry ? formatRunMetrics(entry) :
+                        'Sin captura para esta combinacion.';
                     const values = [
                         baseline.label,
                         condition.label,
@@ -576,8 +619,10 @@ final class RuntimeMatrixPage extends Component
         function captureSnapshot(reason, options) {
             const meta = options && typeof options === 'object' ? options : {};
             const config = readConfig();
-            const scenario = typeof meta.scenario === 'string' && meta.scenario !== '' ? meta.scenario : config.scenario;
-            const condition = typeof meta.condition === 'string' && meta.condition !== '' ? meta.condition : config.condition;
+            const scenario = typeof meta.scenario === 'string' && meta.scenario !== '' ? meta.scenario : config
+                .scenario;
+            const condition = typeof meta.condition === 'string' && meta.condition !== '' ? meta.condition : config
+                .condition;
             const budgetsConfig = meta.budgets && typeof meta.budgets === 'object' ? meta.budgets : config.budgets;
             const carryover = readCarryover();
             const degradation = readDegradationProfile();
@@ -603,13 +648,16 @@ final class RuntimeMatrixPage extends Component
                     type: 'patch'
                 }) :
                 null;
-            const carryoverTelemetry = carryover && carryover.telemetry && typeof carryover.telemetry === 'object' ? carryover.telemetry : null;
-            const carryoverLatest = carryoverTelemetry && carryoverTelemetry.latest && typeof carryoverTelemetry.latest === 'object' ? carryoverTelemetry.latest : null;
+            const carryoverTelemetry = carryover && carryover.telemetry && typeof carryover.telemetry === 'object' ?
+                carryover.telemetry : null;
+            const carryoverLatest = carryoverTelemetry && carryoverTelemetry.latest && typeof carryoverTelemetry
+                .latest === 'object' ? carryoverTelemetry.latest : null;
             const useCarryover = window.location.pathname === '/runtimeMatrix' &&
                 carryover &&
                 typeof carryover.path === 'string' &&
                 carryover.path !== '/runtimeMatrix' &&
-                (scenario === 'spa' || scenario === 'action' || scenario === 'model.sync' || scenario === 'long-session');
+                (scenario === 'spa' || scenario === 'action' || scenario === 'model.sync' || scenario ===
+                    'long-session' || scenario === 'cache' || scenario === 'large-list');
             const effectiveLatestNavigation = useCarryover &&
                 carryoverLatest &&
                 carryoverLatest.navigation &&
@@ -624,8 +672,10 @@ final class RuntimeMatrixPage extends Component
                 (telemetryEntryMatches(telemetryLatestAction, 'action') ? telemetryLatestAction : null);
             const effectiveLatestPatch = useCarryover ?
                 (scenario === 'spa' ?
-                    (effectiveLatestNavigation || (carryoverLatest && telemetryEntryMatches(carryoverLatest.patch, 'patch') ? carryoverLatest.patch : null)) :
-                    ((carryoverLatest && telemetryEntryMatches(carryoverLatest.patch, 'patch') ? carryoverLatest.patch : null) || effectiveLatestAction)) :
+                    (effectiveLatestNavigation || (carryoverLatest && telemetryEntryMatches(carryoverLatest.patch,
+                        'patch') ? carryoverLatest.patch : null)) :
+                    ((carryoverLatest && telemetryEntryMatches(carryoverLatest.patch, 'patch') ? carryoverLatest.patch :
+                        null) || effectiveLatestAction)) :
                 (telemetryEntryMatches(telemetryLatestPatch, 'patch') ? telemetryLatestPatch : null);
             const effectiveTelemetrySummary = useCarryover &&
                 carryoverTelemetry &&
@@ -651,6 +701,7 @@ final class RuntimeMatrixPage extends Component
                     degradation: degradation && typeof degradation === 'object' ? degradation : null,
                 },
                 runtimeAsset: summarizeResource('/_volt/runtime.js'),
+                cache: readJsonStorage(CACHE_STATS_KEY),
                 heap: heapSnapshot(),
                 head: headSnapshot(),
                 busy: busy && typeof busy.current === 'function' ? busy.current() : null,
@@ -689,12 +740,27 @@ final class RuntimeMatrixPage extends Component
                 typeof effectiveLatestAction.responsePayloadBytes === 'number' ?
                 effectiveLatestAction.responsePayloadBytes :
                 null;
+            const payloadLargeListBytes = scenario === 'large-list' &&
+                effectiveLatestAction &&
+                typeof effectiveLatestAction.responsePayloadBytes === 'number' ?
+                effectiveLatestAction.responsePayloadBytes :
+                null;
             const navigationPayloadBytes = scenario === 'spa' &&
                 effectiveLatestNavigation &&
                 typeof effectiveLatestNavigation.responsePayloadBytes === 'number' ?
                 effectiveLatestNavigation.responsePayloadBytes :
                 null;
             const telemetrySize = effectiveTelemetrySize;
+            const heapUsedBytes = snapshot.heap && typeof snapshot.heap.usedJSHeapSize === 'number' ?
+                snapshot.heap.usedJSHeapSize :
+                null;
+            const cacheStats = snapshot.cache && typeof snapshot.cache === 'object' ? snapshot.cache : null;
+            const cacheHitRatioPercent = cacheStats && typeof cacheStats.hitRatioPercent === 'number' ?
+                cacheStats.hitRatioPercent :
+                null;
+            const cacheDuplicateMisses = cacheStats && typeof cacheStats.duplicateMisses === 'number' ?
+                cacheStats.duplicateMisses :
+                null;
 
             snapshot.budgets = {
                 boot: {
@@ -707,6 +773,11 @@ final class RuntimeMatrixPage extends Component
                     thresholdMs: budgetsConfig.patchMs,
                     status: classify(patchMs, budgetsConfig.patchMs, 'lte'),
                 },
+                largeListPatch: {
+                    valueMs: patchMs,
+                    thresholdMs: budgetsConfig.largeListPatchMs,
+                    status: classify(patchMs, budgetsConfig.largeListPatchMs, 'lte'),
+                },
                 payloadAction: {
                     valueBytes: payloadActionBytes,
                     thresholdBytes: budgetsConfig.payloadActionBytes,
@@ -716,6 +787,26 @@ final class RuntimeMatrixPage extends Component
                     valueBytes: navigationPayloadBytes,
                     thresholdBytes: budgetsConfig.navigationPayloadBytes,
                     status: classify(navigationPayloadBytes, budgetsConfig.navigationPayloadBytes, 'lte'),
+                },
+                largeListPayload: {
+                    valueBytes: payloadLargeListBytes,
+                    thresholdBytes: budgetsConfig.payloadLargeListBytes,
+                    status: classify(payloadLargeListBytes, budgetsConfig.payloadLargeListBytes, 'lte'),
+                },
+                cacheHitRatio: {
+                    valuePercent: cacheHitRatioPercent,
+                    thresholdPercent: budgetsConfig.cacheHitRatioMinPercent,
+                    status: classify(cacheHitRatioPercent, budgetsConfig.cacheHitRatioMinPercent, 'gte'),
+                },
+                cacheDupMisses: {
+                    value: cacheDuplicateMisses,
+                    threshold: budgetsConfig.cacheDuplicateMissesMax,
+                    status: classify(cacheDuplicateMisses, budgetsConfig.cacheDuplicateMissesMax, 'lte'),
+                },
+                heapUsed: {
+                    valueBytes: heapUsedBytes,
+                    thresholdBytes: budgetsConfig.heapUsedMaxBytes,
+                    status: classify(heapUsedBytes, budgetsConfig.heapUsedMaxBytes, 'lte'),
                 },
                 telemetry: {
                     value: telemetrySize,
@@ -768,12 +859,16 @@ final class RuntimeMatrixPage extends Component
 
             const budgets = snapshot && snapshot.budgets ? snapshot.budgets : null;
             const matrix = snapshot && snapshot.matrix && typeof snapshot.matrix === 'object' ? snapshot.matrix : null;
+            const patchBudget = matrix && matrix.scenario === 'large-list' ?
+                (budgets ? budgets.largeListPatch : null) :
+                (budgets ? budgets.patch : null);
             const payloadBudget = matrix && matrix.scenario === 'spa' ?
                 (budgets ? budgets.navigationPayload : null) :
-                (budgets ? budgets.payloadAction : null);
+                (matrix && matrix.scenario === 'large-list' ? (budgets ? budgets.largeListPayload : null) : (budgets ?
+                    budgets.payloadAction : null));
 
             updateText('[data-runtime-matrix="budget-boot"]', budgets ? budgets.boot.status : 'pendiente');
-            updateText('[data-runtime-matrix="budget-patch"]', budgets ? budgets.patch.status : 'pendiente');
+            updateText('[data-runtime-matrix="budget-patch"]', patchBudget ? patchBudget.status : 'pendiente');
             updateText('[data-runtime-matrix="budget-payload"]', payloadBudget ? payloadBudget.status : 'pendiente');
             updateText('[data-runtime-matrix="budget-telemetry"]', budgets ? budgets.telemetry.status : 'pendiente');
 
@@ -850,13 +945,27 @@ final class RuntimeMatrixPage extends Component
                 row.style.borderTop = '1px solid rgba(51,65,85,1)';
 
                 const createdAt = entry && typeof entry.capturedAt === 'string' ? entry.capturedAt : 'n/d';
-                const scenario = entry && entry.matrix && typeof entry.matrix.scenario === 'string' ? entry.matrix.scenario : 'n/d';
-                const condition = entry && entry.matrix && typeof entry.matrix.condition === 'string' ? entry.matrix.condition : 'n/d';
-                const bootStatus = entry && entry.budgets && entry.budgets.boot ? entry.budgets.boot.status : 'pendiente';
-                const patchStatus = entry && entry.budgets && entry.budgets.patch ? entry.budgets.patch.status : 'pendiente';
+                const scenario = entry && entry.matrix && typeof entry.matrix.scenario === 'string' ? entry
+                    .matrix.scenario : 'n/d';
+                const condition = entry && entry.matrix && typeof entry.matrix.condition === 'string' ? entry
+                    .matrix.condition : 'n/d';
+                const bootStatus = entry && entry.budgets && entry.budgets.boot ? entry.budgets.boot.status :
+                    'pendiente';
+                const patchStatus = scenario === 'large-list' ?
+                    (entry && entry.budgets && entry.budgets.largeListPatch ? entry.budgets.largeListPatch
+                        .status : 'pendiente') :
+                    (entry && entry.budgets && entry.budgets.patch ? entry.budgets.patch.status : 'pendiente');
                 const payloadStatus = scenario === 'spa' ?
-                    (entry && entry.budgets && entry.budgets.navigationPayload ? entry.budgets.navigationPayload.status : 'pendiente') :
-                    (entry && entry.budgets && entry.budgets.payloadAction ? entry.budgets.payloadAction.status : 'pendiente');
+                    (entry && entry.budgets && entry.budgets.navigationPayload ? entry.budgets.navigationPayload
+                        .status : 'pendiente') :
+                    (scenario === 'large-list' ?
+                        (entry && entry.budgets && entry.budgets.largeListPayload ? entry.budgets
+                            .largeListPayload.status : 'pendiente') :
+                        ((scenario === 'cache' || scenario === 'long-session') ?
+                            (entry && entry.budgets && entry.budgets.cacheHitRatio ? entry.budgets.cacheHitRatio
+                                .status : 'pendiente') :
+                            (entry && entry.budgets && entry.budgets.payloadAction ? entry.budgets.payloadAction
+                                .status : 'pendiente')));
 
                 const cells = [
                     createdAt,
@@ -904,7 +1013,14 @@ final class RuntimeMatrixPage extends Component
             const bootMs = readNumberFormValue('[data-runtime-matrix="budget-boot-ms"]');
             const patchMs = readNumberFormValue('[data-runtime-matrix="budget-patch-ms"]');
             const payloadActionBytes = readNumberFormValue('[data-runtime-matrix="budget-payload-bytes"]');
-            const navigationPayloadBytes = readNumberFormValue('[data-runtime-matrix="budget-navigation-payload-bytes"]');
+            const navigationPayloadBytes = readNumberFormValue(
+                '[data-runtime-matrix="budget-navigation-payload-bytes"]');
+            const largeListPatchMs = readNumberFormValue('[data-runtime-matrix="budget-large-list-patch-ms"]');
+            const payloadLargeListBytes = readNumberFormValue(
+                '[data-runtime-matrix="budget-large-list-payload-bytes"]');
+            const cacheHitRatioMinPercent = readNumberFormValue('[data-runtime-matrix="budget-cache-hit-ratio-min"]');
+            const cacheDuplicateMissesMax = readNumberFormValue('[data-runtime-matrix="budget-cache-dup-misses-max"]');
+            const heapUsedMaxBytes = readNumberFormValue('[data-runtime-matrix="budget-heap-used-max-bytes"]');
             const telemetryMaxEntries = readNumberFormValue('[data-runtime-matrix="budget-telemetry-max"]');
 
             const config = readConfig();
@@ -915,16 +1031,28 @@ final class RuntimeMatrixPage extends Component
                 budgets: {
                     bootMs: typeof bootMs === 'number' ? bootMs : config.budgets.bootMs,
                     patchMs: typeof patchMs === 'number' ? patchMs : config.budgets.patchMs,
-                    payloadActionBytes: typeof payloadActionBytes === 'number' ? payloadActionBytes : config.budgets.payloadActionBytes,
-                    navigationPayloadBytes: typeof navigationPayloadBytes === 'number' ? navigationPayloadBytes : config.budgets.navigationPayloadBytes,
-                    telemetryMaxEntries: typeof telemetryMaxEntries === 'number' ? telemetryMaxEntries : config.budgets.telemetryMaxEntries,
+                    payloadActionBytes: typeof payloadActionBytes === 'number' ? payloadActionBytes : config.budgets
+                        .payloadActionBytes,
+                    navigationPayloadBytes: typeof navigationPayloadBytes === 'number' ? navigationPayloadBytes : config
+                        .budgets.navigationPayloadBytes,
+                    largeListPatchMs: typeof largeListPatchMs === 'number' ? largeListPatchMs : config.budgets
+                        .largeListPatchMs,
+                    payloadLargeListBytes: typeof payloadLargeListBytes === 'number' ? payloadLargeListBytes : config
+                        .budgets.payloadLargeListBytes,
+                    cacheHitRatioMinPercent: typeof cacheHitRatioMinPercent === 'number' ? cacheHitRatioMinPercent : config.budgets.cacheHitRatioMinPercent,
+                    cacheDuplicateMissesMax: typeof cacheDuplicateMissesMax === 'number' ? cacheDuplicateMissesMax : config.budgets.cacheDuplicateMissesMax,
+                    heapUsedMaxBytes: typeof heapUsedMaxBytes === 'number' ? heapUsedMaxBytes : config.budgets
+                        .heapUsedMaxBytes,
+                    telemetryMaxEntries: typeof telemetryMaxEntries === 'number' ? telemetryMaxEntries : config.budgets
+                        .telemetryMaxEntries,
                 },
             };
         }
 
         function hydrateFormFromConfig(config) {
             const safeConfig = config && typeof config === 'object' ? config : readConfig();
-            const budgets = safeConfig.budgets && typeof safeConfig.budgets === 'object' ? safeConfig.budgets : DEFAULT_BUDGETS;
+            const budgets = safeConfig.budgets && typeof safeConfig.budgets === 'object' ? safeConfig.budgets :
+                DEFAULT_BUDGETS;
 
             const setValue = (selector, value) => {
                 const element = document.querySelector(selector);
@@ -939,6 +1067,11 @@ final class RuntimeMatrixPage extends Component
             setValue('[data-runtime-matrix="budget-patch-ms"]', budgets.patchMs);
             setValue('[data-runtime-matrix="budget-payload-bytes"]', budgets.payloadActionBytes);
             setValue('[data-runtime-matrix="budget-navigation-payload-bytes"]', budgets.navigationPayloadBytes);
+            setValue('[data-runtime-matrix="budget-large-list-patch-ms"]', budgets.largeListPatchMs);
+            setValue('[data-runtime-matrix="budget-large-list-payload-bytes"]', budgets.payloadLargeListBytes);
+            setValue('[data-runtime-matrix="budget-cache-hit-ratio-min"]', budgets.cacheHitRatioMinPercent);
+            setValue('[data-runtime-matrix="budget-cache-dup-misses-max"]', budgets.cacheDuplicateMissesMax);
+            setValue('[data-runtime-matrix="budget-heap-used-max-bytes"]', budgets.heapUsedMaxBytes);
             setValue('[data-runtime-matrix="budget-telemetry-max"]', budgets.telemetryMaxEntries);
         }
 
@@ -1081,7 +1214,8 @@ final class RuntimeMatrixPage extends Component
         <div style="display:grid;gap:10px;">
             <h1 style="margin:0;font-size:36px;line-height:1.05;">{{ $title }}</h1>
             <p style="margin:0;color:#bbf7d0;line-height:1.75;max-inline-size:76ch;">
-                Esta pantalla sirve como runner manual: ejecutas escenarios en los labs (SPA, actions, model sync) y vuelves
+                Esta pantalla sirve como runner manual: ejecutas escenarios en los labs (SPA, actions, model sync) y
+                vuelves
                 aqui para capturar un snapshot coherente de <code>telemetry</code>, <code>runtime asset</code>,
                 <code>heap</code> (si existe), y un resumen de budgets.
             </p>
@@ -1118,18 +1252,22 @@ final class RuntimeMatrixPage extends Component
         <h2 style="margin:0;font-size:22px;">Contexto de corrida</h2>
         <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));align-items:end;">
             <label style="display:grid;gap:8px;color:#cbd5e1;">
-                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Escenario</span>
+                <span
+                    style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Escenario</span>
                 <select data-runtime-matrix="scenario"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
                     <option value="boot">boot</option>
                     <option value="spa">navegacion-spa</option>
                     <option value="action">action-reactiva</option>
                     <option value="model.sync">volt-model-sync</option>
+                    <option value="large-list">listas-grandes</option>
+                    <option value="cache">cache</option>
                     <option value="long-session">sesion-larga</option>
                 </select>
             </label>
             <label style="display:grid;gap:8px;color:#cbd5e1;">
-                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Condición</span>
+                <span
+                    style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Condición</span>
                 <select data-runtime-matrix="condition"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
                     <option value="normal">normal</option>
@@ -1137,46 +1275,85 @@ final class RuntimeMatrixPage extends Component
                 </select>
             </label>
             <label style="display:grid;gap:8px;color:#cbd5e1;">
-                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget boot (ms)</span>
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget boot
+                    (ms)</span>
                 <input data-runtime-matrix="budget-boot-ms" type="number" min="0" step="1"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
             </label>
             <label style="display:grid;gap:8px;color:#cbd5e1;">
-                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget patch (ms)</span>
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget patch
+                    (ms)</span>
                 <input data-runtime-matrix="budget-patch-ms" type="number" min="0" step="1"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
             </label>
             <label style="display:grid;gap:8px;color:#cbd5e1;">
-                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget payload action (bytes)</span>
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget
+                    payload action (bytes)</span>
                 <input data-runtime-matrix="budget-payload-bytes" type="number" min="0" step="1"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
             </label>
             <label style="display:grid;gap:8px;color:#cbd5e1;">
-                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget payload nav (bytes)</span>
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget
+                    payload nav (bytes)</span>
                 <input data-runtime-matrix="budget-navigation-payload-bytes" type="number" min="0" step="1"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
             </label>
             <label style="display:grid;gap:8px;color:#cbd5e1;">
-                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget buffer telemetry (max)</span>
-                <input data-runtime-matrix="budget-telemetry-max" type="number" min="0" step="1"
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget
+                    listas grandes patch (ms)</span>
+                <input data-runtime-matrix="budget-large-list-patch-ms" type="number" min="0" step="1"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
             </label>
+            <label style="display:grid;gap:8px;color:#cbd5e1;">
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget
+                    listas grandes payload (bytes)</span>
+                <input data-runtime-matrix="budget-large-list-payload-bytes" type="number" min="0" step="1"
+                    style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
+            </label>
+            <label style="display:grid;gap:8px;color:#cbd5e1;">
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget
+                    cache hit min (%)</span>
+                <input data-runtime-matrix="budget-cache-hit-ratio-min" type="number" min="0" max="100" step="0.01"
+                    style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
+            </label>
+            <label style="display:grid;gap:8px;color:#cbd5e1;">
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget
+                    cache dup misses (max)</span>
+                <input data-runtime-matrix="budget-cache-dup-misses-max" type="number" min="0" step="1"
+                    style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
+            </label>
+            <label style="display:grid;gap:8px;color:#cbd5e1;">
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget
+                    heap used (max bytes)</span>
+                <input data-runtime-matrix="budget-heap-used-max-bytes" type="number" min="0" step="1"
+                    style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
+            </label>
+            <label style="display:grid;gap:8px;color:#cbd5e1;">
+                <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget buffer
+                    telemetry (max)</span>
+                <input data-runtime-matrix="budget-telemetry-max" type="number" min="0" step="1"
+                    style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
+                <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                    <button type="button" data-runtime-matrix-action="export-runs"
+                        style="border:1px solid rgba(59,130,246,0.28);background:rgba(30,64,175,0.18);color:#dbeafe;border-radius:10px;padding:10px 14px;cursor:pointer;">
+                        Exportar corridas (JSON)
+                    </button>
+                    <button type="button" data-runtime-matrix-action="clear-runs"
+                        style="border:1px solid rgba(148,163,184,0.28);background:rgba(15,23,42,0.82);color:#e2e8f0;border-radius:10px;padding:10px 14px;cursor:pointer;">
+                        Limpiar historial
+                    </button>
+                </div>
+                <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.7;">
+                    La condición <strong style="color:#f8fafc;">degradada</strong> activa un harness reproducible del
+                    lab:
+                    añade latencia artificial de red y un bloqueo controlado de CPU en hooks del runtime. Nos sirve para
+                    comparar
+                    escenarios dentro del runner; la validación final de carga fría con throttling real de DevTools
+                    sigue siendo
+                    una pasada aparte.
+                </p>
+            </label>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;">
-            <button type="button" data-runtime-matrix-action="export-runs"
-                style="border:1px solid rgba(59,130,246,0.28);background:rgba(30,64,175,0.18);color:#dbeafe;border-radius:10px;padding:10px 14px;cursor:pointer;">
-                Exportar corridas (JSON)
-            </button>
-            <button type="button" data-runtime-matrix-action="clear-runs"
-                style="border:1px solid rgba(148,163,184,0.28);background:rgba(15,23,42,0.82);color:#e2e8f0;border-radius:10px;padding:10px 14px;cursor:pointer;">
-                Limpiar historial
-            </button>
-        </div>
-        <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.7;">
-            La condición <strong style="color:#f8fafc;">degradada</strong> activa un harness reproducible del lab:
-            añade latencia artificial de red y un bloqueo controlado de CPU en hooks del runtime. Nos sirve para comparar
-            escenarios dentro del runner; la validación final de carga fría con throttling real de DevTools sigue siendo una pasada aparte.
-        </p>
     </section>
 
     <section
@@ -1202,12 +1379,24 @@ final class RuntimeMatrixPage extends Component
             <table style="width:100%;border-collapse:collapse;min-inline-size:980px;">
                 <thead style="background:#0b1220;">
                     <tr>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">scenario</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">condition</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">ruta / flujo</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">ultima captura</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">estado</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">metricas</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            scenario</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            condition</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            ruta / flujo</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            ultima captura</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            estado</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            metricas</th>
                     </tr>
                 </thead>
                 <tbody data-runtime-matrix="coverage-body"></tbody>
@@ -1222,12 +1411,24 @@ final class RuntimeMatrixPage extends Component
             <table style="width:100%;border-collapse:collapse;min-inline-size:780px;">
                 <thead style="background:#0b1220;">
                     <tr>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">capturedAt</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">scenario</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">condition</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">boot</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">patch</th>
-                        <th style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">payload</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            capturedAt</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            scenario</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            condition</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            boot</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            patch</th>
+                        <th
+                            style="text-align:left;padding:10px 12px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                            payload</th>
                     </tr>
                 </thead>
                 <tbody data-runtime-matrix="runs-body"></tbody>
@@ -1255,6 +1456,11 @@ final class RuntimeMatrixPage extends Component
                 <strong style="font-size:16px;color:#bbf7d0;">volt:model.sync</strong>
                 <span style="color:#86efac;line-height:1.6;">Escribe rapido y verifica coalesce en 1 POST
                     <code>__volt_sync__</code>.</span>
+            </a>
+            <a href="/runtimeLargeList" volt:navigate
+                style="display:grid;gap:10px;border:1px solid rgba(251,191,36,0.22);background:rgba(120,53,15,0.14);border-radius:18px;padding:16px;text-decoration:none;color:#ffedd5;">
+                <strong style="font-size:16px;color:#fbbf24;">Listas grandes</strong>
+                <span style="color:#fdba74;line-height:1.6;">2000 filas para medir <code>patch</code> y <code>payload</code>.</span>
             </a>
             <a href="/runtimeEvents" volt:navigate
                 style="display:grid;gap:10px;border:1px solid rgba(148,163,184,0.22);background:rgba(15,23,42,0.72);border-radius:18px;padding:16px;text-decoration:none;color:#e2e8f0;">

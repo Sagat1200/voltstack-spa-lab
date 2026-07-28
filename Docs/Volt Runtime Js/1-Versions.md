@@ -130,6 +130,14 @@ Budgets iniciales del corte actual:
 - `payload navigation <= 50 KB` para `spa`
 - `telemetry buffer <= 60` entradas
 
+Budgets iniciales de segunda ronda (sesion larga + cache + listas grandes):
+
+- `cache hit ratio >= 80%` (medido por `volt:cache-hit` / `volt:cache-miss` en una sesion con warm-up)
+- `cache duplicate misses <= 0` dentro del `ttl` (un `miss` luego de `store` vigente se considera duplicado)
+- `listas grandes (2000) patch <= 400 ms`
+- `listas grandes (2000) payload <= 256 KB`
+- `sesion larga heap used <= 15 MB` (si `performance.memory` esta disponible)
+
 Evidencia usada para fijarlos:
 
 - `boot / normal`: `~22 ms`

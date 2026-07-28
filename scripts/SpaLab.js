@@ -157,6 +157,7 @@ const NAVIGATION_DEBUG_STORAGE_KEY = 'volt.runtimeEvents.lastNavigationDebug'
 const RUNTIME_BUSY_STORAGE_KEY = 'volt.runtimeEvents.busySnapshot'
 const RUNTIME_MATRIX_CARRYOVER_KEY = 'volt.runtimeMatrix.carryover'
 const RUNTIME_MATRIX_DEGRADATION_KEY = 'volt.runtimeMatrix.degradation'
+const RUNTIME_CACHE_STATS_KEY = 'volt.runtimeCache.stats'
 
 const navigationDebugState = {
   stage: 'idle',
@@ -211,6 +212,186 @@ const runtimeMatrixCarryoverState = {
 const runtimeMatrixDegradationState = {
   fetchInstalled: false,
   cpuInstalled: false,
+}
+
+const runtimeCacheStatsState = {
+  ready: false,
+  hits: 0,
+  misses: 0,
+  stores: 0,
+  invalidates: 0,
+  clears: 0,
+  duplicateMisses: 0,
+  lastUpdatedAt: null,
+  storedUrls: {},
+}
+
+function readJsonStorage(key) {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return null
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(key)
+
+    if (!raw) {
+      return null
+    }
+
+    return JSON.parse(raw)
+  } catch (error) {
+    return null
+  }
+}
+
+function writeJsonStorage(key, value) {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return false
+  }
+
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify(value))
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
+function ensureRuntimeCacheStatsLoaded() {
+  if (runtimeCacheStatsState.ready) {
+    return runtimeCacheStatsState
+  }
+
+  const saved = readJsonStorage(RUNTIME_CACHE_STATS_KEY)
+
+  if (saved && typeof saved === 'object') {
+    runtimeCacheStatsState.hits = typeof saved.hits === 'number' ? saved.hits : 0
+    runtimeCacheStatsState.misses = typeof saved.misses === 'number' ? saved.misses : 0
+    runtimeCacheStatsState.stores = typeof saved.stores === 'number' ? saved.stores : 0
+    runtimeCacheStatsState.invalidates = typeof saved.invalidates === 'number' ? saved.invalidates : 0
+    runtimeCacheStatsState.clears = typeof saved.clears === 'number' ? saved.clears : 0
+    runtimeCacheStatsState.duplicateMisses = typeof saved.duplicateMisses === 'number' ? saved.duplicateMisses : 0
+    runtimeCacheStatsState.lastUpdatedAt = typeof saved.lastUpdatedAt === 'string' ? saved.lastUpdatedAt : null
+    runtimeCacheStatsState.storedUrls = saved.storedUrls && typeof saved.storedUrls === 'object' ? saved.storedUrls : {}
+  }
+
+  runtimeCacheStatsState.ready = true
+  return runtimeCacheStatsState
+}
+
+function persistRuntimeCacheStats() {
+  const state = ensureRuntimeCacheStatsLoaded()
+
+  writeJsonStorage(RUNTIME_CACHE_STATS_KEY, {
+    hits: state.hits,
+    misses: state.misses,
+    stores: state.stores,
+    invalidates: state.invalidates,
+    clears: state.clears,
+    duplicateMisses: state.duplicateMisses,
+    lastUpdatedAt: state.lastUpdatedAt,
+    storedUrls: state.storedUrls,
+  })
+}
+
+function pruneRuntimeCacheStoredUrls(storedUrls, maxEntries = 40) {
+  if (!storedUrls || typeof storedUrls !== 'object') {
+    return {}
+  }
+
+  const entries = Object.entries(storedUrls)
+    .map(([url, meta]) => ({
+      url,
+      storedAt: meta && typeof meta === 'object' && typeof meta.storedAt === 'number' ? meta.storedAt : 0,
+      ttlMs: meta && typeof meta === 'object' && typeof meta.ttlMs === 'number' ? meta.ttlMs : null,
+    }))
+    .sort((a, b) => a.storedAt - b.storedAt)
+
+  if (entries.length <= maxEntries) {
+    return storedUrls
+  }
+
+  const keep = entries.slice(entries.length - maxEntries)
+  const next = {}
+
+  keep.forEach(({ url, storedAt, ttlMs }) => {
+    next[url] = {
+      storedAt,
+      ttlMs,
+    }
+  })
+
+  return next
+}
+
+function recordRuntimeCacheEvent(eventName, detail) {
+  const state = ensureRuntimeCacheStatsLoaded()
+  const now = Date.now()
+  const safeDetail = detail && typeof detail === 'object' ? detail : {}
+  const url = typeof safeDetail.url === 'string' ? safeDetail.url : null
+
+  if (eventName === 'volt:cache-hit') {
+    state.hits += 1
+  } else if (eventName === 'volt:cache-miss') {
+    state.misses += 1
+
+    if (url && state.storedUrls && Object.prototype.hasOwnProperty.call(state.storedUrls, url)) {
+      const meta = state.storedUrls[url]
+      const storedAt = meta && typeof meta === 'object' && typeof meta.storedAt === 'number' ? meta.storedAt : null
+      const ttlMs = meta && typeof meta === 'object' && typeof meta.ttlMs === 'number' ? meta.ttlMs : null
+
+      if (storedAt !== null && ttlMs !== null && now - storedAt <= ttlMs) {
+        state.duplicateMisses += 1
+      }
+    }
+  } else if (eventName === 'volt:cache-store') {
+    state.stores += 1
+
+    if (url) {
+      const ttlMs = typeof safeDetail.ttl === 'number' ? safeDetail.ttl : null
+
+      state.storedUrls = Object.assign({}, state.storedUrls, {
+        [url]: {
+          storedAt: now,
+          ttlMs,
+        },
+      })
+
+      state.storedUrls = pruneRuntimeCacheStoredUrls(state.storedUrls)
+    }
+  } else if (eventName === 'volt:cache-invalidate') {
+    state.invalidates += 1
+
+    if (url && state.storedUrls && Object.prototype.hasOwnProperty.call(state.storedUrls, url)) {
+      const nextUrls = Object.assign({}, state.storedUrls)
+      delete nextUrls[url]
+      state.storedUrls = nextUrls
+    }
+  } else if (eventName === 'volt:cache-clear') {
+    state.clears += 1
+    state.storedUrls = {}
+  }
+
+  state.lastUpdatedAt = new Date().toISOString()
+  persistRuntimeCacheStats()
+}
+
+function runtimeCacheStatsSnapshot() {
+  const state = ensureRuntimeCacheStatsLoaded()
+  const totalReads = state.hits + state.misses
+  const hitRatioPercent = totalReads > 0 ? Math.round((state.hits / totalReads) * 10000) / 100 : null
+
+  return {
+    hits: state.hits,
+    misses: state.misses,
+    stores: state.stores,
+    invalidates: state.invalidates,
+    clears: state.clears,
+    duplicateMisses: state.duplicateMisses,
+    totalReads,
+    hitRatioPercent,
+    lastUpdatedAt: state.lastUpdatedAt,
+  }
 }
 
 function roundMetric(value) {
@@ -2182,6 +2363,11 @@ function registerVoltHookExamples() {
         count: nextCount,
         date: now,
       })
+
+      if (isCacheRuntimeEvent(eventName)) {
+        recordRuntimeCacheEvent(eventName, detail)
+      }
+
       appendHookLog(eventName, detail, now)
       syncHookInspector()
     })

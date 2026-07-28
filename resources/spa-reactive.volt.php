@@ -127,6 +127,16 @@
                 Bloque 4 (Eficiencia y Presupuestos) sin depender de DevTools.</span>
         </a>
 
+        <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-amber-400/40 hover:bg-slate-950"
+            href="/runtimeLargeList" volt:navigate volt:prefetch="none">
+            <strong class="block text-lg text-white">/runtimeLargeList</strong>
+            <span class="block mt-3 text-sm leading-6 text-slate-400">Escenario de listas grandes (2000 filas) para
+                estresar <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">patch</code> y
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">payload</code> en acciones reactivas y
+                registrar el resultado en <code
+                    class="px-2 py-1 rounded bg-slate-800 text-slate-200">/runtimeMatrix</code>.</span>
+        </a>
+
         <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-cyan-400/40 hover:bg-slate-950"
             href="/runtimeFocus" volt:navigate volt:prefetch="none">
             <strong class="block text-lg text-white">/runtimeFocus</strong>
