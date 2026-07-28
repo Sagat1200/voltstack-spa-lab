@@ -104,7 +104,7 @@ Impacta directamente:
 - `[-]` ejecutar la matriz de medicion definida mas abajo en este documento
 - `[x]` agregar `/runtimeMatrix` como runner manual para capturar snapshots coherentes de `telemetry`, `runtime asset`, `heap` (si existe), exportar JSON por escenario, visualizar cobertura base `4x2` (escenario × condicion), releer telemetria persistida entre rutas cuando el escenario ocurre fuera del runner y activar un harness reproducible para la condicion `degradada`
 - `[x]` blindar `/runtimeMatrix` con guardrails server-side del skeleton para su contrato visible (controles, budgets separados, cobertura e inicializacion versionada)
-- `[-]` fijar budgets iniciales para `boot`, `patch` y payload; memoria, carga fria degradada y sesiones largas siguen pendientes
+- `[-]` fijar budgets iniciales para `boot`, `patch` y payload; memoria y sesiones largas siguen pendientes
 - `[ ]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
 
 Este bloque debe arrancar despues del cierre funcional del runtime actual, para medir un contrato ya estabilizado.
@@ -120,7 +120,7 @@ Plan ejecutivo inmediato para este bloque:
 Nota operativa del corte actual:
 
 - la condicion `degradada` del runner ya aplica un harness reproducible del lab (latencia artificial de red + bloqueo controlado de CPU en hooks del runtime) para `spa`, `action` y `volt:model.sync`
-- la validacion final de `boot` en degradacion real de carga fria sigue requiriendo una pasada externa con throttling de DevTools
+- `boot / degradada` ya quedo validado con una pasada externa de DevTools sobre `/runtimeEvents`, usando `Slow 4G`: `runtime.js` (`45.6 kB`) en `146 ms` y `bootMs = 2.6 ms`, ambos dentro del corte actual
 
 Budgets iniciales del corte actual:
 
@@ -133,6 +133,7 @@ Budgets iniciales del corte actual:
 Evidencia usada para fijarlos:
 
 - `boot / normal`: `~22 ms`
+- `boot / degradada` con DevTools `Slow 4G`: `runtime.js` `45.6 kB` en `146 ms`; `boot = 2.6 ms` (`ok` contra `< 150 ms`)
 - `action-reactiva / normal`: `patch ~14.3 ms`, `payload 689 B`
 - `volt:model.sync / normal`: `patch ~12.9 ms`, `payload 699 B`
 - `action-reactiva / degradada`: `patch ~106.4 ms`, `payload 689 B`

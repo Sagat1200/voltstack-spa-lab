@@ -155,6 +155,7 @@ Budgets iniciales fijados con la evidencia reciente del runner:
 Lecturas representativas del corte:
 
 - `boot / normal`: `~22 ms`
+- `boot / degradada` con DevTools `Slow 4G`: `runtime.js` `45.6 kB` en `146 ms`; `boot = 2.6 ms`
 - `action-reactiva / normal`: `patch ~14.3 ms`, `payload 689 B`
 - `volt:model.sync / normal`: `patch ~12.9 ms`, `payload 699 B`
 - `action-reactiva / degradada`: `patch ~106.4 ms`, `payload 689 B`
@@ -164,4 +165,4 @@ Lecturas representativas del corte:
 Nota:
 
 - la condicion `degradada` de `/runtimeMatrix` ya es un harness reproducible del lab (latencia artificial de red + bloqueo controlado de CPU en hooks runtime)
-- `boot / degradada` todavia requiere una pasada externa con throttling real de DevTools para cierre final de carga fria
+- `boot / degradada` queda cerrado con una pasada externa real de DevTools sobre `/runtimeEvents`; el `bootMs` observado (`2.6 ms`) se mantiene dentro del budget `< 150 ms` y el costo de red del asset (`146 ms`) queda separado como `runtime asset duration`
