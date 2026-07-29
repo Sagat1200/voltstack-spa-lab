@@ -154,11 +154,32 @@ Budgets iniciales fijados con la evidencia reciente del runner:
 
 Budgets iniciales de segunda ronda (sesion larga + cache + listas grandes):
 
-- `cache hit ratio >= 80%`
+- `cache hit ratio (navigate) >= 80%`
 - `cache duplicate misses <= 0` dentro del `ttl`
 - `listas grandes (2000) patch <= 400 ms`
 - `listas grandes (2000) payload <= 256 KB`
 - `sesion larga heap used <= 15 MB` (si el browser expone `performance.memory`)
+
+### Protocolo Cache Hit Ratio (Warm-up)
+
+Objetivo: medir reuso real en navegacion (click), sin contaminar el indicador con misses/hits de prefetch.
+
+Accion:
+
+- abrir `/runtimeMatrix`
+- seleccionar escenario `cache` (condicion `normal`)
+- pulsar `Resetear cache stats`
+- abrir `/counterExample`
+- repetir la navegacion a `/counterExample` usando el boton `Repetir /counterExample (ttl=15000ms)` (usa `volt:prefetch="none"` y `volt:cache="ttl=15000"`)
+  - primer click: debe producir `miss` + `store`
+  - siguientes clicks (dentro de ~15s): deben producir `hit` (navigate)
+- ejecutar al menos `10` navegaciones a `/counterExample` dentro de la ventana `ttl` para estabilizar el ratio aun si el regreso al runner cuenta como un `miss`
+- volver a `/runtimeMatrix` y pulsar `Capturar snapshot`
+
+Esperado:
+
+- `cache hit` en el snapshot debe tomar el ratio de `navigate` y quedar `>= 80%`
+- `cache duplicate misses` debe permanecer en `0` dentro de la ventana `ttl`
 
 Lecturas representativas del corte:
 

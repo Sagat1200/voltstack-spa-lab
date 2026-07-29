@@ -32,7 +32,7 @@ final class CacheExamplePage extends Component
         [
             'label' => 'TTL extendido',
             'href' => '/counterExample',
-            'cache' => 'ttl=15s',
+            'cache' => 'ttl=15000',
             'description' => 'Mantiene la entrada viva mas tiempo que el TTL global del runtime.',
             'expectation' => 'Reutiliza la respuesta durante 15 segundos salvo invalidacion explicita.',
         ],
@@ -48,7 +48,7 @@ final class CacheExamplePage extends Component
     /** @var array<int, string> */
     public array $documentControls = [
         '<meta name="volt-cache-control" content="no-store">',
-        '<meta name="volt-cache-control" content="reload ttl=15s">',
+        '<meta name="volt-cache-control" content="reload ttl=15000">',
         '<meta name="volt:navigation-cache" content="invalidate">',
     ];
 

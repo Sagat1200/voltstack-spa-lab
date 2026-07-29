@@ -40,6 +40,11 @@ final class LargeListPage extends Component
 
 @section('head')
 <meta name="volt-navigation-mode" content="auto" data-volt-head-key="large-list-mode">
+<style data-volt-head-key="large-list-style">
+    [data-large-list-highlight="1"] .large-list-row {
+        background: rgba(34, 197, 94, 0.10);
+    }
+</style>
 @endsection
 
 @section('content')
@@ -98,17 +103,16 @@ final class LargeListPage extends Component
 
     <section
         style="border:1px solid rgba(51,65,85,1);background:#020617;border-radius:20px;padding:16px;color:#e2e8f0;">
-        <div data-volt-target="large-list-root"
+        <div data-volt-target="large-list-root" data-large-list-highlight="{{ $highlight ? '1' : '0' }}"
             style="max-block-size:560px;overflow:auto;border:1px solid rgba(51,65,85,1);border-radius:16px;background:#0b1220;">
             <ol style="margin:0;padding:0;list-style:none;">
                 @for ($index = 1; $index <= $rows; $index++)
-                <li
-                    style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-top:1px solid rgba(51,65,85,0.7);color:#cbd5e1;{{ $highlight ? 'background:rgba(34,197,94,0.10);' : '' }}">
+                    <li class="large-list-row"
+                    style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-top:1px solid rgba(51,65,85,0.7);color:#cbd5e1;">
                     <span style="font-family:Consolas,monospace;font-size:12px;color:#94a3b8;">#{{ $index }}</span>
                     <span style="font-size:13px;">Fila {{ $index }}</span>
-                    <span style="font-size:12px;color:#64748b;">v{{ $variant }}</span>
-                </li>
-                @endfor
+                    </li>
+                    @endfor
             </ol>
         </div>
     </section>
@@ -126,4 +130,3 @@ final class LargeListPage extends Component
     </section>
 </div>
 @endsection
-

@@ -132,7 +132,7 @@ Budgets iniciales del corte actual:
 
 Budgets iniciales de segunda ronda (sesion larga + cache + listas grandes):
 
-- `cache hit ratio >= 80%` (medido por `volt:cache-hit` / `volt:cache-miss` en una sesion con warm-up)
+- `cache hit ratio (navigate) >= 80%` (medido por `volt:cache-hit` / `volt:cache-miss` con `source="navigate"`; prefetch queda fuera del indicador)
 - `cache duplicate misses <= 0` dentro del `ttl` (un `miss` luego de `store` vigente se considera duplicado)
 - `listas grandes (2000) patch <= 400 ms`
 - `listas grandes (2000) payload <= 256 KB`

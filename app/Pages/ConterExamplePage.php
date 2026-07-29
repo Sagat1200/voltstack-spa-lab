@@ -118,6 +118,10 @@ final class ConterExamplePage extends Component
                 style="display:inline-flex;align-items:center;border:1px solid rgba(34,211,238,0.28);background:rgba(34,211,238,0.08);color:#cffafe;border-radius:10px;padding:10px 16px;text-decoration:none;">
                 Volver al inicio
             </a>
+            <a href="/counterExample" volt:navigate volt:prefetch="none" volt:cache="ttl=15000"
+                style="display:inline-flex;align-items:center;border:1px solid rgba(34,197,94,0.28);background:rgba(20,83,45,0.18);color:#dcfce7;border-radius:10px;padding:10px 16px;text-decoration:none;">
+                Repetir /counterExample (ttl=15000ms)
+            </a>
             <a href="/formExample" volt:navigate
                 style="display:inline-flex;align-items:center;border:1px solid #334155;background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 16px;text-decoration:none;">
                 Ir a formulario

@@ -218,12 +218,43 @@ const runtimeCacheStatsState = {
   ready: false,
   hits: 0,
   misses: 0,
+  hitsNavigate: 0,
+  missesNavigate: 0,
+  hitsPrefetch: 0,
+  missesPrefetch: 0,
   stores: 0,
   invalidates: 0,
   clears: 0,
   duplicateMisses: 0,
   lastUpdatedAt: null,
   storedUrls: {},
+}
+
+function resetRuntimeCacheStats(reason = 'manual') {
+  runtimeCacheStatsState.ready = true
+  runtimeCacheStatsState.hits = 0
+  runtimeCacheStatsState.misses = 0
+  runtimeCacheStatsState.hitsNavigate = 0
+  runtimeCacheStatsState.missesNavigate = 0
+  runtimeCacheStatsState.hitsPrefetch = 0
+  runtimeCacheStatsState.missesPrefetch = 0
+  runtimeCacheStatsState.stores = 0
+  runtimeCacheStatsState.invalidates = 0
+  runtimeCacheStatsState.clears = 0
+  runtimeCacheStatsState.duplicateMisses = 0
+  runtimeCacheStatsState.storedUrls = {}
+  runtimeCacheStatsState.lastUpdatedAt = new Date().toISOString()
+
+  persistRuntimeCacheStats()
+
+  if (typeof document !== 'undefined') {
+    document.dispatchEvent(new CustomEvent('volt:cache-stats-reset', {
+      detail: {
+        reason,
+        at: runtimeCacheStatsState.lastUpdatedAt,
+      },
+    }))
+  }
 }
 
 function readJsonStorage(key) {
@@ -267,6 +298,10 @@ function ensureRuntimeCacheStatsLoaded() {
   if (saved && typeof saved === 'object') {
     runtimeCacheStatsState.hits = typeof saved.hits === 'number' ? saved.hits : 0
     runtimeCacheStatsState.misses = typeof saved.misses === 'number' ? saved.misses : 0
+    runtimeCacheStatsState.hitsNavigate = typeof saved.hitsNavigate === 'number' ? saved.hitsNavigate : 0
+    runtimeCacheStatsState.missesNavigate = typeof saved.missesNavigate === 'number' ? saved.missesNavigate : 0
+    runtimeCacheStatsState.hitsPrefetch = typeof saved.hitsPrefetch === 'number' ? saved.hitsPrefetch : 0
+    runtimeCacheStatsState.missesPrefetch = typeof saved.missesPrefetch === 'number' ? saved.missesPrefetch : 0
     runtimeCacheStatsState.stores = typeof saved.stores === 'number' ? saved.stores : 0
     runtimeCacheStatsState.invalidates = typeof saved.invalidates === 'number' ? saved.invalidates : 0
     runtimeCacheStatsState.clears = typeof saved.clears === 'number' ? saved.clears : 0
@@ -285,6 +320,10 @@ function persistRuntimeCacheStats() {
   writeJsonStorage(RUNTIME_CACHE_STATS_KEY, {
     hits: state.hits,
     misses: state.misses,
+    hitsNavigate: state.hitsNavigate,
+    missesNavigate: state.missesNavigate,
+    hitsPrefetch: state.hitsPrefetch,
+    missesPrefetch: state.missesPrefetch,
     stores: state.stores,
     invalidates: state.invalidates,
     clears: state.clears,
@@ -329,11 +368,24 @@ function recordRuntimeCacheEvent(eventName, detail) {
   const now = Date.now()
   const safeDetail = detail && typeof detail === 'object' ? detail : {}
   const url = typeof safeDetail.url === 'string' ? safeDetail.url : null
+  const source = typeof safeDetail.source === 'string' ? safeDetail.source : null
 
   if (eventName === 'volt:cache-hit') {
     state.hits += 1
+
+    if (source === 'navigate') {
+      state.hitsNavigate += 1
+    } else if (source === 'prefetch') {
+      state.hitsPrefetch += 1
+    }
   } else if (eventName === 'volt:cache-miss') {
     state.misses += 1
+
+    if (source === 'navigate') {
+      state.missesNavigate += 1
+    } else if (source === 'prefetch') {
+      state.missesPrefetch += 1
+    }
 
     if (url && state.storedUrls && Object.prototype.hasOwnProperty.call(state.storedUrls, url)) {
       const meta = state.storedUrls[url]
@@ -380,16 +432,24 @@ function runtimeCacheStatsSnapshot() {
   const state = ensureRuntimeCacheStatsLoaded()
   const totalReads = state.hits + state.misses
   const hitRatioPercent = totalReads > 0 ? Math.round((state.hits / totalReads) * 10000) / 100 : null
+  const totalReadsNavigate = state.hitsNavigate + state.missesNavigate
+  const hitRatioNavigatePercent = totalReadsNavigate > 0 ? Math.round((state.hitsNavigate / totalReadsNavigate) * 10000) / 100 : null
 
   return {
     hits: state.hits,
     misses: state.misses,
+    hitsNavigate: state.hitsNavigate,
+    missesNavigate: state.missesNavigate,
+    hitsPrefetch: state.hitsPrefetch,
+    missesPrefetch: state.missesPrefetch,
     stores: state.stores,
     invalidates: state.invalidates,
     clears: state.clears,
     duplicateMisses: state.duplicateMisses,
     totalReads,
     hitRatioPercent,
+    totalReadsNavigate,
+    hitRatioNavigatePercent,
     lastUpdatedAt: state.lastUpdatedAt,
   }
 }
@@ -2757,6 +2817,11 @@ registerRuntimeBusyPanel()
 registerRuntimeEfficiencyExamples()
 registerRuntimeMatrixCarryover()
 registerRuntimeMatrixDegradationHarness()
+
+document.addEventListener('volt:runtime-cache-stats-reset', (event) => {
+  const detail = event && typeof event.detail === 'object' ? event.detail : {}
+  resetRuntimeCacheStats(typeof detail.reason === 'string' ? detail.reason : 'runtimeMatrix')
+})
 document.addEventListener('DOMContentLoaded', () => {
   window.requestAnimationFrame(() => {
     bootstrapRequestLabPage()

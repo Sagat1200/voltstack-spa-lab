@@ -157,6 +157,30 @@ final class RuntimeMatrixPage extends Component
             }
         }
 
+        function normalizeCacheStats(cacheStats) {
+            if (!cacheStats || typeof cacheStats !== 'object') {
+                return null;
+            }
+
+            const hits = typeof cacheStats.hits === 'number' ? cacheStats.hits : 0;
+            const misses = typeof cacheStats.misses === 'number' ? cacheStats.misses : 0;
+            const totalReads = hits + misses;
+            const hitRatioPercent = totalReads > 0 ? Math.round((hits / totalReads) * 10000) / 100 : null;
+            const hitsNavigate = typeof cacheStats.hitsNavigate === 'number' ? cacheStats.hitsNavigate : null;
+            const missesNavigate = typeof cacheStats.missesNavigate === 'number' ? cacheStats.missesNavigate : null;
+            const totalReadsNavigate = hitsNavigate !== null && missesNavigate !== null ? hitsNavigate + missesNavigate : null;
+            const hitRatioNavigatePercent = totalReadsNavigate !== null && totalReadsNavigate > 0 ? Math.round((hitsNavigate / totalReadsNavigate) * 10000) / 100 : null;
+
+            return Object.assign({}, cacheStats, {
+                hits,
+                misses,
+                totalReads,
+                hitRatioPercent,
+                totalReadsNavigate,
+                hitRatioNavigatePercent,
+            });
+        }
+
         function normalizeConfig(saved) {
             const normalized = saved && typeof saved === 'object' ? saved : {};
             const budgets = normalized.budgets && typeof normalized.budgets === 'object' ? normalized.budgets : {};
@@ -701,7 +725,7 @@ final class RuntimeMatrixPage extends Component
                     degradation: degradation && typeof degradation === 'object' ? degradation : null,
                 },
                 runtimeAsset: summarizeResource('/_volt/runtime.js'),
-                cache: readJsonStorage(CACHE_STATS_KEY),
+                cache: normalizeCacheStats(readJsonStorage(CACHE_STATS_KEY)),
                 heap: heapSnapshot(),
                 head: headSnapshot(),
                 busy: busy && typeof busy.current === 'function' ? busy.current() : null,
@@ -755,9 +779,9 @@ final class RuntimeMatrixPage extends Component
                 snapshot.heap.usedJSHeapSize :
                 null;
             const cacheStats = snapshot.cache && typeof snapshot.cache === 'object' ? snapshot.cache : null;
-            const cacheHitRatioPercent = cacheStats && typeof cacheStats.hitRatioPercent === 'number' ?
-                cacheStats.hitRatioPercent :
-                null;
+            const cacheHitRatioPercent = cacheStats && typeof cacheStats.hitRatioNavigatePercent === 'number' ?
+                cacheStats.hitRatioNavigatePercent :
+                (cacheStats && typeof cacheStats.hitRatioPercent === 'number' ? cacheStats.hitRatioPercent : null);
             const cacheDuplicateMisses = cacheStats && typeof cacheStats.duplicateMisses === 'number' ?
                 cacheStats.duplicateMisses :
                 null;
@@ -1152,6 +1176,25 @@ final class RuntimeMatrixPage extends Component
                 window.__spaLabRuntimeMatrix.clearRuns();
                 return;
             }
+
+            if (action === 'reset-cache-stats') {
+                try {
+                    if (typeof sessionStorage !== 'undefined') {
+                        sessionStorage.removeItem(CACHE_STATS_KEY);
+                    }
+                } catch (error) {}
+
+                document.dispatchEvent(new CustomEvent('volt:runtime-cache-stats-reset', {
+                    detail: {
+                        reason: 'runtimeMatrix',
+                    },
+                }));
+
+                const snapshot = window.__spaLabRuntimeMatrix.render('cache-stats-reset');
+                window.__spaLabRuntimeMatrix.last = snapshot;
+                renderSnapshot(snapshot);
+                return;
+            }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1243,6 +1286,10 @@ final class RuntimeMatrixPage extends Component
                     style="border:1px solid rgba(59,130,246,0.28);background:rgba(30,64,175,0.18);color:#dbeafe;border-radius:10px;padding:10px 14px;cursor:pointer;">
                     Exportar JSON
                 </button>
+                <button type="button" data-runtime-matrix-action="reset-cache-stats"
+                    style="border:1px solid rgba(251,191,36,0.28);background:rgba(120,53,15,0.18);color:#ffedd5;border-radius:10px;padding:10px 14px;cursor:pointer;">
+                    Resetear cache stats
+                </button>
             </div>
         </div>
     </section>
@@ -1312,7 +1359,7 @@ final class RuntimeMatrixPage extends Component
             </label>
             <label style="display:grid;gap:8px;color:#cbd5e1;">
                 <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Budget
-                    cache hit min (%)</span>
+                    cache hit min (navigate %)</span>
                 <input data-runtime-matrix="budget-cache-hit-ratio-min" type="number" min="0" max="100" step="0.01"
                     style="border:1px solid rgba(51,65,85,1);background:#020617;color:#e2e8f0;border-radius:10px;padding:10px 12px;">
             </label>
@@ -1460,7 +1507,8 @@ final class RuntimeMatrixPage extends Component
             <a href="/runtimeLargeList" volt:navigate
                 style="display:grid;gap:10px;border:1px solid rgba(251,191,36,0.22);background:rgba(120,53,15,0.14);border-radius:18px;padding:16px;text-decoration:none;color:#ffedd5;">
                 <strong style="font-size:16px;color:#fbbf24;">Listas grandes</strong>
-                <span style="color:#fdba74;line-height:1.6;">2000 filas para medir <code>patch</code> y <code>payload</code>.</span>
+                <span style="color:#fdba74;line-height:1.6;">2000 filas para medir <code>patch</code> y
+                    <code>payload</code>.</span>
             </a>
             <a href="/runtimeEvents" volt:navigate
                 style="display:grid;gap:10px;border:1px solid rgba(148,163,184,0.22);background:rgba(15,23,42,0.72);border-radius:18px;padding:16px;text-decoration:none;color:#e2e8f0;">
