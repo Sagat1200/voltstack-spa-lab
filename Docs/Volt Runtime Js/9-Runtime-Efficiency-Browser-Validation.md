@@ -181,6 +181,26 @@ Esperado:
 - `cache hit` en el snapshot debe tomar el ratio de `navigate` y quedar `>= 80%`
 - `cache duplicate misses` debe permanecer en `0` dentro de la ventana `ttl`
 
+### Protocolo Sesion Larga (Runner)
+
+Objetivo: validar que en una sesion con muchas interacciones el runtime mantiene:
+
+- buffer de telemetria acotado (`<= 60`)
+- heap razonable (si el browser expone `performance.memory`)
+- cache sin misses duplicados dentro del `ttl`
+- hit ratio de cache (navigate) dentro del umbral
+
+Accion (por condicion: `normal` y `degradada`):
+
+- abrir `/runtimeMatrix`
+- seleccionar escenario `sesion-larga`
+- seleccionar condicion (`normal` o `degradada`)
+- pulsar `Resetear telemetria` y `Resetear cache stats`
+- abrir `/runtimeRequestLab` y ejecutar `Fast action` `80` veces
+- abrir `/runtimeModelSync` y hacer `20` updates rapidos
+- abrir `/counterExample` y ejecutar `1 miss + 50 hits` con `Repetir /counterExample (ttl=15000ms)`
+- volver a `/runtimeMatrix` y pulsar `Capturar snapshot`
+
 Lecturas representativas del corte:
 
 - `boot / normal`: `~22 ms`
@@ -190,6 +210,8 @@ Lecturas representativas del corte:
 - `action-reactiva / degradada`: `patch ~106.4 ms`, `payload 689 B`
 - `volt:model.sync / degradada`: `patch ~103.1 ms`, `payload 707 B`
 - `navegacion-spa / degradada`: `patch ~103 ms`, `payload ~39.7 KB`
+- `sesion larga / normal` (runner): `telemetry size = 60`, `heap used ~10.1 MB`, `cache hit (navigate) = 90.91%`, `dup misses = 0`
+- `sesion larga / degradada` (runner): `telemetry size = 60`, `heap used ~10.1 MB`, `cache hit (navigate) = 90.91%`, `dup misses = 0`
 
 Nota:
 

@@ -104,8 +104,8 @@ Impacta directamente:
 - `[-]` ejecutar la matriz de medicion definida mas abajo en este documento
 - `[x]` agregar `/runtimeMatrix` como runner manual para capturar snapshots coherentes de `telemetry`, `runtime asset`, `heap` (si existe), exportar JSON por escenario, visualizar cobertura base `4x2` (escenario × condicion), releer telemetria persistida entre rutas cuando el escenario ocurre fuera del runner y activar un harness reproducible para la condicion `degradada`
 - `[x]` blindar `/runtimeMatrix` con guardrails server-side del skeleton para su contrato visible (controles, budgets separados, cobertura e inicializacion versionada)
-- `[-]` fijar budgets iniciales para `boot`, `patch` y payload; memoria y sesiones largas siguen pendientes
-- `[ ]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas
+- `[x]` fijar budgets iniciales para `boot`, `patch` y payload; extender a cache, listas grandes y sesion larga con evidencia browser-level y runner
+- `[x]` decidir umbrales de alerta para `volt:model.sync`, cache, listas grandes y sesiones prolongadas (corte inicial contractual)
 
 Este bloque debe arrancar despues del cierre funcional del runtime actual, para medir un contrato ya estabilizado.
 
@@ -147,6 +147,8 @@ Evidencia usada para fijarlos:
 - `action-reactiva / degradada`: `patch ~106.4 ms`, `payload 689 B`
 - `volt:model.sync / degradada`: `patch ~103.1 ms`, `payload 707 B`
 - `navegacion-spa / degradada`: `patch ~103 ms`, `payload ~39.7 KB`
+- `sesion larga / normal` (`/runtimeMatrix`): `telemetry size = 60`, `heap used ~10.1 MB`, `cache hit (navigate) = 90.91%`, `dup misses = 0`
+- `sesion larga / degradada` (`/runtimeMatrix`): `telemetry size = 60`, `heap used ~10.1 MB`, `cache hit (navigate) = 90.91%`, `dup misses = 0`
 
 Primer lote recomendado:
 

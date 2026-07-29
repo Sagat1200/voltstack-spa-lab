@@ -659,17 +659,17 @@ final class RuntimeMatrixPage extends Component
             const telemetrySummary = telemetry && typeof telemetry.summary === 'function' ? telemetry.summary() : null;
             const telemetryLatestNavigation = telemetry && typeof telemetry.latest === 'function' ?
                 telemetry.latest({
-                    type: 'navigation'
+                    kind: 'navigation'
                 }) :
                 null;
             const telemetryLatestAction = telemetry && typeof telemetry.latest === 'function' ?
                 telemetry.latest({
-                    type: 'action'
+                    kind: 'action'
                 }) :
                 null;
             const telemetryLatestPatch = telemetry && typeof telemetry.latest === 'function' ?
                 telemetry.latest({
-                    type: 'patch'
+                    kind: 'patch'
                 }) :
                 null;
             const carryoverTelemetry = carryover && carryover.telemetry && typeof carryover.telemetry === 'object' ?
