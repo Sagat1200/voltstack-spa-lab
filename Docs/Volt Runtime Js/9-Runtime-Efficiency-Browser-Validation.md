@@ -210,6 +210,11 @@ Lecturas representativas del corte:
 - `action-reactiva / degradada`: `patch ~106.4 ms`, `payload 689 B`
 - `volt:model.sync / degradada`: `patch ~103.1 ms`, `payload 707 B`
 - `navegacion-spa / degradada`: `patch ~103 ms`, `payload ~39.7 KB`
+- `runner / cobertura base 4x2` (`/runtimeMatrix`, flujo SPA con `Volt.visit(...,{fallback:false})`, `coverage = 8/8`):
+  - `boot`: `bootMs = 9.4 ms` (normal y degradada)
+  - `spa`: `patchMs = 107.6 ms` (normal), `110.7 ms` (degradada), `payload navigation = 25,173 B`
+  - `action`: `patchMs = 105.9 ms` (normal), `106.2 ms` (degradada), `payload action = 689 B`
+  - `volt:model.sync`: `patchMs = 98.7 ms` (normal), `98.9 ms` (degradada), `payload action = 739–745 B`
 - `sesion larga / normal` (runner): `telemetry size = 60`, `heap used ~10.1 MB`, `cache hit (navigate) = 90.91%`, `dup misses = 0`
 - `sesion larga / degradada` (runner): `telemetry size = 60`, `heap used ~10.1 MB`, `cache hit (navigate) = 90.91%`, `dup misses = 0`
 

@@ -101,7 +101,7 @@ Impacta directamente:
 ### Bloque Activo 4. Eficiencia Y Presupuestos
 
 - `[x]` exponer budgets visibles en `/runtimeEvents` para `boot`, `patch`, `payload` y `buffer telemetry`
-- `[-]` ejecutar la matriz de medicion definida mas abajo en este documento
+- `[x]` ejecutar la matriz de medicion definida mas abajo en este documento (cobertura base `4x2`)
 - `[x]` agregar `/runtimeMatrix` como runner manual para capturar snapshots coherentes de `telemetry`, `runtime asset`, `heap` (si existe), exportar JSON por escenario, visualizar cobertura base `4x2` (escenario × condicion), releer telemetria persistida entre rutas cuando el escenario ocurre fuera del runner y activar un harness reproducible para la condicion `degradada`
 - `[x]` blindar `/runtimeMatrix` con guardrails server-side del skeleton para su contrato visible (controles, budgets separados, cobertura e inicializacion versionada)
 - `[x]` fijar budgets iniciales para `boot`, `patch` y payload; extender a cache, listas grandes y sesion larga con evidencia browser-level y runner
@@ -121,6 +121,12 @@ Nota operativa del corte actual:
 
 - la condicion `degradada` del runner ya aplica un harness reproducible del lab (latencia artificial de red + bloqueo controlado de CPU en hooks del runtime) para `spa`, `action` y `volt:model.sync`
 - `boot / degradada` ya quedo validado con una pasada externa de DevTools sobre `/runtimeEvents`, usando `Slow 4G`: `runtime.js` (`45.6 kB`) en `146 ms` y `bootMs = 2.6 ms`, ambos dentro del corte actual
+- cobertura base `4x2` cerrada en `/runtimeMatrix` usando flujo SPA (`Volt.visit(..., { fallback:false })`) con `coverage = 8/8`:
+  - `boot`: `bootMs = 9.4 ms` (normal y degradada)
+  - `spa`: `patchMs = 107.6 ms` (normal), `110.7 ms` (degradada), `payload navigation = 25,173 B`
+  - `action`: `patchMs = 105.9 ms` (normal), `106.2 ms` (degradada), `payload action = 689 B`
+  - `volt:model.sync`: `patchMs = 98.7 ms` (normal), `98.9 ms` (degradada), `payload action = 739–745 B`
+  - budgets de cache quedan `pendiente` fuera de escenarios `cache` y `sesion-larga`
 
 Budgets iniciales del corte actual:
 

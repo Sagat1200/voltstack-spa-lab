@@ -769,6 +769,7 @@ final class RuntimeMatrixPage extends Component
                 typeof effectiveLatestAction.responsePayloadBytes === 'number' ?
                 effectiveLatestAction.responsePayloadBytes :
                 null;
+            const largeListPatchMs = scenario === 'large-list' ? patchMs : null;
             const navigationPayloadBytes = scenario === 'spa' &&
                 effectiveLatestNavigation &&
                 typeof effectiveLatestNavigation.responsePayloadBytes === 'number' ?
@@ -779,10 +780,13 @@ final class RuntimeMatrixPage extends Component
                 snapshot.heap.usedJSHeapSize :
                 null;
             const cacheStats = snapshot.cache && typeof snapshot.cache === 'object' ? snapshot.cache : null;
-            const cacheHitRatioPercent = cacheStats && typeof cacheStats.hitRatioNavigatePercent === 'number' ?
-                cacheStats.hitRatioNavigatePercent :
-                (cacheStats && typeof cacheStats.hitRatioPercent === 'number' ? cacheStats.hitRatioPercent : null);
-            const cacheDuplicateMisses = cacheStats && typeof cacheStats.duplicateMisses === 'number' ?
+            const cacheBudgetsEnabled = scenario === 'cache' || scenario === 'long-session';
+            const cacheHitRatioPercent = cacheBudgetsEnabled ?
+                (cacheStats && typeof cacheStats.hitRatioNavigatePercent === 'number' ?
+                    cacheStats.hitRatioNavigatePercent :
+                    (cacheStats && typeof cacheStats.hitRatioPercent === 'number' ? cacheStats.hitRatioPercent : null)) :
+                null;
+            const cacheDuplicateMisses = cacheBudgetsEnabled && cacheStats && typeof cacheStats.duplicateMisses === 'number' ?
                 cacheStats.duplicateMisses :
                 null;
 
@@ -798,9 +802,9 @@ final class RuntimeMatrixPage extends Component
                     status: classify(patchMs, budgetsConfig.patchMs, 'lte'),
                 },
                 largeListPatch: {
-                    valueMs: patchMs,
+                    valueMs: largeListPatchMs,
                     thresholdMs: budgetsConfig.largeListPatchMs,
-                    status: classify(patchMs, budgetsConfig.largeListPatchMs, 'lte'),
+                    status: classify(largeListPatchMs, budgetsConfig.largeListPatchMs, 'lte'),
                 },
                 payloadAction: {
                     valueBytes: payloadActionBytes,
