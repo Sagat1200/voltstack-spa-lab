@@ -32,7 +32,7 @@ Resumen del estado del runtime segun la documentacion y la implementacion observ
 - `[x]` navegacion SPA base
 - `[x]` hooks runtime base para requests y navegacion
 - `[x]` preservacion de foco y scroll basica
-- `[-]` reconciliacion de `head` y manejo de layout
+- `[x]` reconciliacion de `head` y manejo de layout
 - `[x]` prefetch y preload SPA
 - `[x]` client state real
 - `[x]` shared state global real
@@ -210,7 +210,7 @@ Cuando se trabaje en este corte:
 - `[x]` fragment cache SPA opt-in por clave declarativa
 - `[x]` preservacion opt-in de formularios entre pantallas
 - `[x]` preservacion opt-in de componentes vivos entre navegaciones
-- `[-]` politicas configurables por ruta para SPA vs full reload
+- `[x]` politicas configurables por ruta para SPA vs full reload
 - `[x]` transiciones de pagina enter/leave reales
 - `[x]` invalidacion/control de cache de navegacion
 
@@ -561,7 +561,7 @@ Matriz operativa sugerida:
 | Lista grande con `volt:for` | DevTools Performance + Memory | scripting, mutaciones DOM, heap | sin long tasks recurrentes `> 50ms` | `[ ]` | |
 | Directivas complejas (`volt:if`, `volt:show`, `volt:class`, `volt:style`) | DevTools Performance | costo de expresiones y mutaciones | sin jank visible ni reflows excesivos | `[ ]` | |
 | Fragment cache + preserve/reset | DevTools Memory + hooks runtime | reuso real, descarte correcto, memoria retenida | reuse correcto, sin nodos retenidos de mas | `[ ]` | |
-| Reconciliacion de `head` y layout | DevTools Elements + Network | duplicacion de metas/assets, costo de swap | sin reinyecciones redundantes | `[ ]` | |
+| Reconciliacion de `head` y layout | DevTools Elements + Network | duplicacion de metas/assets, costo de swap | sin reinyecciones redundantes | `[x]` | validado en `/routing-lab/head/a <-> /routing-lab/head/b` sin duplicar `meta`/`style` gestionados; y fallback por layout al saltar a `/` desde `routing-lab` |
 | Sesion larga de 100-500 interacciones | DevTools Memory + Performance | heap final, GC visible, estabilidad del runtime | sin degradacion sostenida ni fuga aparente | `[ ]` | |
 | CPU degradada + red lenta | DevTools throttling | resiliencia del runtime bajo estres | degradacion controlada, sin bloqueo severo | `[ ]` | |
 | Multiples tabs y estado compartido | DevTools + observacion funcional | consistencia, retrabajo de red, consumo extra | sin duplicacion injustificada ni drift de estado | `[ ]` | |
