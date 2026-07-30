@@ -830,7 +830,7 @@ Orden sugerido para seguir avanzando:
 
 Estado actual:
 
-- `[x]` MVP implementado; validacion manual fina aun pendiente
+- `[x]` MVP implementado; validacion manual fina cerrada en build local (ver `7-Fragment-Cache-Prefetch-Manual-Validation.md`)
 
 Objetivo del bloque:
 
@@ -849,7 +849,7 @@ Checklist inmediato:
 - `[x]` integrar cache prefetched con `visit()`
 - `[x]` evitar race conditions entre `prefetch` y `navigate`
 - `[x]` implementar preload de assets criticos del documento destino
-- `[-]` agregar pruebas manuales del flujo
+- `[x]` agregar pruebas manuales del flujo (pasada browser cerrada en `7-Fragment-Cache-Prefetch-Manual-Validation.md`)
 - `[x]` agregar pruebas automatizadas focalizadas si aportan valor
 
 Resultado esperado del bloque:
@@ -868,7 +868,7 @@ Validacion tecnica ejecutada:
 - `[x]` respuestas `200` reconfirmadas para `/`, `/counterExample` y `/formExample` despues del cambio de invalidacion/cache
 - `[x]` `data-volt-layout="app"` y `data-volt-head-key` reconfirmados en las tres respuestas HTML tras el cambio
 - `[x]` shell actual emitiendo assets frontend via Vite dev server en `http://127.0.0.1:5173`
-- `[-]` validacion manual real de red/navegador pendiente para confirmar visualmente los hints `preload` y `modulepreload`
+- `[x]` validacion manual real de red/navegador cerrada para confirmar visualmente los hints `preload` y `modulepreload`
 
 ### Diseno MVP: Cache En Memoria Por URL
 
@@ -1144,13 +1144,13 @@ Motivo:
 - `[x]` verificar que no se dupliquen requests
 - `[x]` probar reuso real del payload prefetched
 
-## Bloque Activo Actual
+## Bloque Cerrado (Ultimo)
 
 ### Fragment Cache SPA
 
 Estado actual:
 
-- `[-]` MVP inicial implementado; contrato de preserve/reset ya aterrizado y pendiente de validacion manual final
+- `[x]` MVP inicial implementado; contrato de preserve/reset ya aterrizado y validacion manual final cerrada (ver `7-Fragment-Cache-Prefetch-Manual-Validation.md`)
 - `[x]` dependencias previas cubiertas: cache de navegacion, invalidacion explicita y demo UI de observabilidad
 
 Objetivo del bloque:
