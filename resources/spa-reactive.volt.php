@@ -128,6 +128,18 @@
                 <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">runtime.policy</code>.</span>
         </a>
 
+        <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-cyan-400/40 hover:bg-slate-950"
+            href="/runtimeHead" volt:navigate volt:prefetch="none">
+            <strong class="block text-lg text-white">/runtimeHead</strong>
+            <span class="block mt-3 text-sm leading-6 text-slate-400">Lab para validar reconciliación de
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">head</code> (dedupe por
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">data-volt-head-key</code>),
+                conservación de <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">meta charset/viewport</code> y
+                fallback automático al cambiar de layout (<code
+                    class="px-2 py-1 rounded bg-slate-800 text-slate-200">spa</code> → <code
+                    class="px-2 py-1 rounded bg-slate-800 text-slate-200">app</code>).</span>
+        </a>
+
         <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-green-400/40 hover:bg-slate-950"
             href="/runtimeMatrix" volt:navigate volt:prefetch="none">
             <strong class="block text-lg text-white">/runtimeMatrix</strong>

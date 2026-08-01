@@ -424,11 +424,11 @@ Cuando se trabaje en este corte:
 
 ### F. Layout Y Head
 
-- `[ ]` inline page con `@extends('layouts.app')`
-- `[ ]` retorno a home sin perder estilos
-- `[ ]` cambio de layout con fallback automatico
-- `[ ]` keys de `head` estables en assets de Vite
-- `[ ]` no perder `meta charset` ni `viewport`
+- `[x]` inline page con `@extends('layouts.app')`
+- `[x]` retorno a home sin perder estilos
+- `[x]` cambio de layout con fallback automatico
+- `[x]` keys de `head` estables en assets de Vite
+- `[x]` no perder `meta charset` ni `viewport`
 
 ### G. Errores Y Seguridad
 

@@ -2907,6 +2907,134 @@ function registerRuntimeEffectsD2Lab() {
   syncRuntimeEffectsD2Lab('boot', {})
 }
 
+const runtimeHeadLabState = {
+  lastVisitDetail: null,
+}
+
+function runtimeHeadLabRoot() {
+  return document.querySelector('[data-runtime-head-lab="true"]')
+}
+
+function runtimeHeadLabSerialize(value) {
+  try {
+    return JSON.stringify(value, null, 2)
+  } catch (error) {
+    return String(value)
+  }
+}
+
+function runtimeHeadLabCountViteAssets() {
+  return document.querySelectorAll(
+    'head [data-volt-head-key^="vite"], head [data-volt-head-key^="script:"], head [data-volt-head-key^="style:"], head [data-volt-head-key^="modulepreload:"]',
+  ).length
+}
+
+function syncRuntimeHeadLab(reason = 'manual', detail = {}) {
+  if (!runtimeHeadLabRoot()) {
+    return
+  }
+
+  const meta = document.querySelector('meta[data-volt-head-key="runtime-head-lab-meta"]')
+  const metaLabel = document.querySelector('[data-runtime-check="head-lab-meta"]')
+  const viteAssetsLabel = document.querySelector('[data-runtime-check="head-lab-vite-assets"]')
+  const coreMetaLabel = document.querySelector('[data-runtime-check="head-lab-core-meta"]')
+  const resultLabel = document.querySelector('[data-runtime-check="head-lab-visit-result"]')
+
+  if (metaLabel) {
+    metaLabel.textContent = meta ? (meta.getAttribute('content') || '-') : '(missing)'
+  }
+
+  if (viteAssetsLabel) {
+    viteAssetsLabel.textContent = String(runtimeHeadLabCountViteAssets())
+  }
+
+  if (coreMetaLabel) {
+    const charset = document.querySelector('meta[data-volt-head-key="document-charset"]')
+    const viewport = document.querySelector('meta[data-volt-head-key="document-viewport"]')
+    coreMetaLabel.textContent = charset && viewport ? 'ok' : 'missing'
+  }
+
+  if (resultLabel) {
+    const payload = runtimeHeadLabState.lastVisitDetail
+      ? Object.assign(
+        {
+          observedAt: new Date().toISOString(),
+          reason,
+        },
+        runtimeHeadLabState.lastVisitDetail,
+      )
+      : {
+        result: '(sin ejecutar)',
+        reason,
+        detail,
+      }
+
+    resultLabel.textContent = runtimeHeadLabSerialize(payload)
+  }
+}
+
+function registerRuntimeHeadLab() {
+  if (!runtimeHeadLabRoot()) {
+    return
+  }
+
+  const trigger = document.querySelector('[data-runtime-head-lab-action="visit-no-fallback"]')
+
+  if (trigger) {
+    trigger.addEventListener('click', () => {
+      if (!window.Volt || typeof window.Volt.visit !== 'function') {
+        runtimeHeadLabState.lastVisitDetail = {
+          error: 'Volt.visit no disponible',
+        }
+        syncRuntimeHeadLab('visit-no-fallback', {})
+        return
+      }
+
+      runtimeHeadLabState.lastVisitDetail = null
+      syncRuntimeHeadLab('visit-no-fallback', {})
+
+      window.Volt.visit('/runtimeHeadApp', {
+        fallback: false,
+      }).catch((error) => {
+        runtimeHeadLabState.lastVisitDetail = {
+          error: String(error),
+        }
+        syncRuntimeHeadLab('visit-no-fallback:error', {})
+      })
+    })
+  }
+
+  document.addEventListener('volt:request-finish', (event) => {
+    const payload = event && event.detail && typeof event.detail === 'object' ? event.detail : null
+    if (!payload || payload.type !== 'navigation') {
+      return
+    }
+    if (payload.url !== '/runtimeHeadApp') {
+      return
+    }
+    runtimeHeadLabState.lastVisitDetail = payload
+    window.requestAnimationFrame(() => {
+      syncRuntimeHeadLab('volt:request-finish', payload)
+    })
+  })
+
+  ;['volt:navigated', 'volt:after-patch', 'volt:after-effect'].forEach((eventName) => {
+    document.addEventListener(eventName, (event) => {
+      window.requestAnimationFrame(() => {
+        syncRuntimeHeadLab(eventName, event && event.detail ? event.detail : {})
+      })
+    })
+  })
+
+  window.addEventListener('load', () => {
+    window.requestAnimationFrame(() => {
+      syncRuntimeHeadLab('window-load', {})
+    })
+  })
+
+  syncRuntimeHeadLab('boot', {})
+}
+
 function bootstrapRequestLabPage() {
   const requestLabMarker = document.querySelector('[data-runtime-check="action-endpoint-status"]')
 
@@ -2942,6 +3070,7 @@ registerNavigationDebugPanel()
 registerCacheExampleControls()
 registerRuntimeStateExampleControls()
 registerRuntimeEffectsD2Lab()
+registerRuntimeHeadLab()
 registerRuntimeBusyPanel()
 registerRuntimeEfficiencyExamples()
 registerRuntimeMatrixCarryover()

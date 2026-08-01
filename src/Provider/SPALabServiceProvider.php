@@ -15,6 +15,7 @@ use VoltStack\SPALab\Services\Provider\Routes\SpaLabCounterRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabDirectiveRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabEventRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabEffectsRouteService;
+use VoltStack\SPALab\Services\Provider\Routes\SpaLabHeadRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabFocusRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabFormRouteService;
 use VoltStack\SPALab\Services\Provider\Routes\SpaLabHtmlRouteService;
@@ -53,6 +54,7 @@ final class SPALabServiceProvider extends ServiceProvider
             SpaLabDirectiveRouteService::registerDirectiveRoutes();
             SpaLabEventRouteService::registerEventRoutes();
             SpaLabEffectsRouteService::registerEffectsRoutes();
+            SpaLabHeadRouteService::registerHeadRoutes();
             SpaLabFocusRouteService::registerFocusRoutes();
             SpaLabFormRouteService::registerFormRoutes();
             SpaLabHtmlRouteService::registerHtmlRoutes();
