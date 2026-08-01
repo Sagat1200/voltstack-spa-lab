@@ -332,10 +332,10 @@ Cuando se trabaje en este corte:
 - `[x]` API publica `runtime.on(...)` (wrapper de `addEventListener` con filtros por `component/root/selector` + unsubscribe)
 - `[x]` plugins frontend (API `window.Volt.plugins` + alias `window.Volt.use`)
 - `[x]` custom effects (API `window.Volt.effects.register(...)` + integración con `applyEffect`)
-- `[ ]` runtime middleware
-- `[ ]` navigation middleware
-- `[ ]` hydration middleware
-- `[ ]` effect middleware
+- `[x]` runtime middleware (pipeline Koa-like via `window.Volt.middleware.register("runtime", ...)`)
+- `[x]` navigation middleware (envolviendo `visit(...)`)
+- `[x]` hydration middleware (envolviendo `withPreservedUiState(...)`)
+- `[x]` effect middleware (envolviendo `applyEffect(...)`)
 
 ### 10. Resilience Y Modo Offline
 
