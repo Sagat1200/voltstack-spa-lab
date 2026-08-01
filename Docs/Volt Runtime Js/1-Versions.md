@@ -339,8 +339,8 @@ Cuando se trabaje en este corte:
 
 ### 10. Resilience Y Modo Offline
 
-- `[-]` retry system parcial: navegacion `GET` validada; acciones reactivas quedan sin retry automatico por contrato actual; degradacion offline aun pendiente
-- `[ ]` retry coordinado con acciones reactivas
+- `[x]` retry system: navegacion `GET` validada + acciones reactivas con retry opt-in (atributos `data-volt-request-retry*`)
+- `[x]` retry coordinado con acciones reactivas
 - `[ ]` offline snapshots
 - `[ ]` queued actions
 - `[ ]` sync recovery
