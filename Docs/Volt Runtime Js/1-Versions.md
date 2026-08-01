@@ -310,7 +310,7 @@ Cuando se trabaje en este corte:
 - `[x]` `volt:if`
 - `[x]` `volt:for`
 - `[x]` directivas runtime mas expresivas (`volt:text`, `volt:class`, `volt:attr`, `volt:style`, `volt:show`, `volt:if`)
-- `[ ]` parser extensible de directivas frontend
+- `[x]` parser extensible de directivas frontend (API `window.Volt.directives`, grupos `before-state/after-state/render`, estabilizacion)
 
 ### 8. Transition Engine
 
@@ -329,7 +329,7 @@ Cuando se trabaje en este corte:
 ### 9. Runtime Extensibility
 
 - `[x]` hooks DOM/runtime basicos emitidos como eventos
-- `[ ]` API publica `runtime.on(...)`
+- `[x]` API publica `runtime.on(...)` (wrapper de `addEventListener` con filtros por `component/root/selector` + unsubscribe)
 - `[ ]` plugins frontend
 - `[ ]` custom effects
 - `[ ]` runtime middleware
@@ -548,23 +548,23 @@ Formato sugerido de registro:
 
 Matriz operativa sugerida:
 
-| Escenario | Herramienta | Metrica principal | Umbral orientativo | Resultado | Observaciones |
-| --- | --- | --- | --- | --- | --- |
-| Carga inicial del documento con runtime | DevTools Performance + Network | tiempo de boot inicial, long tasks, requests iniciales | boot `< 150ms`, long tasks `0`, requests sin duplicados | `[x]` | `/runtimeEvents` en frio: budget `boot = alerta` con runtime asset `326.3 ms`; `patch/payload = pendiente`; sin consola, pero con `@vite/client` abortado y doble `prefetch` visible hacia `/runtimeRequestLab` |
-| Navegacion SPA entre dos vistas compatibles | DevTools Performance + Network | tiempo de patch visual, requests por click | patch `< 120ms`, requests `1` | `[x]` | `/spaReactive -> /cacheExample -> /spaReactive`: `patchDurationMs` de navegacion `42.1 ms` y `23.5 ms`, ambos bajo umbral y sin `html fallback`; cada click hizo `GET` principal, pero el primer salto arrastro `2` CSS y la vuelta disparo un `prefetch` posterior a `/counterExample`; `cacheHit=false` y doble `volt:cache-miss prefetch` inicial a vigilar |
-| Navegacion SPA repetida 50 veces | DevTools Memory + Network | crecimiento de heap, hit ratio cache, listeners/timers | memoria `< 15%`, sin crecimiento monotono | `[x]` | `/spaReactive <-> /cacheExample` por 25 ciclos: `44` hits y `6` misses (hit rate `88%`), sin degradacion sostenida de latencia tras warm-up; pero el heap subio de `4.30 MB` a `8.47 MB` y el `<head>` termino con fuerte acumulacion de assets (`216` `<style>` y `55` `<script>`), señal clara de retencion/reinyeccion SPA a investigar |
-| Navegacion con `prefetch` + `navigate` | DevTools Network | requests duplicadas, cache hit/miss, waterfall | sin duplicados, reuse observable | `[x]` | `/cacheExample`: el caso `ttl=15s` hacia `/counterExample` confirma `cache-hit` real al click y evita un segundo fetch si el click ocurre dentro del TTL; la transicion baja de ~`310ms` a ~`90ms`. En contraste, `reload` invalida la entrada prefetcheada y vuelve a red, generando doble request con mejora marginal |
-| Accion reactiva simple | DevTools Performance + logs backend | tiempo total visible, TTFB, payload request/response | `< 180ms`, JSON `< 25KB` | `[x]` | `/runtimeRequestLab`: `fastAction` fue optimizada para no adjuntar `html` redundante cuando los `effects` ya cubren el patch; la respuesta bajo de `90441 B` a `689 B`, con `patchDurationMs=11.9` y sin `html fallback`; `Timeout action` sigue cortando en `120ms` sin alterar la UI; el payload ya queda dentro de budget, aunque `totalDurationMs~362.6` sigue por encima del objetivo |
-| `volt:model.sync` con escritura rapida | DevTools Network + Performance | requests por rafaga, debounce efectivo, stale/abort | sin tormenta de requests, abort/stale controlados | `[x]` | `/runtimeModelSync`: un burst de 5 cambios rapidos colapso en 1 POST `__volt_sync__`; el debounce visible quedo en ~`268-270ms` frente a `220ms` nominales; `abort` y `stale` se observaron de forma controlada sin que un payload viejo pise el valor final visible |
-| Rehidratacion de componente pequeno | Performance API + DevTools | tiempo de rehidratacion por componente | `< 16ms` | `[ ]` | |
-| Rehidratacion de pagina con multiples componentes | DevTools Performance | tiempo total de hidratacion y patch | alerta `> 250ms` | `[ ]` | |
-| Lista grande con `volt:for` | DevTools Performance + Memory | scripting, mutaciones DOM, heap | sin long tasks recurrentes `> 50ms` | `[ ]` | |
-| Directivas complejas (`volt:if`, `volt:show`, `volt:class`, `volt:style`) | DevTools Performance | costo de expresiones y mutaciones | sin jank visible ni reflows excesivos | `[ ]` | |
-| Fragment cache + preserve/reset | DevTools Memory + hooks runtime | reuso real, descarte correcto, memoria retenida | reuse correcto, sin nodos retenidos de mas | `[ ]` | |
-| Reconciliacion de `head` y layout | DevTools Elements + Network | duplicacion de metas/assets, costo de swap | sin reinyecciones redundantes | `[x]` | validado en `/routing-lab/head/a <-> /routing-lab/head/b` sin duplicar `meta`/`style` gestionados; y fallback por layout al saltar a `/` desde `routing-lab` |
-| Sesion larga de 100-500 interacciones | DevTools Memory + Performance | heap final, GC visible, estabilidad del runtime | sin degradacion sostenida ni fuga aparente | `[ ]` | |
-| CPU degradada + red lenta | DevTools throttling | resiliencia del runtime bajo estres | degradacion controlada, sin bloqueo severo | `[ ]` | |
-| Multiples tabs y estado compartido | DevTools + observacion funcional | consistencia, retrabajo de red, consumo extra | sin duplicacion injustificada ni drift de estado | `[ ]` | |
+| Escenario                                                                 | Herramienta                         | Metrica principal                                      | Umbral orientativo                                      | Resultado | Observaciones                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------ | ------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Carga inicial del documento con runtime                                   | DevTools Performance + Network      | tiempo de boot inicial, long tasks, requests iniciales | boot `< 150ms`, long tasks `0`, requests sin duplicados | `[x]`     | `/runtimeEvents` en frio: budget `boot = alerta` con runtime asset `326.3 ms`; `patch/payload = pendiente`; sin consola, pero con `@vite/client` abortado y doble `prefetch` visible hacia `/runtimeRequestLab`                                                                                                                                                                            |
+| Navegacion SPA entre dos vistas compatibles                               | DevTools Performance + Network      | tiempo de patch visual, requests por click             | patch `< 120ms`, requests `1`                           | `[x]`     | `/spaReactive -> /cacheExample -> /spaReactive`: `patchDurationMs` de navegacion `42.1 ms` y `23.5 ms`, ambos bajo umbral y sin `html fallback`; cada click hizo `GET` principal, pero el primer salto arrastro `2` CSS y la vuelta disparo un `prefetch` posterior a `/counterExample`; `cacheHit=false` y doble `volt:cache-miss prefetch` inicial a vigilar                             |
+| Navegacion SPA repetida 50 veces                                          | DevTools Memory + Network           | crecimiento de heap, hit ratio cache, listeners/timers | memoria `< 15%`, sin crecimiento monotono               | `[x]`     | `/spaReactive <-> /cacheExample` por 25 ciclos: `44` hits y `6` misses (hit rate `88%`), sin degradacion sostenida de latencia tras warm-up; pero el heap subio de `4.30 MB` a `8.47 MB` y el `<head>` termino con fuerte acumulacion de assets (`216` `<style>` y `55` `<script>`), señal clara de retencion/reinyeccion SPA a investigar                                                 |
+| Navegacion con `prefetch` + `navigate`                                    | DevTools Network                    | requests duplicadas, cache hit/miss, waterfall         | sin duplicados, reuse observable                        | `[x]`     | `/cacheExample`: el caso `ttl=15s` hacia `/counterExample` confirma `cache-hit` real al click y evita un segundo fetch si el click ocurre dentro del TTL; la transicion baja de ~`310ms` a ~`90ms`. En contraste, `reload` invalida la entrada prefetcheada y vuelve a red, generando doble request con mejora marginal                                                                    |
+| Accion reactiva simple                                                    | DevTools Performance + logs backend | tiempo total visible, TTFB, payload request/response   | `< 180ms`, JSON `< 25KB`                                | `[x]`     | `/runtimeRequestLab`: `fastAction` fue optimizada para no adjuntar `html` redundante cuando los `effects` ya cubren el patch; la respuesta bajo de `90441 B` a `689 B`, con `patchDurationMs=11.9` y sin `html fallback`; `Timeout action` sigue cortando en `120ms` sin alterar la UI; el payload ya queda dentro de budget, aunque `totalDurationMs~362.6` sigue por encima del objetivo |
+| `volt:model.sync` con escritura rapida                                    | DevTools Network + Performance      | requests por rafaga, debounce efectivo, stale/abort    | sin tormenta de requests, abort/stale controlados       | `[x]`     | `/runtimeModelSync`: un burst de 5 cambios rapidos colapso en 1 POST `__volt_sync__`; el debounce visible quedo en ~`268-270ms` frente a `220ms` nominales; `abort` y `stale` se observaron de forma controlada sin que un payload viejo pise el valor final visible                                                                                                                       |
+| Rehidratacion de componente pequeno                                       | Performance API + DevTools          | tiempo de rehidratacion por componente                 | `< 16ms`                                                | `[ ]`     |                                                                                                                                                                                                                                                                                                                                                                                            |
+| Rehidratacion de pagina con multiples componentes                         | DevTools Performance                | tiempo total de hidratacion y patch                    | alerta `> 250ms`                                        | `[ ]`     |                                                                                                                                                                                                                                                                                                                                                                                            |
+| Lista grande con `volt:for`                                               | DevTools Performance + Memory       | scripting, mutaciones DOM, heap                        | sin long tasks recurrentes `> 50ms`                     | `[ ]`     |                                                                                                                                                                                                                                                                                                                                                                                            |
+| Directivas complejas (`volt:if`, `volt:show`, `volt:class`, `volt:style`) | DevTools Performance                | costo de expresiones y mutaciones                      | sin jank visible ni reflows excesivos                   | `[ ]`     |                                                                                                                                                                                                                                                                                                                                                                                            |
+| Fragment cache + preserve/reset                                           | DevTools Memory + hooks runtime     | reuso real, descarte correcto, memoria retenida        | reuse correcto, sin nodos retenidos de mas              | `[ ]`     |                                                                                                                                                                                                                                                                                                                                                                                            |
+| Reconciliacion de `head` y layout                                         | DevTools Elements + Network         | duplicacion de metas/assets, costo de swap             | sin reinyecciones redundantes                           | `[x]`     | validado en `/routing-lab/head/a <-> /routing-lab/head/b` sin duplicar `meta`/`style` gestionados; y fallback por layout al saltar a `/` desde `routing-lab`                                                                                                                                                                                                                               |
+| Sesion larga de 100-500 interacciones                                     | DevTools Memory + Performance       | heap final, GC visible, estabilidad del runtime        | sin degradacion sostenida ni fuga aparente              | `[ ]`     |                                                                                                                                                                                                                                                                                                                                                                                            |
+| CPU degradada + red lenta                                                 | DevTools throttling                 | resiliencia del runtime bajo estres                    | degradacion controlada, sin bloqueo severo              | `[ ]`     |                                                                                                                                                                                                                                                                                                                                                                                            |
+| Multiples tabs y estado compartido                                        | DevTools + observacion funcional    | consistencia, retrabajo de red, consumo extra          | sin duplicacion injustificada ni drift de estado        | `[ ]`     |                                                                                                                                                                                                                                                                                                                                                                                            |
 
 Prioridad sugerida de ejecucion:
 
@@ -596,13 +596,13 @@ Primera linea base local ejecutada antes de externalizar el runtime:
 - rutas medidas: `/`, `/runtimeEvents`, `/runtimeModelSync`, `/fragmentCache`, `/navigationPolicy`
 - resultado base:
 
-| Ruta | Status | HTML promedio | Tiempo promedio | Pico observado |
-| --- | --- | --- | --- | --- |
-| `/` | `200` | `316297 B` | `555.90 ms` | `840.86 ms` |
-| `/runtimeEvents` | `200` | `320761 B` | `485.77 ms` | `694.35 ms` |
-| `/runtimeModelSync` | `200` | `304306 B` | `522.97 ms` | `610.86 ms` |
-| `/fragmentCache` | `200` | `313431 B` | `524.22 ms` | `647.59 ms` |
-| `/navigationPolicy` | `200` | `301547 B` | `405.37 ms` | `460.70 ms` |
+| Ruta                | Status | HTML promedio | Tiempo promedio | Pico observado |
+| ------------------- | ------ | ------------- | --------------- | -------------- |
+| `/`                 | `200`  | `316297 B`    | `555.90 ms`     | `840.86 ms`    |
+| `/runtimeEvents`    | `200`  | `320761 B`    | `485.77 ms`     | `694.35 ms`    |
+| `/runtimeModelSync` | `200`  | `304306 B`    | `522.97 ms`     | `610.86 ms`    |
+| `/fragmentCache`    | `200`  | `313431 B`    | `524.22 ms`     | `647.59 ms`    |
+| `/navigationPolicy` | `200`  | `301547 B`    | `405.37 ms`     | `460.70 ms`    |
 
 Peso de assets compilados:
 
@@ -628,14 +628,14 @@ Resultado despues de externalizar el runtime a `/_volt/runtime.js`:
 - el runtime ahora se sirve como asset separado con `Cache-Control: public, max-age=31536000, immutable`
 - linea base local repetida sobre el mismo entorno y las mismas rutas:
 
-| Ruta | Status | HTML promedio despues | Tiempo promedio despues | Pico observado despues |
-| --- | --- | --- | --- | --- |
-| `/` | `200` | `41071 B` | `273.43 ms` | `427.46 ms` |
-| `/runtimeEvents` | `200` | `45535 B` | `234.49 ms` | `245.72 ms` |
-| `/runtimeModelSync` | `200` | `29080 B` | `222.71 ms` | `230.54 ms` |
-| `/fragmentCache` | `200` | `38205 B` | `226.02 ms` | `231.05 ms` |
-| `/navigationPolicy` | `200` | `26321 B` | `218.29 ms` | `227.26 ms` |
-| `/_volt/runtime.js` | `200` | `275267 B` | `236.19 ms` | `268.23 ms` |
+| Ruta                | Status | HTML promedio despues | Tiempo promedio despues | Pico observado despues |
+| ------------------- | ------ | --------------------- | ----------------------- | ---------------------- |
+| `/`                 | `200`  | `41071 B`             | `273.43 ms`             | `427.46 ms`            |
+| `/runtimeEvents`    | `200`  | `45535 B`             | `234.49 ms`             | `245.72 ms`            |
+| `/runtimeModelSync` | `200`  | `29080 B`             | `222.71 ms`             | `230.54 ms`            |
+| `/fragmentCache`    | `200`  | `38205 B`             | `226.02 ms`             | `231.05 ms`            |
+| `/navigationPolicy` | `200`  | `26321 B`             | `218.29 ms`             | `227.26 ms`            |
+| `/_volt/runtime.js` | `200`  | `275267 B`            | `236.19 ms`             | `268.23 ms`            |
 
 Impacto observado:
 
@@ -1048,22 +1048,26 @@ Eventos emitidos:
 Invalidacion explicita desde frontend:
 
 ```js
-document.dispatchEvent(new CustomEvent('volt:navigation-cache-invalidate', {
-  detail: {
-    url: '/formExample',
-    reason: 'manual',
-  },
-}));
+document.dispatchEvent(
+  new CustomEvent("volt:navigation-cache-invalidate", {
+    detail: {
+      url: "/formExample",
+      reason: "manual",
+    },
+  }),
+);
 ```
 
 Para limpiar toda la cache SPA actual:
 
 ```js
-document.dispatchEvent(new CustomEvent('volt:navigation-cache-invalidate', {
-  detail: {
-    reason: 'manual',
-  },
-}));
+document.dispatchEvent(
+  new CustomEvent("volt:navigation-cache-invalidate", {
+    detail: {
+      reason: "manual",
+    },
+  }),
+);
 ```
 
 Validacion tecnica ejecutada para este bloque:
@@ -1222,13 +1226,13 @@ Declaracion por enlace:
   href="/navigationTransitionProfile"
   volt:navigate
   data-volt-page-transition-profile="soft"
->
+></a>
 ```
 
 Declaracion por documento destino:
 
 ```html
-<meta name="volt-page-transition-profile" content="gentle">
+<meta name="volt-page-transition-profile" content="gentle" />
 ```
 
 Reglas actuales:
@@ -1247,15 +1251,15 @@ Estado actual:
 API publica:
 
 ```js
-window.Volt.state.get(key, { scope: 'client' | 'shared' })
-window.Volt.state.set(key, value, { scope: 'client' | 'shared' })
-window.Volt.state.merge(key, partial, { scope: 'client' | 'shared' })
-window.Volt.state.update(key, updater, { scope: 'client' | 'shared' })
-window.Volt.state.delete(key, { scope: 'client' | 'shared' })
-window.Volt.state.clear({ scope: 'client' | 'shared', reason: 'manual' })
-window.Volt.state.snapshot({ scope: 'client' | 'shared' })
-window.Volt.state.subscribe(key, listener, { scope: 'client' | 'shared' })
-window.Volt.state.currentScope()
+window.Volt.state.get(key, { scope: "client" | "shared" });
+window.Volt.state.set(key, value, { scope: "client" | "shared" });
+window.Volt.state.merge(key, partial, { scope: "client" | "shared" });
+window.Volt.state.update(key, updater, { scope: "client" | "shared" });
+window.Volt.state.delete(key, { scope: "client" | "shared" });
+window.Volt.state.clear({ scope: "client" | "shared", reason: "manual" });
+window.Volt.state.snapshot({ scope: "client" | "shared" });
+window.Volt.state.subscribe(key, listener, { scope: "client" | "shared" });
+window.Volt.state.currentScope();
 ```
 
 Reglas actuales:
@@ -1287,8 +1291,8 @@ Declaracion en el trigger o formulario:
 ```html
 <form
   volt-submit="captureSelectiveSync"
-  data-volt-state-sync="client:draft.note->params.clientNote, shared:draft.note->params.sharedNote, shared:counter->updates.sharedCounterMirror">
-</form>
+  data-volt-state-sync="client:draft.note->params.clientNote, shared:draft.note->params.sharedNote, shared:counter->updates.sharedCounterMirror"
+></form>
 ```
 
 Reglas actuales:
@@ -1515,11 +1519,11 @@ Estado actual:
 Declaracion actual:
 
 ```html
-<input volt:bind:value="client:draft.note">
-<input type="checkbox" volt:bind:checked="shared:ui.enabled">
+<input volt:bind:value="client:draft.note" />
+<input type="checkbox" volt:bind:checked="shared:ui.enabled" />
 <button volt:bind:disabled="shared:ui.busy"></button>
 <a volt:bind:href="shared:links.detailsUrl"></a>
-<img volt:bind:src="shared:media.previewUrl">
+<img volt:bind:src="shared:media.previewUrl" />
 ```
 
 Gramatica actual:
@@ -1679,29 +1683,29 @@ Rutas demo:
 
 ## Comparativa: Volt On Vs Volt Dispatch
 
-| Aspecto | `volt:on` | `volt:dispatch` |
-| --- | --- | --- |
-| Objetivo principal | orquestar eventos DOM y resolver acciones frontend declarativas | emitir `CustomEvent` declarativos desde markup |
-| Disparador MVP | explicito por evento, por ejemplo `click`, `input`, `keydown.escape` | implicito por `click` |
-| Acciones del MVP | `dispatch:*`, `state:set`, `state:toggle`, `state:delete` | solo `dispatch` de uno o varios eventos |
-| Modificadores | si, `prevent`, `stop`, `once`, `self` | no en el MVP |
-| Mutacion de state | si, mediante `state:*` | no |
-| Complejidad | mas alta; sirve como DSL general de eventos | mas baja; sirve como atajo de emision |
-| Caso ideal | cuando necesitas reaccionar al evento y decidir que hacer | cuando solo quieres avisar a otros listeners frontend |
-| Relacion recomendada | directiva principal de eventos | azucar declarativa para el caso comun `click -> dispatch:nombre` |
+| Aspecto              | `volt:on`                                                            | `volt:dispatch`                                                  |
+| -------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Objetivo principal   | orquestar eventos DOM y resolver acciones frontend declarativas      | emitir `CustomEvent` declarativos desde markup                   |
+| Disparador MVP       | explicito por evento, por ejemplo `click`, `input`, `keydown.escape` | implicito por `click`                                            |
+| Acciones del MVP     | `dispatch:*`, `state:set`, `state:toggle`, `state:delete`            | solo `dispatch` de uno o varios eventos                          |
+| Modificadores        | si, `prevent`, `stop`, `once`, `self`                                | no en el MVP                                                     |
+| Mutacion de state    | si, mediante `state:*`                                               | no                                                               |
+| Complejidad          | mas alta; sirve como DSL general de eventos                          | mas baja; sirve como atajo de emision                            |
+| Caso ideal           | cuando necesitas reaccionar al evento y decidir que hacer            | cuando solo quieres avisar a otros listeners frontend            |
+| Relacion recomendada | directiva principal de eventos                                       | azucar declarativa para el caso comun `click -> dispatch:nombre` |
 
 ## Comparativa: Volt On / Volt Dispatch / Volt Click / Volt Submit
 
-| Aspecto | `volt:on` | `volt:dispatch` | `volt:click` | `volt:submit` |
-| --- | --- | --- | --- | --- |
-| Rol principal | DSL general de eventos frontend | emitir `CustomEvent` frontend | disparar accion reactiva backend desde click | enviar formulario/reactive action al backend |
-| Disparador | explicito, por ejemplo `click`, `input`, `keydown.escape` | implicito por `click` | `click` | `submit` |
-| Toca backend | opcionalmente no | no | si | si |
-| Puede mutar state local | si, con `state:*` | no | indirectamente via respuesta backend | indirectamente via respuesta backend |
-| Modificadores MVP | si | no | propios del flujo reactivo existente | propios del flujo reactivo existente |
-| Mejor caso de uso | interaccion declarativa rica sin roundtrip | notificar listeners frontend | botones de accion de componente | formularios y validaciones |
-| Complejidad | alta | baja | media | media |
-| Recomendacion | usar cuando necesitas control fino del evento | usar cuando solo quieres emitir un evento | usar para acciones backend simples | usar para formularios y submits reactivos |
+| Aspecto                 | `volt:on`                                                 | `volt:dispatch`                           | `volt:click`                                 | `volt:submit`                                |
+| ----------------------- | --------------------------------------------------------- | ----------------------------------------- | -------------------------------------------- | -------------------------------------------- |
+| Rol principal           | DSL general de eventos frontend                           | emitir `CustomEvent` frontend             | disparar accion reactiva backend desde click | enviar formulario/reactive action al backend |
+| Disparador              | explicito, por ejemplo `click`, `input`, `keydown.escape` | implicito por `click`                     | `click`                                      | `submit`                                     |
+| Toca backend            | opcionalmente no                                          | no                                        | si                                           | si                                           |
+| Puede mutar state local | si, con `state:*`                                         | no                                        | indirectamente via respuesta backend         | indirectamente via respuesta backend         |
+| Modificadores MVP       | si                                                        | no                                        | propios del flujo reactivo existente         | propios del flujo reactivo existente         |
+| Mejor caso de uso       | interaccion declarativa rica sin roundtrip                | notificar listeners frontend              | botones de accion de componente              | formularios y validaciones                   |
+| Complejidad             | alta                                                      | baja                                      | media                                        | media                                        |
+| Recomendacion           | usar cuando necesitas control fino del evento             | usar cuando solo quieres emitir un evento | usar para acciones backend simples           | usar para formularios y submits reactivos    |
 
 ## Contrato Actual: Volt Dispatch
 
@@ -1824,7 +1828,7 @@ Estado actual:
 Declaracion actual:
 
 ```html
-<input volt:focus="client:ui.focusTitle">
+<input volt:focus="client:ui.focusTitle" />
 <textarea volt:autofocus.when="shared:form.showErrors"></textarea>
 <button volt:focus="client:ui.returnFocusToAction"></button>
 ```
@@ -2032,9 +2036,9 @@ Estado actual:
 Declaracion actual:
 
 ```html
-<input volt:model.local="client:draft.note">
+<input volt:model.local="client:draft.note" />
 <textarea volt:model.local="client:draft.body"></textarea>
-<input type="checkbox" volt:model.local="client:ui.enabled">
+<input type="checkbox" volt:model.local="client:ui.enabled" />
 <select volt:model.local="shared:filters.category"></select>
 ```
 
@@ -2097,7 +2101,7 @@ Estado actual:
 Declaracion actual:
 
 ```html
-<input volt:model.sync="client:draft.note">
+<input volt:model.sync="client:draft.note" />
 <textarea volt:model.sync="client:draft.body"></textarea>
 <select volt:model.sync="shared:filters.category"></select>
 ```
@@ -2155,16 +2159,16 @@ Rutas demo actuales:
 
 ## Comparativa: Volt Text / Volt Html / Volt Bind / Volt Model
 
-| Aspecto | `volt:text` | `volt:html` | `volt:bind` | `volt:model` |
-| --- | --- | --- | --- | --- |
-| Direccion principal | state -> DOM | state -> DOM | state -> DOM | DOM <-> state y opcional backend |
-| Target | `textContent` | `innerHTML` | propiedad DOM especifica | valor interactivo de input/control |
-| Tipo de uso ideal | texto plano visible | contenido enriquecido confiable | reflejar propiedades como `value`, `checked`, `disabled`, `href` | formularios e inputs con sincronizacion |
-| Soporta HTML | no | si | no, salvo propiedades textuales del DOM | no como objetivo principal |
-| Soporta binding de propiedades | no | no | si | si, pero orientado a entrada de usuario |
-| Escribe al store | no | no | no | si |
-| Riesgo principal | bajo | XSS y reemplazo completo de subarbol | conflicto semantico con otras directivas si se abusa | sincronizacion, latencia y control de entrada |
-| Caso recomendado | etiquetas, badges, textos auxiliares | previews, fragmentos CMS, HTML renderizado por backend | checkbox, disabled, href, src, value reflejado | inputs, textareas, selects, formularios |
+| Aspecto                        | `volt:text`                          | `volt:html`                                            | `volt:bind`                                                      | `volt:model`                                  |
+| ------------------------------ | ------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------- | --------------------------------------------- |
+| Direccion principal            | state -> DOM                         | state -> DOM                                           | state -> DOM                                                     | DOM <-> state y opcional backend              |
+| Target                         | `textContent`                        | `innerHTML`                                            | propiedad DOM especifica                                         | valor interactivo de input/control            |
+| Tipo de uso ideal              | texto plano visible                  | contenido enriquecido confiable                        | reflejar propiedades como `value`, `checked`, `disabled`, `href` | formularios e inputs con sincronizacion       |
+| Soporta HTML                   | no                                   | si                                                     | no, salvo propiedades textuales del DOM                          | no como objetivo principal                    |
+| Soporta binding de propiedades | no                                   | no                                                     | si                                                               | si, pero orientado a entrada de usuario       |
+| Escribe al store               | no                                   | no                                                     | no                                                               | si                                            |
+| Riesgo principal               | bajo                                 | XSS y reemplazo completo de subarbol                   | conflicto semantico con otras directivas si se abusa             | sincronizacion, latencia y control de entrada |
+| Caso recomendado               | etiquetas, badges, textos auxiliares | previews, fragmentos CMS, HTML renderizado por backend | checkbox, disabled, href, src, value reflejado                   | inputs, textareas, selects, formularios       |
 
 ## Contrato Actual: Volt Text
 
@@ -2210,12 +2214,22 @@ Estado actual:
 Declaracion actual:
 
 ```html
-<article volt:class="client:ui.highlightClientCard -> ring-4 ring-cyan-400"></article>
-<article volt:class="shared:ui.highlightSharedCard -> ring-4 ring-fuchsia-400"></article>
+<article
+  volt:class="client:ui.highlightClientCard -> ring-4 ring-cyan-400"
+></article>
+<article
+  volt:class="shared:ui.highlightSharedCard -> ring-4 ring-fuchsia-400"
+></article>
 <article volt:class="!shared:ui.highlightSharedCard -> opacity-60"></article>
-<article volt:class="client:ui.ready && !shared:ui.blocked -> ring-2 ring-emerald-400 | shared:ui.highlightSharedCard -> shadow-xl"></article>
-<article volt:class="client:counter >= 2 && shared:counter < 3 -> ring-4 ring-sky-400"></article>
-<article volt:class="client:counter >= shared:counter -> ring-2 ring-violet-400"></article>
+<article
+  volt:class="client:ui.ready && !shared:ui.blocked -> ring-2 ring-emerald-400 | shared:ui.highlightSharedCard -> shadow-xl"
+></article>
+<article
+  volt:class="client:counter >= 2 && shared:counter < 3 -> ring-4 ring-sky-400"
+></article>
+<article
+  volt:class="client:counter >= shared:counter -> ring-2 ring-violet-400"
+></article>
 ```
 
 Reglas actuales:
@@ -2247,12 +2261,22 @@ Estado actual:
 Declaracion actual:
 
 ```html
-<button volt:attr="client:ui.lockClientAction -> disabled=disabled, aria-disabled=true"></button>
-<button volt:attr="shared:ui.lockSharedAction -> disabled=disabled, data-lock=shared"></button>
+<button
+  volt:attr="client:ui.lockClientAction -> disabled=disabled, aria-disabled=true"
+></button>
+<button
+  volt:attr="shared:ui.lockSharedAction -> disabled=disabled, data-lock=shared"
+></button>
 <div volt:attr="!shared:ui.lockSharedAction -> data-state=ready"></div>
-<div volt:attr="client:ui.ready && !shared:ui.busy -> data-state=ready, aria-busy=false | shared:ui.busy -> data-state=busy, aria-busy=true"></div>
-<div volt:attr="client:counter >= 2 -> data-threshold=ready, aria-live=polite"></div>
-<div volt:attr="client:counter >= shared:counter -> data-balance=client-dominant"></div>
+<div
+  volt:attr="client:ui.ready && !shared:ui.busy -> data-state=ready, aria-busy=false | shared:ui.busy -> data-state=busy, aria-busy=true"
+></div>
+<div
+  volt:attr="client:counter >= 2 -> data-threshold=ready, aria-live=polite"
+></div>
+<div
+  volt:attr="client:counter >= shared:counter -> data-balance=client-dominant"
+></div>
 ```
 
 Reglas actuales:
@@ -2284,12 +2308,22 @@ Estado actual:
 Declaracion actual:
 
 ```html
-<article volt:style="client:ui.softenClientCard -> opacity:0.55; transform:scale(0.98)"></article>
-<article volt:style="shared:ui.softenSharedCard -> opacity:0.7; box-shadow:0 18px 40px rgba(217,70,239,0.22)"></article>
+<article
+  volt:style="client:ui.softenClientCard -> opacity:0.55; transform:scale(0.98)"
+></article>
+<article
+  volt:style="shared:ui.softenSharedCard -> opacity:0.7; box-shadow:0 18px 40px rgba(217,70,239,0.22)"
+></article>
 <div volt:style="!shared:ui.softenSharedCard -> opacity:1"></div>
-<div volt:style="client:ui.ready && !shared:ui.busy -> opacity:1; transform:scale(1) | shared:ui.busy -> opacity:0.55; pointer-events:none"></div>
-<div volt:style="shared:counter >= 3 -> opacity:0.45; filter:saturate(0.7)"></div>
-<div volt:style="client:counter >= shared:counter -> outline:1px solid rgba(139,92,246,0.45)"></div>
+<div
+  volt:style="client:ui.ready && !shared:ui.busy -> opacity:1; transform:scale(1) | shared:ui.busy -> opacity:0.55; pointer-events:none"
+></div>
+<div
+  volt:style="shared:counter >= 3 -> opacity:0.45; filter:saturate(0.7)"
+></div>
+<div
+  volt:style="client:counter >= shared:counter -> outline:1px solid rgba(139,92,246,0.45)"
+></div>
 ```
 
 Reglas actuales:
