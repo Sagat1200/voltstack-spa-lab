@@ -363,8 +363,8 @@ Cuando se trabaje en este corte:
 - `[x]` navegar entre layouts distintos y verificar fallback a full reload
 - `[x]` validar retry automatico de navegacion `GET` con fallo transitorio controlado
 - `[x]` volver con `popstate` y validar contenido correcto
-- `[ ]` validar preservacion de scroll normal
-- `[ ]` validar `volt:preserve-scroll`
+- `[x]` validar preservacion de scroll normal
+- `[x]` validar `volt:preserve-scroll`
 - `[x]` validar reconciliacion de `head` con estilos y scripts
 - `[x]` validar que no se dupliquen scripts del `head`
 - `[x]` validar navegacion con error HTTP y fallback correcto
