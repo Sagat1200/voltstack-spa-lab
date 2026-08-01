@@ -391,18 +391,29 @@ Cuando se trabaje en este corte:
 
 ### D. DOM Y Effects
 
-- `[ ]` `text.update`
-- `[ ]` `html.replace`
-- `[ ]` `dom.append`
-- `[ ]` `dom.insert`
-- `[ ]` `dom.remove`
-- `[ ]` `dom.move`
-- `[ ]` `class.toggle`
-- `[ ]` `style.set`
-- `[ ]` `focus`
-- `[ ]` `scroll`
-- `[ ]` `navigate`
-- `[ ]` `dispatch.event`
+- `[x]` `text.update`
+- `[x]` `html.replace`
+- `[x]` `dom.append`
+- `[x]` `dom.insert`
+- `[x]` `dom.remove`
+- `[x]` `dom.move`
+- `[x]` `class.toggle`
+- `[x]` `style.set`
+- `[x]` `focus`
+- `[x]` `scroll`
+- `[x]` `navigate`
+- `[x]` `dispatch.event`
+
+### D2. Runtime Effects (attribute/state/policy)
+
+- `[x]` `attribute.set`
+- `[x]` `attribute.remove`
+- `[x]` `blur`
+- `[x]` `runtime.policy`
+- `[x]` `state.set`
+- `[x]` `state.merge`
+- `[x]` `state.delete`
+- `[x]` `state.clear`
 
 ### E. Foco, Seleccion Y Scroll
 

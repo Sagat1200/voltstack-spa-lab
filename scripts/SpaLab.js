@@ -2779,6 +2779,134 @@ function registerRuntimeStateExampleControls() {
   syncRuntimeStateExamples()
 }
 
+function effectsD2Root() {
+  return document.querySelector('[data-runtime-effects-d2="true"]')
+}
+
+const effectsD2Status = {
+  action: null,
+  at: null,
+}
+
+function filterStateSnapshot(snapshot, prefix) {
+  const source = snapshot && typeof snapshot === 'object' ? snapshot : {}
+  const result = {}
+  const normalizedPrefix = typeof prefix === 'string' ? prefix : ''
+
+  Object.keys(source).forEach((key) => {
+    if (normalizedPrefix && !key.startsWith(normalizedPrefix)) {
+      return
+    }
+
+    result[key] = source[key]
+  })
+
+  return result
+}
+
+function setEffectsD2Text(root, selector, value) {
+  const container = root && typeof root.querySelector === 'function' ? root : document
+  const node = container.querySelector(selector)
+
+  if (node) {
+    node.textContent = typeof value === 'string' ? value : String(value ?? '')
+  }
+}
+
+function syncRuntimeEffectsD2Lab(reason = 'manual', detail = {}) {
+  const root = effectsD2Root()
+
+  if (!root) {
+    return
+  }
+
+  if (effectsD2Status.action) {
+    setEffectsD2Text(null, '[data-runtime-check="effects-d2-last-action"]', effectsD2Status.action)
+  }
+
+  if (effectsD2Status.at) {
+    setEffectsD2Text(null, '[data-runtime-check="effects-d2-last-action-at"]', effectsD2Status.at)
+  }
+
+  const attributeBox = root.querySelector('[data-volt-target="effects-d2-attr-box"]')
+  const attributeValue = attributeBox ? attributeBox.getAttribute('data-d2-flag') : null
+
+  setEffectsD2Text(root, '[data-runtime-check="effects-d2-attr-present"]', attributeValue === null ? 'false' : 'true')
+  setEffectsD2Text(root, '[data-runtime-check="effects-d2-attr-value"]', attributeValue === null ? '(sin atributo)' : attributeValue)
+
+  const active = document.activeElement instanceof Element ? document.activeElement : null
+  const activeLabel = active
+    ? `${active.tagName.toLowerCase()}${active.getAttribute('data-volt-target') ? ' data-volt-target=' + active.getAttribute('data-volt-target') : ''}`
+    : '(sin activeElement)'
+  setEffectsD2Text(root, '[data-runtime-check="effects-d2-active-element"]', activeLabel)
+
+  const api = runtimeStateApi()
+
+  if (!api) {
+    setEffectsD2Text(root, '[data-runtime-check="effects-d2-client-snapshot"]', 'window.Volt.state no disponible')
+    setEffectsD2Text(root, '[data-runtime-check="effects-d2-shared-snapshot"]', 'window.Volt.state no disponible')
+    return
+  }
+
+  const clientSnapshot = filterStateSnapshot(api.snapshot({
+    scope: 'client',
+  }), 'd2.')
+  const sharedSnapshot = filterStateSnapshot(api.snapshot({
+    scope: 'shared',
+  }), 'd2.')
+
+  setEffectsD2Text(root, '[data-runtime-check="effects-d2-client-snapshot"]', serializeStateExample({
+    reason,
+    detail,
+    snapshot: clientSnapshot,
+  }))
+  setEffectsD2Text(root, '[data-runtime-check="effects-d2-shared-snapshot"]', serializeStateExample({
+    reason,
+    detail,
+    snapshot: sharedSnapshot,
+  }))
+}
+
+function registerRuntimeEffectsD2Lab() {
+  if (!effectsD2Root()) {
+    return
+  }
+
+  ;[
+    'volt:request-finish',
+    'volt:after-effect',
+    'volt:state-changed',
+    'volt:state-cleared',
+    'volt:state-scope-changed',
+    'volt:navigated',
+  ].forEach((eventName) => {
+    document.addEventListener(eventName, (event) => {
+      if (eventName === 'volt:request-finish') {
+        const detail = event && typeof event.detail === 'object' ? event.detail : {}
+        if (detail.type === 'action' && typeof detail.action === 'string' && detail.action !== '') {
+          effectsD2Status.action = detail.action
+          effectsD2Status.at = new Date().toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          })
+        }
+      }
+      window.requestAnimationFrame(() => {
+        syncRuntimeEffectsD2Lab(eventName, event && event.detail ? event.detail : {})
+      })
+    })
+  })
+
+  window.addEventListener('load', () => {
+    window.requestAnimationFrame(() => {
+      syncRuntimeEffectsD2Lab('window-load', {})
+    })
+  })
+
+  syncRuntimeEffectsD2Lab('boot', {})
+}
+
 function bootstrapRequestLabPage() {
   const requestLabMarker = document.querySelector('[data-runtime-check="action-endpoint-status"]')
 
@@ -2813,6 +2941,7 @@ registerVoltHookExamples()
 registerNavigationDebugPanel()
 registerCacheExampleControls()
 registerRuntimeStateExampleControls()
+registerRuntimeEffectsD2Lab()
 registerRuntimeBusyPanel()
 registerRuntimeEfficiencyExamples()
 registerRuntimeMatrixCarryover()

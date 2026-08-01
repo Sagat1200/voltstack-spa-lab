@@ -117,6 +117,17 @@
                 <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">CustomEvent</code>.</span>
         </a>
 
+        <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-indigo-400/40 hover:bg-slate-950"
+            href="/runtimeEffectsD2" volt:navigate volt:prefetch="none">
+            <strong class="block text-lg text-white">/runtimeEffectsD2</strong>
+            <span class="block mt-3 text-sm leading-6 text-slate-400">Lab visual para cerrar D2 (effects extra):
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">attribute.set</code>,
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">attribute.remove</code>,
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">state.*</code>,
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">blur</code> y
+                <code class="px-2 py-1 rounded bg-slate-800 text-slate-200">runtime.policy</code>.</span>
+        </a>
+
         <a class="flex h-full min-h-[220px] flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-5 transition hover:border-green-400/40 hover:bg-slate-950"
             href="/runtimeMatrix" volt:navigate volt:prefetch="none">
             <strong class="block text-lg text-white">/runtimeMatrix</strong>
