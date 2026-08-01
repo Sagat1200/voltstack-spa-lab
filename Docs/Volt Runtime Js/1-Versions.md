@@ -341,11 +341,11 @@ Cuando se trabaje en este corte:
 
 - `[x]` retry system: navegacion `GET` validada + acciones reactivas con retry opt-in (atributos `data-volt-request-retry*`)
 - `[x]` retry coordinado con acciones reactivas
-- `[ ]` offline snapshots
-- `[ ]` queued actions
-- `[ ]` sync recovery
-- `[ ]` deteccion de desconexion
-- `[ ]` modo degradado con progressive enhancement mas formal
+- `[x]` offline snapshots (persistencia de `data-volt-snapshot` por componente en `localStorage`)
+- `[x]` queued actions (cola offline + flush automatico al volver online)
+- `[x]` sync recovery (replay de cola al recuperar conectividad)
+- `[x]` deteccion de desconexion (atributos `data-volt-offline/data-volt-online` + hooks `volt:offline/volt:online`)
+- `[x]` modo degradado (bloqueo de navegacion SPA cuando `navigator.onLine=false`)
 
 ### 11. Transportes Futuros
 
