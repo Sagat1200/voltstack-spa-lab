@@ -330,8 +330,8 @@ Cuando se trabaje en este corte:
 
 - `[x]` hooks DOM/runtime basicos emitidos como eventos
 - `[x]` API publica `runtime.on(...)` (wrapper de `addEventListener` con filtros por `component/root/selector` + unsubscribe)
-- `[ ]` plugins frontend
-- `[ ]` custom effects
+- `[x]` plugins frontend (API `window.Volt.plugins` + alias `window.Volt.use`)
+- `[x]` custom effects (API `window.Volt.effects.register(...)` + integración con `applyEffect`)
 - `[ ]` runtime middleware
 - `[ ]` navigation middleware
 - `[ ]` hydration middleware
